@@ -1,0 +1,77 @@
+version: '3.8'
+
+services:
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: vigilanteye_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: vigilanteye_db
+      MYSQL_USER: vigilanteye_user
+      MYSQL_PASSWORD: vigilanteye_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - vigilanteye_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+
+  # FastAPI Application
+  api:
+    build: .
+    container_name: vigilanteye_api
+    restart: unless-stopped
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: vigilanteye_user
+      DB_PASSWORD: vigilanteye_password
+      DB_NAME: vigilanteye_db
+      APP_NAME: VigilantEye API
+      DEBUG: "False"
+    ports:
+      - "8000:8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - vigilanteye_network
+    volumes:
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # phpMyAdmin (Optional - for database management)
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: vigilanteye_phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_USER: vigilanteye_user
+      PMA_PASSWORD: vigilanteye_password
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql
+    networks:
+      - vigilanteye_network
+
+volumes:
+  mysql_data:
+
+networks:
+  vigilanteye_network:
+    driver: bridge

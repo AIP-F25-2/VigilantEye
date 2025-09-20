@@ -1,0 +1,33 @@
+version: '3.8'
+
+services:
+  # FastAPI Application (Development)
+  api:
+    build: .
+    container_name: vigilanteye_api_dev
+    restart: unless-stopped
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: vigilanteye_user
+      DB_PASSWORD: vigilanteye_password
+      DB_NAME: vigilanteye_db
+      APP_NAME: VigilantEye API (Dev)
+      DEBUG: "True"
+    ports:
+      - "8000:8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - vigilanteye_network
+    volumes:
+      # Mount source code for development
+      - .:/app
+      - ./logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
