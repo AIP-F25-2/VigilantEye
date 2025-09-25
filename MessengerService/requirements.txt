@@ -1,0 +1,7 @@
+Flask
+SQLAlchemy
+pymysql
+requests
+python-dotenv
+APScheduler
+alembic         # optional, if you want migrations
