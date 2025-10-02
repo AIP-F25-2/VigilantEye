@@ -18,9 +18,26 @@ function initFormValidation() {
     const forms = document.querySelectorAll('form');
     forms.forEach(form => {
         form.addEventListener('submit', function(event) {
-            if (!form.checkValidity()) {
+            console.log('Form submission attempted');
+            // Only prevent submission if there are actual validation errors
+            const requiredFields = form.querySelectorAll('[required]');
+            let hasErrors = false;
+            
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    hasErrors = true;
+                    field.classList.add('is-invalid');
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            });
+            
+            if (hasErrors) {
+                console.log('Form has validation errors, preventing submission');
                 event.preventDefault();
                 event.stopPropagation();
+            } else {
+                console.log('Form validation passed, submitting...');
             }
             form.classList.add('was-validated');
         });
