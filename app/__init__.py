@@ -12,8 +12,9 @@ def create_app():
     
     # Configuration
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///app.db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'mysql+pymysql://flaskuser:flaskpass@localhost:3306/flaskapi')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024 * 1024  # 20GB
     
     # Initialize extensions
     db.init_app(app)
@@ -22,7 +23,19 @@ def create_app():
     
     # Register blueprints
     from app.controllers import main_bp, api_bp
+    from app.controllers.video_controller import video_bp
+    from app.controllers.recording_controller import recording_bp
+    from app.controllers.project_controller import project_bp
+    
+    # Register main blueprints
     app.register_blueprint(main_bp)
     app.register_blueprint(api_bp, url_prefix='/api')
+    
+    # Register new API blueprints
+    app.register_blueprint(video_bp, url_prefix='/api/v2')
+    app.register_blueprint(recording_bp, url_prefix='/api/v2')
+    app.register_blueprint(project_bp, url_prefix='/api/v2')
+    
+    # Note: Server blueprints removed - using new API structure
     
     return app

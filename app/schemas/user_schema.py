@@ -9,3 +9,10 @@ class UserSchema(Schema):
     is_active = fields.Boolean(dump_only=True)
     created_at = fields.DateTime(dump_only=True)
     updated_at = fields.DateTime(dump_only=True)
+
+class UserUpdateSchema(Schema):
+    """User update schema for partial updates"""
+    username = fields.String(validate=validate.Length(min=3, max=80))
+    email = fields.Email()
+    password = fields.String(validate=validate.Length(min=6), load_only=True)
+    is_active = fields.Boolean()

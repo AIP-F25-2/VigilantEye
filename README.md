@@ -1,42 +1,66 @@
-# Flask REST API with SQLAlchemy and Docker
+# VigilantEye - Video Management API
 
-A complete Flask REST API structure with models, controllers, SQLAlchemy ORM, and Docker support.
+A comprehensive Flask REST API for video management with MySQL database, Docker support, and phpMyAdmin interface.
 
 ## Project Structure
 
 ```
 ├── app/
 │   ├── __init__.py              # Flask app factory
-│   ├── models/
+│   ├── models/                  # Database models
 │   │   ├── __init__.py
 │   │   ├── base.py              # Base model with common fields
-│   │   └── user.py              # User model
-│   ├── controllers/
+│   │   ├── user.py              # User model
+│   │   ├── video.py             # Video model
+│   │   ├── recording.py         # Recording models
+│   │   ├── frame.py             # Frame models
+│   │   ├── clip.py              # Clip model
+│   │   ├── segment.py           # Segment model
+│   │   ├── device.py            # Device models
+│   │   ├── project.py           # Project models
+│   │   └── analytics.py         # Analytics models
+│   ├── controllers/             # API controllers
 │   │   ├── __init__.py
-│   │   ├── main.py              # Main routes (health check)
-│   │   └── api.py               # API endpoints
-│   └── schemas/
+│   │   ├── main.py              # Health check endpoints
+│   │   ├── api.py               # User API endpoints
+│   │   ├── video_controller.py  # Video API endpoints
+│   │   ├── recording_controller.py # Recording API endpoints
+│   │   └── project_controller.py # Project API endpoints
+│   └── schemas/                 # Marshmallow schemas
 │       ├── __init__.py
-│       └── user_schema.py       # Marshmallow schemas for validation
+│       ├── user_schema.py       # User validation schemas
+│       ├── video_schema.py      # Video validation schemas
+│       ├── recording_schema.py  # Recording validation schemas
+│       ├── frame_schema.py      # Frame validation schemas
+│       ├── clip_schema.py       # Clip validation schemas
+│       ├── segment_schema.py    # Segment validation schemas
+│       ├── device_schema.py     # Device validation schemas
+│       ├── project_schema.py    # Project validation schemas
+│       └── analytics_schema.py  # Analytics validation schemas
 ├── migrations/                   # Database migrations
 ├── requirements.txt              # Python dependencies
 ├── Dockerfile                    # Docker configuration
 ├── docker-compose.yml           # Docker Compose setup
 ├── run.py                       # Application entry point
-└── env.example                  # Environment variables template
+└── README.md                    # This file
 ```
 
 ## Features
 
-- **Flask REST API** with proper structure
+- **Flask REST API** with comprehensive video management
 - **SQLAlchemy ORM** for database operations
-- **PostgreSQL** database with Docker
+- **MySQL** database with Docker
+- **phpMyAdmin** for database management
 - **Flask-Migrate** for database migrations
 - **Marshmallow** for data validation and serialization
 - **CORS** support for cross-origin requests
 - **Docker** and **Docker Compose** setup
 - **Base Model** with common fields (id, created_at, updated_at)
-- **User Model** with authentication support
+- **Multiple Models**: Users, Videos, Recordings, Frames, Clips, Segments, Devices, Projects, Analytics
+- **Video Processing**: Upload, metadata extraction, frame analysis
+- **Recording Management**: Live recording sessions with device support
+- **Project Collaboration**: Multi-user project management
+- **Analytics**: View tracking and usage analytics
 
 ## Quick Start
 
@@ -45,8 +69,7 @@ A complete Flask REST API structure with models, controllers, SQLAlchemy ORM, an
 1. **Clone and setup:**
    ```bash
    git clone <your-repo>
-   cd <your-repo>
-   cp env.example .env
+   cd VigilantEye
    ```
 
 2. **Start the application:**
@@ -54,10 +77,13 @@ A complete Flask REST API structure with models, controllers, SQLAlchemy ORM, an
    docker-compose up --build
    ```
 
-3. **Access the API:**
-   - API Base URL: `http://localhost:5000`
-   - Health Check: `http://localhost:5000/health`
-   - API Endpoints: `http://localhost:5000/api/`
+3. **Access the services:**
+   - **Flask API**: `http://localhost:5000`
+   - **Health Check**: `http://localhost:5000/health`
+   - **API Endpoints**: `http://localhost:5000/api/`
+   - **phpMyAdmin**: `http://localhost:8080`
+     - Username: `root`
+     - Password: `rootpass`
 
 ### Manual Setup
 
@@ -68,13 +94,12 @@ A complete Flask REST API structure with models, controllers, SQLAlchemy ORM, an
 
 2. **Set up environment variables:**
    ```bash
-   cp env.example .env
-   # Edit .env with your configuration
+   export DATABASE_URL=mysql+pymysql://flaskuser:flaskpass@localhost:3306/flaskapi
+   export SECRET_KEY=your-secret-key-here
    ```
 
 3. **Initialize database:**
    ```bash
-   flask db init
    flask db migrate -m "Initial migration"
    flask db upgrade
    ```
@@ -90,12 +115,30 @@ A complete Flask REST API structure with models, controllers, SQLAlchemy ORM, an
 - `GET /` - Basic health check
 - `GET /health` - Detailed health check
 
-### User Management
+### User Management (v1)
 - `GET /api/users` - Get all users
 - `GET /api/users/{id}` - Get user by ID
 - `POST /api/users` - Create new user
 - `PUT /api/users/{id}` - Update user
 - `DELETE /api/users/{id}` - Delete user
+
+### Video Management (v2)
+- `GET /api/v2/videos` - Get all videos
+- `GET /api/v2/videos/{id}` - Get video by ID
+- `POST /api/v2/videos` - Upload new video
+- `PUT /api/v2/videos/{id}` - Update video
+- `DELETE /api/v2/videos/{id}` - Delete video
+- `GET /api/v2/videos/search` - Search videos
+
+### Recording Management (v2)
+- `GET /api/v2/recordings` - Get all recordings
+- `POST /api/v2/recordings/start` - Start recording
+- `POST /api/v2/recordings/{id}/stop` - Stop recording
+
+### Project Management (v2)
+- `GET /api/v2/projects` - Get all projects
+- `POST /api/v2/projects` - Create new project
+- `GET /api/v2/projects/{id}/members` - Get project members
 
 ### Example API Usage
 
@@ -122,11 +165,16 @@ curl http://localhost:5000/api/users
 - `created_at` - Creation timestamp
 - `updated_at` - Last update timestamp
 
-### User Model
-- `username` - Unique username
-- `email` - Unique email address
-- `password_hash` - Hashed password
-- `is_active` - Account status
+### Core Models
+- **User** - User authentication and management
+- **Video** - Video files with metadata
+- **Recording** - Live recording sessions
+- **Frame** - Individual video frames
+- **Clip** - Video clips and segments
+- **Segment** - Video segments
+- **Device** - Recording devices
+- **Project** - Project management
+- **Analytics** - Usage analytics and tracking
 
 ## Development
 
