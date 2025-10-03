@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="1" failures="0" skipped="0" tests="1" time="7.365" timestamp="2025-09-30T12:40:19.256383-04:00" hostname="Sridatta"><testcase classname="" name="tests.test_envdet_1" time="0.000"><error message="collection failure">ImportError while importing test module 'C:\Users\srida\sonarqube\tests\test_envdet_1.py'.
+Hint: make sure your test modules/packages have valid Python names.
+Traceback:
+..\Anaconda\Lib\importlib\__init__.py:90: in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+tests\test_envdet_1.py:6: in &lt;module&gt;
+    mod = importlib.util.module_from_spec(spec); spec.loader.exec_module(mod)
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+EnvDet_1.py:14: in &lt;module&gt;
+    from google import genai
+E   ImportError: cannot import name 'genai' from 'google' (unknown location)</error></testcase></testsuite></testsuites>
