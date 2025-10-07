@@ -7,6 +7,7 @@ from .segment_schema import SegmentSchema, SegmentCreateSchema
 from .device_schema import DeviceSchema, DeviceCreateSchema
 from .project_schema import ProjectSchema, ProjectCreateSchema, ProjectMemberSchema
 from .analytics_schema import AnalyticsSchema, ViewEventSchema
+from .auth_schema import LoginSchema, RegisterSchema, TokenResponseSchema, UserResponseSchema
 
 __all__ = [
     'UserSchema', 'UserUpdateSchema',
@@ -17,5 +18,6 @@ __all__ = [
     'SegmentSchema', 'SegmentCreateSchema',
     'DeviceSchema', 'DeviceCreateSchema',
     'ProjectSchema', 'ProjectCreateSchema', 'ProjectMemberSchema',
-    'AnalyticsSchema', 'ViewEventSchema'
+    'AnalyticsSchema', 'ViewEventSchema',
+    'LoginSchema', 'RegisterSchema', 'TokenResponseSchema', 'UserResponseSchema'
 ]
