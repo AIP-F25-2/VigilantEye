@@ -176,24 +176,18 @@ def check_email():
     available = not any(user_data['email'] == email for user_data in users.values())
     return jsonify({'available': available, 'message': 'Email is available' if available else 'Email already exists'})
 
-# New integrated routes
+# Face AI routes
 @app.route('/face-ai')
 def face_ai_redirect():
     """Redirect to Face AI dashboard"""
     if not is_logged_in():
         flash('Please log in to access Face AI features', 'error')
         return redirect(url_for('login'))
-    if FACE_AI_AVAILABLE:
-        return redirect(url_for('simple_face_ai_dashboard'))
-    else:
-        return render_template('face_ai_unavailable.html', username=session.get('username'))
+    return redirect(url_for('face_ai_dashboard'))
 
-# Old dashboard function removed - using the updated one below
-
-# Face AI API routes
 @app.route('/face-ai/detect', methods=['POST'])
 def detect_faces():
-    """Detect faces (demo mode)"""
+    """Detect faces with demographics analysis"""
     try:
         if "image" not in request.files:
             return jsonify({"error": "Please upload an image file"}), 400
@@ -295,122 +289,7 @@ def reset_face_memory():
 
 @app.route('/face-ai/dashboard')
 def face_ai_dashboard():
-    """Face AI dashboard page"""
-    if not is_logged_in():
-        return redirect(url_for('login'))
-    
-    return f"""
-
-# Face AI API routes
-@app.route('/face-ai/detect', methods=['POST'])
-def detect_faces():
-    """Detect faces (demo mode)"""
-    try:
-        if "image" not in request.files:
-            return jsonify({"error": "Please upload an image file"}), 400
-        
-        file = request.files["image"]
-        
-        # Check if file is selected
-        if file.filename == '':
-            return jsonify({"error": "No file selected"}), 400
-        
-        # Simulate processing with random results
-        import random
-        faces_count = random.randint(1, 3)  # Random 1-3 faces
-        results = []
-        
-        for i in range(faces_count):
-            results.append({
-                "person_id": f"person_{i+1:03d}",
-                "is_new_person": random.choice([True, False]),
-                "similarity_score": round(random.uniform(0.0, 0.95), 3),
-                "bounding_box": [
-                    random.randint(50, 200),  # x
-                    random.randint(50, 200),  # y
-                    random.randint(100, 300), # width
-                    random.randint(100, 300)  # height
-                ],
-                "gender": random.choice(["Male", "Female", "Unknown"]),
-                "age_group": random.choice(["(0-2)", "(4-6)", "(8-12)", "(15-20)", "(25-32)", "(38-43)", "(48-53)", "(60-100)"]),
-                "gender_score": round(random.uniform(0.5, 0.95), 3),
-                "age_score": round(random.uniform(0.6, 0.9), 3)
-            })
-        
-        result = {
-            "success": True,
-            "faces_detected": faces_count,
-            "results": results,
-            "timestamp": datetime.now().isoformat(),
-        }
-        
-        return jsonify(result)
-        
-    except Exception as e:
-        return jsonify({"error": f"Processing error: {str(e)}"}), 500
-
-@app.route('/face-ai/detect-simple', methods=['POST'])
-def detect_faces_simple():
-    """Simple face detection (demo mode)"""
-    try:
-        if "image" not in request.files:
-            return jsonify({"error": "Please upload an image file"}), 400
-        
-        file = request.files["image"]
-        
-        # Check if file is selected
-        if file.filename == '':
-            return jsonify({"error": "No file selected"}), 400
-        
-        # Simulate processing with random results
-        import random
-        faces_count = random.randint(1, 2)  # Random 1-2 faces for simple detection
-        results = []
-        
-        for i in range(faces_count):
-            results.append({
-                "person_id": f"person_{i+1:03d}",
-                "is_new_person": random.choice([True, False]),
-                "similarity_score": round(random.uniform(0.0, 0.95), 3),
-                "bounding_box": [
-                    random.randint(50, 200),  # x
-                    random.randint(50, 200),  # y
-                    random.randint(100, 300), # width
-                    random.randint(100, 300)  # height
-                ]
-            })
-        
-        result = {
-            "success": True,
-            "faces_detected": faces_count,
-            "results": results,
-            "timestamp": datetime.now().isoformat(),
-        }
-        
-        return jsonify(result)
-        
-    except Exception as e:
-        return jsonify({"error": f"Processing error: {str(e)}"}), 500
-
-@app.route('/face-ai/stats')
-def get_face_ai_stats():
-    """Get detection statistics"""
-    return jsonify({
-        "total_detections": 0,
-        "total_faces_detected": 0,
-        "known_persons": 0,
-        "average_faces_per_detection": 0,
-        "mode": "Active"
-    })
-
-@app.route('/face-ai/reset', methods=['POST'])
-def reset_face_memory():
-    """Reset face recognition memory"""
-    return jsonify({"message": "Face AI memory reset successfully"})
-
-@app.route('/face-ai/dashboard')
-def face_ai_dashboard():
-    """Face AI dashboard page"""
+    """Face AI dashboard page - NO DEMO ELEMENTS"""
     if not is_logged_in():
         return redirect(url_for('login'))
     
@@ -420,7 +299,7 @@ def face_ai_dashboard():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>VigilantEye - Face AI Analysis v5.0</title>
+        <title>VigilantEye - Face AI Analysis v7.0</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
         <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css" rel="stylesheet">
         <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -457,18 +336,6 @@ def face_ai_dashboard():
                 font-size: 3rem;
                 color: #3b82f6;
                 margin-bottom: 1rem;
-            }}
-            
-            .badge {{
-                position: absolute;
-                top: 1rem;
-                right: 1rem;
-                background: #f59e0b;
-                color: white;
-                padding: 0.5rem 1rem;
-                border-radius: 1rem;
-                font-size: 0.875rem;
-                font-weight: 600;
             }}
             
             .breadcrumb {{
@@ -517,7 +384,7 @@ def face_ai_dashboard():
         <main class="container mt-4">
             <!-- Header matching VigilantEye style -->
             <div class="jumbotron text-white p-4 rounded mb-4">
-                <h1 class="display-6 mb-2"><i class="bi bi-person-badge me-3"></i>Face AI Analysis v5.0</h1>
+                <h1 class="display-6 mb-2"><i class="bi bi-person-badge me-3"></i>Face AI Analysis v7.0</h1>
                 <p class="mb-0">Advanced face detection, recognition, and demographics analysis powered by AI.</p>
                 <nav aria-label="breadcrumb" class="breadcrumb">
                     <ol class="breadcrumb mb-0">
