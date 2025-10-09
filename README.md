@@ -114,22 +114,6 @@ A comprehensive AI-powered security and surveillance system with integrated face
 - `GET /face-ai/stats` - Get analysis statistics
 - `POST /face-ai/reset` - Reset statistics
 
-## 🚀 Deployment
-
-### Vercel Deployment
-1. Connect your GitHub repository to Vercel
-2. Configure environment variables if needed
-3. Deploy automatically on push
-
-### Heroku Deployment
-1. Install Heroku CLI
-2. Create Heroku app
-3. Deploy using Git
-
-### Docker Deployment
-1. Build Docker image
-2. Run container with appropriate ports
-
 ## 📁 Project Structure
 
 ```
@@ -161,11 +145,6 @@ VigilantEye/
 - `DATABASE_URL` - Database connection string
 - `SECRET_KEY` - Flask secret key for sessions
 
-### Face AI Configuration
-- Model files are automatically downloaded on first run
-- Upload directory is created automatically
-- Statistics are stored in memory (can be configured for database storage)
-
 ## 🤝 Contributing
 
 1. Fork the repository
@@ -173,10 +152,6 @@ VigilantEye/
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## 👨‍💻 Author
 
@@ -190,14 +165,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Face Recognition library contributors
 - Bootstrap team for the UI framework
 - Flask community for the web framework
-
-## 📊 Project Status
-
-![GitHub last commit](https://img.shields.io/github/last-commit/sameerkeshvani/VigilantEye)
-![GitHub issues](https://img.shields.io/github/issues/sameerkeshvani/VigilantEye)
-![GitHub pull requests](https://img.shields.io/github/issues-pr/sameerkeshvani/VigilantEye)
-![GitHub stars](https://img.shields.io/github/stars/sameerkeshvani/VigilantEye)
-
----
-
-**VigilantEye** - *Your AI-Powered Security Solution* 🛡️👁️
