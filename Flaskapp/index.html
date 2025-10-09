@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>VigilantEye</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg:#0f172a; --panel:#111827; --text:#e5e7eb; --muted:#9ca3af; --green:#16a34a; --orange:#f59e0b; --red:#ef4444; }
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Arial}
+    .wrap{max-width:1100px;margin:24px auto;padding:0 16px}
+    .header{display:flex;align-items:center;gap:12px;margin-bottom:12px}
+    .dot{width:10px;height:10px;border-radius:50%;background:#22c55e}
+    .cards{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    .card{background:var(--panel);border-radius:12px;padding:18px;min-height:300px}
+    .label{font-weight:600;margin-bottom:8px}
+    input[type=text]{width:100%;padding:10px 12px;background:#0b1220;border:1px solid #1f2937;border-radius:8px;color:var(--text)}
+    .row{display:flex;gap:10px;align-items:center;margin-top:10px}
+    button{background:#2563eb;border:none;color:white;padding:10px 16px;border-radius:8px;cursor:pointer}
+    img.preview{width:100%;max-height:240px;object-fit:cover;border-radius:10px;margin-top:12px;border:1px solid #1f2937}
+    .badge{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:600;margin-bottom:10px}
+    .badge.low{background:var(--green)}
+    .badge.medium{background:var(--orange)}
+    .badge.high,.badge.critical{background:var(--red)}
+    .muted{color:var(--muted)}
+    .kv{margin:6px 0}
+    .kv span{color:var(--muted)}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="dot"></div>
+    <h2 style="margin:0">VigilantEye</h2>
+    <div style="margin-left:auto" class="muted">Engine: {{engine}}</div>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="label">Analyze an image</div>
+      <input id="url" type="text" placeholder="Paste a direct .jpg/.png URL or use file upload"/>
+      <div class="row">
+        <input id="file" type="file" accept="image/*"/>
+        <button id="go">Analyze</button>
+      </div>
+      <img id="preview" class="preview" style="display:none"/>
+    </div>
+
+    <div class="card" id="out">
+      <div class="muted">Waiting…</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const out = document.getElementById('out');
+  const url = document.getElementById('url');
+  const file = document.getElementById('file');
+  const preview = document.getElementById('preview');
+
+  function showPreview() {
+    const u = url.value.trim();
+    const f = file.files[0];
+    if (f) {
+      const r = new FileReader();
+      r.onload = e => { preview.src = e.target.result; preview.style.display = 'block'; };
+      r.readAsDataURL(f);
+    } else if (u) {
+      preview.src = u; preview.style.display = 'block';
+    } else {
+      preview.style.display = 'none';
+    }
+  }
+  url.addEventListener('input', showPreview);
+  file.addEventListener('change', showPreview);
+
+  function renderResult(data) {
+    if (data.error) {
+      out.innerHTML = `<div style="color:#f87171">Failed: ${data.error}</div>`;
+      return;
+    }
+    const sev = (data.severity || 'low').toLowerCase();
+    const cls = ['low','medium','high','critical'].includes(sev) ? sev : 'low';
+    const reasons = (data.reasons||[]).map(r=>`<li>${r}</li>`).join('');
+
+    out.innerHTML = `
+      <div class="badge ${cls}">${data.is_abnormal ? 'Abnormal' : 'Normal'} / ${data.severity || 'low'}</div>
+      <div class="kv"><span>Caption:</span> ${data.caption || '—'}</div>
+      <div class="kv"><span>Situation:</span> ${data.situation || '—'}</div>
+      <div class="kv"><span>Objects:</span> ${(data.objects||[]).join(', ') || '—'}</div>
+      <div class="kv"><span>Environment:</span> ${(data.environment||[]).join(', ') || '—'}</div>
+      <div class="kv"><span>Reasons:</span> ${reasons ? `<ul>${reasons}</ul>` : '—'}</div>
+      <div class="kv"><span>Explanation:</span> ${data.explanation || '—'}</div>
+      <div class="muted" style="margin-top:8px">${data.engine || ''}</div>
+    `;
+  }
+
+  document.getElementById('go').onclick = async () => {
+    out.innerHTML = '<div class="muted">Running…</div>';
+
+    try {
+      const f = file.files[0];
+      let resp;
+      if (f) {
+        const fd = new FormData();
+        fd.append('file', f, f.name);
+        resp = await fetch('/api/describe', { method:'POST', body: fd });
+      } else {
+        const u = url.value.trim();
+        resp = await fetch('/api/describe', {
+          method:'POST',
+          headers:{ 'Content-Type':'application/json' },
+          body: JSON.stringify({ image_url: u })
+        });
+      }
+      const data = await resp.json();  // will always be JSON (even on errors)
+      renderResult(data);
+    } catch (err) {
+      out.innerHTML = `<div style="color:#f87171">Failed: ${err}</div>`;
+    }
+  };
+</script>
+</body>
+</html>
