@@ -28,7 +28,7 @@ class Frame(BaseModel):
     quality = db.Column(db.Integer, nullable=True)  # JPEG quality
     
     # Batch info (for batch frames)
-    batch_id = db.Column(db.String(100), nullable=True)
+    batch_id = db.Column(db.Integer, db.ForeignKey('frame_batches.id'), nullable=True)
     batch_index = db.Column(db.Integer, nullable=True)
     
     # Metadata
@@ -80,7 +80,7 @@ class FrameBatch(BaseModel):
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id'), nullable=True)
     
     # Related frames
-    frames = db.relationship('Frame', backref='batch', lazy='dynamic')
+    frames = db.relationship('Frame', backref='frame_batch', lazy='dynamic')
     
     def __repr__(self):
         return f'<FrameBatch {self.batch_name}>'

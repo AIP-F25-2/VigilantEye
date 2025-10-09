@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - VIGILANTEye{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        <i class="bi bi-person-circle" style="font-size: 5rem; color: #3b82f6;"></i>
+                    </div>
+                    <h4>{{ session.username }}</h4>
+                    <p class="text-muted">{{ session.email }}</p>
+                    <div class="d-grid gap-2">
+                        <span class="badge bg-primary">{{ session.roles|join(', ') if session.roles else 'Operator' }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-person-fill me-2"></i>Profile Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Username</label>
+                        <p class="form-control-plaintext">{{ session.username }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Email</label>
+                        <p class="form-control-plaintext">{{ session.email }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Role</label>
+                        <p class="form-control-plaintext">{{ session.roles|join(', ') if session.roles else 'Operator' }}</p>
+                    </div>
+                    <hr>
+                    <button class="btn btn-primary" disabled>
+                        <i class="bi bi-pencil me-2"></i>Edit Profile (Coming Soon)
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

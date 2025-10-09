@@ -80,8 +80,7 @@ class RecordingSession(BaseModel):
     total_duration = db.Column(db.Float, default=0.0)  # in seconds
     session_settings = db.Column(JSON, default=dict)
     
-    # Relationships
-    recordings = db.relationship('Recording', backref='session', lazy='dynamic')
+    # Note: Relationship with Recording will be handled via foreign key
     
     def __repr__(self):
         return f'<RecordingSession {self.session_id}>'

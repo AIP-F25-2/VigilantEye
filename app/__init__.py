@@ -32,14 +32,16 @@ def create_app():
     
     # Register blueprints
     from app.controllers import main_bp, api_bp, auth_bp
+    from app.controllers.web_auth_controller import web_auth_bp
     from app.controllers.video_controller import video_bp
     from app.controllers.recording_controller import recording_bp
     from app.controllers.project_controller import project_bp
     
     # Register main blueprints
     app.register_blueprint(main_bp)
+    app.register_blueprint(web_auth_bp)  # Web authentication routes (/, /login, /register, /logout)
     app.register_blueprint(api_bp, url_prefix='/api')
-    app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    app.register_blueprint(auth_bp, url_prefix='/api/auth')  # API authentication routes
     
     # Register new API blueprints
     app.register_blueprint(video_bp, url_prefix='/api/v2')
