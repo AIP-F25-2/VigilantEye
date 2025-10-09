@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>YAMNet Audio Classifier</title>
+
+  <style>
+    :root {
+      --primary: #007bff;
+      --accent: #5e17eb;
+      --bg: #f7f8fc;
+      --card-bg: #fff;
+      --text-dark: #333;
+      --text-light: #666;
+    }
+
+    body {
+      font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      min-height: 100vh;
+      margin: 0;
+      padding: 40px 20px;
+      color: var(--text-dark);
+    }
+
+    h1 {
+      color: var(--accent);
+      font-size: 2.2rem;
+      margin-bottom: 0.5rem;
+    }
+
+    p.subtitle {
+      font-size: 1rem;
+      color: var(--text-light);
+      margin-bottom: 2rem;
+    }
+
+    form {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      width: 100%;
+      max-width: 450px;
+    }
+
+    input[type="file"] {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      border: 2px dashed var(--accent);
+      border-radius: 8px;
+      margin: 20px 0;
+      cursor: pointer;
+      transition: 0.3s;
+      background: #fafaff;
+      color: var(--text-light);
+    }
+
+    input[type="file"]:hover {
+      border-color: var(--primary);
+      background: #f0f6ff;
+    }
+
+    button {
+      background: linear-gradient(90deg, var(--accent), var(--primary));
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    .result {
+      margin-top: 30px;
+      background: var(--card-bg);
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      text-align: left;
+      width: 100%;
+      max-width: 450px;
+    }
+
+    .result h3 {
+      margin-top: 0;
+      color: var(--accent);
+    }
+
+    .footer {
+      margin-top: 60px;
+      font-size: 0.9rem;
+      color: var(--text-light);
+    }
+  </style>
+</head>
+
+<body>
+  <h1>🎧 YAMNet Audio Classifier</h1>
+  <p class="subtitle">Upload an MP3 or WAV file to detect its sound class.</p>
+
+  <form action="/predict" method="POST" enctype="multipart/form-data">
+    <input type="file" name="file" accept=".mp3,.wav" required />
+    <button type="submit">🔍 Upload & Classify</button>
+  </form>
+
+  {% if filename %}
+  <div class="result">
+    <h3>Prediction Result</h3>
+    <p><b>File:</b> {{ filename }}</p>
+    <p><b>Predicted Class:</b> {{ prediction }}</p>
+  </div>
+  {% endif %}
+
+  <div class="footer">Powered by Flask + TensorFlow YAMNet 🔊</div>
+</body>
+</html>

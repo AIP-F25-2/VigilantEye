@@ -1,0 +1,108 @@
+Processing uploads/applause.mp3 ...
+{
+  "prediction": "Police car"
+}
+
+
+Processing uploads/caulking-gun-back.mp3 ...
+{
+  "prediction": "UNKNOWN"
+}
+
+
+Processing uploads/crying.mp3 ...
+{
+  "prediction": "Speech"
+}
+
+
+Processing uploads/funny-laughing.mp3 ...
+{
+  "prediction": "Speech"
+}
+
+
+Processing uploads/girl-scream.mp3 ...
+{
+  "prediction": "Screaming"
+}
+
+
+Processing uploads/gunfire.mp3 ...
+{
+  "prediction": "UNKNOWN"
+}
+
+
+Processing uploads/gunload.mp3 ...
+{
+  "prediction": "UNKNOWN"
+}
+
+
+Processing uploads/gunshot.mp3 ...
+{
+  "prediction": "UNKNOWN"
+}
+
+
+Processing uploads/gunshot1.mp3 ...
+{
+  "prediction": "UNKNOWN"
+}
+
+
+Processing uploads/laughing-man.mp3 ...
+{
+  "prediction": "Speech"
+}
+
+
+Processing uploads/machine-gun 2.mp3 ...
+{
+  "prediction": "UNKNOWN"
+}
+
+
+Processing uploads/machine-gun_2.mp3 ...
+{
+  "prediction": "UNKNOWN"
+}
+
+
+Processing uploads/machine-gun-burst.mp3 ...
+{
+  "prediction": "UNKNOWN"
+}
+
+
+Processing uploads/machine-gun.mp3 ...
+{
+  "prediction": "UNKNOWN"
+}
+
+
+Processing uploads/male-scream.mp3 ...
+{
+  "prediction": "Whine"
+}
+
+
+Processing uploads/man-scream1.mp3 ...
+{
+  "prediction": "Whine"
+}
+
+
+Processing uploads/single-gunshot.mp3 ...
+{
+  "prediction": "UNKNOWN"
+}
+
+
+Processing uploads/women-scream1.mp3 ...
+{
+  "prediction": "UNKNOWN"
+}
+
+
