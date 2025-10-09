@@ -29,6 +29,7 @@ $env:FLASK_ENV = "development"
 flask db upgrade
 ```
 
+
 ### Step 4: Run the Application
 ```bash
 python run.py
