@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}Login - VIGILANTEye{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+  <div class="row g-0 auth-card">
+    <div class="col-lg-6 d-none d-lg-block auth-illustration auth-gradient">
+      <div class="auth-illustration-content">
+        <i class="bi bi-camera-video-fill display-3" style="color:#0f766e;"></i>
+        <h2 class="mt-3 mb-2">Secure access to live monitoring</h2>
+        <p class="text-muted mb-0">Sign in to manage feeds, alerts, and automations.</p>
+      </div>
+    </div>
+    <div class="col-lg-6 col-12">
+      <div class="auth-form p-4 p-md-5">
+        <div class="text-center mb-4">
+          <div class="brand-badge">
+            <i class="bi bi-eye-fill"></i>
+            <span>VIGILANTEye</span>
+          </div>
+          <h3 class="mb-1">Sign in</h3>
+          <p class="text-muted">Continue to your AI monitoring dashboard</p>
+        </div>
+        <form method="POST" id="loginForm" novalidate>
+          <div class="mb-3">
+            <label for="username" class="form-label">Username</label>
+            <div class="input-group input-group-lg">
+              <span class="input-group-text"><i class="bi bi-person"></i></span>
+              <input type="text" class="form-control" id="username" name="username" placeholder="Enter your username" required>
+            </div>
+          </div>
+          <div class="mb-2">
+            <label for="password" class="form-label">Password</label>
+            <div class="input-group input-group-lg password-group">
+              <span class="input-group-text"><i class="bi bi-lock"></i></span>
+              <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
+              <button class="btn btn-outline-secondary toggle-password" type="button" data-target="password"><i class="bi bi-eye"></i></button>
+            </div>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" id="remember">
+              <label class="form-check-label" for="remember">Remember me</label>
+            </div>
+            <a class="small" href="#" tabindex="-1">Forgot password?</a>
+          </div>
+          <div class="d-grid">
+            <button type="submit" class="btn btn-success btn-lg">Sign in</button>
+          </div>
+        </form>
+        <div class="text-center mt-4">
+          <p class="mb-0">New to VIGILANTEye? <a href="{{ url_for('signup') }}">Create an account</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

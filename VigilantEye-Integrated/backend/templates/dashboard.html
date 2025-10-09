@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - VIGILANTEye{% endblock %}
+
+{% block content %}
+<div class="row gy-4">
+  <div class="col-12">
+    <div class="jumbotron text-white p-5 rounded mb-2">
+      <h1 class="display-6 mb-1">Welcome, {{ username }} 👋</h1>
+      <p class="mb-0">Monitor your live feeds and manage automations from here.</p>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Live Camera Feed</h5>
+        <div class="d-flex gap-2">
+          <button id="startCamera" class="btn btn-sm btn-primary"><i class="bi bi-camera-video"></i> Start Camera</button>
+          <button id="stopCamera" class="btn btn-sm btn-outline-danger" disabled><i class="bi bi-camera-video-off"></i> Stop Camera</button>
+          <button class="btn btn-sm btn-outline-secondary" disabled><i class="bi bi-gear"></i> Configure</button>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="ratio ratio-16x9" id="cameraContainer">
+          <video id="cameraFeed" autoplay muted playsinline style="width: 100%; height: 100%; object-fit: cover; display: none;"></video>
+          <canvas id="cameraCanvas" style="width: 100%; height: 100%; object-fit: cover; display: none;"></canvas>
+          <div id="cameraPlaceholder" class="text-center p-3" style="background: linear-gradient(135deg,#f1f5f9,#ecfeff); display:flex; align-items:center; justify-content:center; width: 100%; height: 100%;">
+            <div>
+              <i class="bi bi-eye" style="font-size:48px; color:#0f766e;"></i>
+              <p class="mt-2 mb-0 text-muted small">Click "Start Camera" to begin live monitoring</p>
+            </div>
+          </div>
+        </div>
+        <div class="p-3 border-top">
+          <div class="row text-center">
+            <div class="col-4">
+              <small class="text-muted">Status</small>
+              <div id="cameraStatus" class="fw-semibold text-secondary">Disconnected</div>
+            </div>
+            <div class="col-4">
+              <small class="text-muted">Resolution</small>
+              <div id="cameraResolution" class="fw-semibold text-secondary">-</div>
+            </div>
+            <div class="col-4">
+              <small class="text-muted">FPS</small>
+              <div id="cameraFPS" class="fw-semibold text-secondary">-</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-header"><h6 class="mb-0">Recent alerts</h6></div>
+      <div class="list-group list-group-flush">
+        <div class="list-group-item d-flex align-items-start">
+          <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+          <div>
+            <div class="fw-semibold">No alerts yet</div>
+            <div class="text-muted small">Alerts will appear here with snapshots and timestamps.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h6 class="mb-0">Automation status</h6></div>
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <span>Intrusion rule</span>
+          <span class="badge bg-secondary">Disabled</span>
+        </div>
+        <div class="d-flex justify-content-between mt-2">
+          <span>PPE detection</span>
+          <span class="badge bg-secondary">Disabled</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-4">
+  <div class="col-12 text-center">
+    <a href="{{ url_for('logout') }}" class="btn btn-outline-secondary">Logout</a>
+  </div>
+</div>
+{% endblock %}
+

@@ -1,0 +1,37 @@
+{
+  "appSettings": [
+    {
+      "name": "WEBSITES_ENABLE_APP_SERVICE_STORAGE",
+      "value": "false"
+    },
+    {
+      "name": "DOCKER_REGISTRY_SERVER_URL",
+      "value": "https://index.docker.io"
+    },
+    {
+      "name": "DOCKER_REGISTRY_SERVER_USERNAME",
+      "value": ""
+    },
+    {
+      "name": "DOCKER_REGISTRY_SERVER_PASSWORD",
+      "value": ""
+    },
+    {
+      "name": "DOCKER_CUSTOM_IMAGE_NAME",
+      "value": "vigilanteye-api:latest"
+    },
+    {
+      "name": "WEBSITES_PORT",
+      "value": "5000"
+    },
+    {
+      "name": "FLASK_ENV",
+      "value": "production"
+    },
+    {
+      "name": "PYTHONPATH",
+      "value": "/app"
+    }
+  ],
+  "connectionStrings": []
+}

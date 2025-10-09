@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - VIGILANTEye{% endblock %}
+
+{% block content %}
+<div class="row gy-4">
+  <div class="col-12">
+    <div class="jumbotron text-white p-5 rounded mb-2">
+      <h1 class="display-6 mb-1">Welcome, {{ username }} 👋</h1>
+      <p class="mb-0">Monitor your live feeds and manage automations from here.</p>
+    </div>
+  </div>
+
+  <div class="col-lg-8">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Live Camera Feed</h5>
+        <div class="d-flex gap-2 flex-wrap">
+          <button id="startCamera" class="btn btn-sm btn-primary"><i class="bi bi-camera-video"></i> Start Camera</button>
+          <button id="stopCamera" class="btn btn-sm btn-outline-danger" disabled><i class="bi bi-camera-video-off"></i> Stop Camera</button>
+          <button id="recordBtn" class="btn btn-sm btn-success" disabled><i class="bi bi-record-circle"></i> Record</button>
+          <button id="stopRecordBtn" class="btn btn-sm btn-outline-danger" disabled><i class="bi bi-stop-circle"></i> Stop</button>
+          <button id="screenshotBtn" class="btn btn-sm btn-warning" disabled><i class="bi bi-camera"></i> Screenshot</button>
+          <button class="btn btn-sm btn-outline-secondary" disabled><i class="bi bi-gear"></i> Configure</button>
+        </div>
+      </div>
+      <div class="card-body p-0">
+        <div class="ratio ratio-16x9" id="cameraContainer">
+          <video id="cameraFeed" autoplay muted playsinline style="width: 100%; height: 100%; object-fit: cover; display: none;"></video>
+          <canvas id="cameraCanvas" style="width: 100%; height: 100%; object-fit: cover; display: none;"></canvas>
+          <div id="cameraPlaceholder" class="text-center p-3" style="background: linear-gradient(135deg,#f1f5f9,#ecfeff); display:flex; align-items:center; justify-content:center; width: 100%; height: 100%;">
+            <div>
+              <i class="bi bi-eye" style="font-size:48px; color:#0f766e;"></i>
+              <p class="mt-2 mb-0 text-muted small">Click "Start Camera" to begin live monitoring</p>
+            </div>
+          </div>
+        </div>
+        <div class="p-3 border-top">
+          <div class="row text-center">
+            <div class="col-3">
+              <small class="text-muted">Status</small>
+              <div id="cameraStatus" class="fw-semibold text-secondary">Disconnected</div>
+            </div>
+            <div class="col-3">
+              <small class="text-muted">Resolution</small>
+              <div id="cameraResolution" class="fw-semibold text-secondary">-</div>
+            </div>
+            <div class="col-3">
+              <small class="text-muted">FPS</small>
+              <div id="cameraFPS" class="fw-semibold text-secondary">-</div>
+            </div>
+            <div class="col-3">
+              <small class="text-muted">Recording</small>
+              <div id="recordingStatus" class="fw-semibold text-secondary">Ready</div>
+            </div>
+          </div>
+          <div class="row text-center mt-2">
+            <div class="col-6">
+              <small class="text-muted">Recording Timer</small>
+              <div id="recordingTimer" class="fw-semibold text-danger">00:00</div>
+            </div>
+            <div class="col-6">
+              <small class="text-muted">Screenshot</small>
+              <div id="screenshotStatus" class="fw-semibold text-secondary">Ready</div>
+            </div>
+          </div>
+          <div class="row text-center mt-2">
+            <div class="col-6">
+              <small class="text-muted">Motion</small>
+              <div id="motionStatus" class="fw-semibold text-secondary">Disabled</div>
+            </div>
+            <div class="col-6">
+              <small class="text-muted">Objects</small>
+              <div id="objectStatus" class="fw-semibold text-secondary">0 detected</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-header"><h6 class="mb-0">Recent alerts</h6></div>
+      <div class="list-group list-group-flush">
+        <div class="list-group-item d-flex align-items-start">
+          <i class="bi bi-exclamation-triangle text-warning me-2"></i>
+          <div>
+            <div class="fw-semibold">No alerts yet</div>
+            <div class="text-muted small">Alerts will appear here with snapshots and timestamps.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header"><h6 class="mb-0">Camera Settings</h6></div>
+      <div class="card-body">
+        <div class="mb-3">
+          <label class="form-label small">Resolution</label>
+          <select id="resolutionSelect" class="form-select form-select-sm">
+            <option value="640x480">640x480 (VGA)</option>
+            <option value="1280x720" selected>1280x720 (HD)</option>
+            <option value="1920x1080">1920x1080 (Full HD)</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label small">Frame Rate</label>
+          <select id="fpsSelect" class="form-select form-select-sm">
+            <option value="15">15 FPS</option>
+            <option value="30" selected>30 FPS</option>
+            <option value="60">60 FPS</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label small">Camera</label>
+          <select id="cameraSelect" class="form-select form-select-sm">
+            <option value="user">Front Camera</option>
+            <option value="environment">Back Camera</option>
+          </select>
+        </div>
+        <button id="applySettings" class="btn btn-sm btn-outline-primary w-100" disabled>
+          <i class="bi bi-gear"></i> Apply Settings
+        </button>
+        
+        <hr class="my-3">
+        
+        <div class="mb-3">
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="motionDetectionToggle">
+            <label class="form-check-label small" for="motionDetectionToggle">
+              Motion Detection
+            </label>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" id="objectDetectionToggle">
+            <label class="form-check-label small" for="objectDetectionToggle">
+              Object Recognition
+            </label>
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <label class="form-label small">Motion Sensitivity</label>
+          <input type="range" class="form-range" id="motionSensitivity" min="0.1" max="1" step="0.1" value="0.3">
+          <div class="small text-muted">Current: <span id="sensitivityValue">0.3</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h6 class="mb-0">Session History</h6>
+        <button id="clearHistory" class="btn btn-sm btn-outline-danger">
+          <i class="bi bi-trash"></i> Clear
+        </button>
+      </div>
+      <div class="card-body p-2" style="max-height: 300px; overflow-y: auto;">
+        <div id="sessionHistory">
+          <div class="text-muted small">No sessions yet</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><h6 class="mb-0">Automation status</h6></div>
+      <div class="card-body">
+        <div class="d-flex justify-content-between">
+          <span>Intrusion rule</span>
+          <span class="badge bg-secondary">Disabled</span>
+        </div>
+        <div class="d-flex justify-content-between mt-2">
+          <span>PPE detection</span>
+          <span class="badge bg-secondary">Disabled</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-4">
+  <div class="col-12">
+    <div class="card border-0 shadow-sm" style="background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);">
+      <div class="card-header border-0" style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);">
+        <div class="d-flex align-items-center">
+          <div class="me-3">
+            <i class="bi bi-robot text-white" style="font-size: 2rem;"></i>
+          </div>
+          <div>
+            <h5 class="mb-0 text-white">🤖 AI-Powered Features v3.0</h5>
+            <small class="text-white-50">Advanced surveillance capabilities powered by artificial intelligence</small>
+          </div>
+        </div>
+      </div>
+      <div class="card-body p-4">
+        <div class="row g-4">
+          <div class="col-lg-4 col-md-6">
+            <div class="d-flex align-items-start p-3 rounded" style="background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%); border: 1px solid #bae6fd;">
+              <div class="me-3">
+                <div class="bg-primary rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                  <i class="bi bi-person-badge text-white" style="font-size: 1.5rem;"></i>
+                </div>
+              </div>
+              <div class="flex-grow-1">
+                <h6 class="mb-2 text-primary">Face Recognition & Analysis</h6>
+                <p class="text-muted small mb-3">Advanced face detection, recognition, and demographics analysis powered by AI.</p>
+                <div class="d-flex gap-2">
+                  <a href="{{ url_for('face_ai_dashboard') }}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-camera-video me-1"></i> Face AI Dashboard
+                  </a>
+                  <span class="badge bg-success align-self-center">Available</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-lg-4 col-md-6">
+            <div class="d-flex align-items-start p-3 rounded" style="background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 1px solid #bbf7d0;">
+              <div class="me-3">
+                <div class="bg-success rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                  <i class="bi bi-eye text-white" style="font-size: 1.5rem;"></i>
+                </div>
+              </div>
+              <div class="flex-grow-1">
+                <h6 class="mb-2 text-success">Motion Detection</h6>
+                <p class="text-muted small mb-3">Intelligent motion detection with real-time alerts and smart filtering.</p>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-success btn-sm" disabled>
+                    <i class="bi bi-activity me-1"></i> Enable Motion
+                  </button>
+                  <span class="badge bg-secondary align-self-center">Demo Mode</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-lg-4 col-md-6">
+            <div class="d-flex align-items-start p-3 rounded" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border: 1px solid #fbbf24;">
+              <div class="me-3">
+                <div class="bg-warning rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                  <i class="bi bi-shield-check text-white" style="font-size: 1.5rem;"></i>
+                </div>
+              </div>
+              <div class="flex-grow-1">
+                <h6 class="mb-2 text-warning">Object Recognition</h6>
+                <p class="text-muted small mb-3">Advanced object detection and classification for security monitoring.</p>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-warning btn-sm" disabled>
+                    <i class="bi bi-search me-1"></i> Enable Objects
+                  </button>
+                  <span class="badge bg-secondary align-self-center">Demo Mode</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-lg-4 col-md-6">
+            <div class="d-flex align-items-start p-3 rounded" style="background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%); border: 1px solid #c4b5fd;">
+              <div class="me-3">
+                <div class="bg-purple rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background-color: #8b5cf6 !important;">
+                  <i class="bi bi-graph-up text-white" style="font-size: 1.5rem;"></i>
+                </div>
+              </div>
+              <div class="flex-grow-1">
+                <h6 class="mb-2" style="color: #8b5cf6;">Analytics Dashboard</h6>
+                <p class="text-muted small mb-3">Comprehensive analytics and insights from your surveillance data.</p>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-sm" style="background-color: #8b5cf6; color: white; border: none;" disabled>
+                    <i class="bi bi-bar-chart me-1"></i> View Analytics
+                  </button>
+                  <span class="badge bg-secondary align-self-center">Coming Soon</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-lg-4 col-md-6">
+            <div class="d-flex align-items-start p-3 rounded" style="background: linear-gradient(135deg, #fce7f3 0%, #fbcfe8 100%); border: 1px solid #f9a8d4;">
+              <div class="me-3">
+                <div class="bg-pink rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background-color: #ec4899 !important;">
+                  <i class="bi bi-bell text-white" style="font-size: 1.5rem;"></i>
+                </div>
+              </div>
+              <div class="flex-grow-1">
+                <h6 class="mb-2" style="color: #ec4899;">Smart Alerts</h6>
+                <p class="text-muted small mb-3">Intelligent alert system with customizable notification rules.</p>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-sm" style="background-color: #ec4899; color: white; border: none;" disabled>
+                    <i class="bi bi-gear me-1"></i> Configure
+                  </button>
+                  <span class="badge bg-secondary align-self-center">Demo Mode</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-lg-4 col-md-6">
+            <div class="d-flex align-items-start p-3 rounded" style="background: linear-gradient(135deg, #f0fdfa 0%, #ccfbf1 100%); border: 1px solid #99f6e4;">
+              <div class="me-3">
+                <div class="bg-teal rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 50px; height: 50px; background-color: #14b8a6 !important;">
+                  <i class="bi bi-list-ul text-white" style="font-size: 1.5rem;"></i>
+                </div>
+              </div>
+              <div class="flex-grow-1">
+                <h6 class="mb-2" style="color: #14b8a6;">All Features</h6>
+                <p class="text-muted small mb-3">View all available features and capabilities of VigilantEye.</p>
+                <div class="d-flex gap-2">
+                  <a href="{{ url_for('features') }}" class="btn btn-sm" style="background-color: #14b8a6; color: white; border: none;">
+                    <i class="bi bi-grid me-1"></i> View All Features
+                  </a>
+                  <span class="badge bg-success align-self-center">Available</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="row mt-4">
+          <div class="col-12">
+            <div class="text-center p-3 rounded" style="background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); border: 1px solid #cbd5e1;">
+              <h6 class="mb-2 text-muted">AI Status</h6>
+              <div class="d-flex justify-content-center align-items-center gap-3">
+                <div class="d-flex align-items-center">
+                  <div class="bg-success rounded-circle me-2" style="width: 12px; height: 12px;"></div>
+                  <small class="text-muted">Face AI: Available</small>
+                </div>
+                <div class="d-flex align-items-center">
+                  <div class="bg-warning rounded-circle me-2" style="width: 12px; height: 12px;"></div>
+                  <small class="text-muted">Motion Detection: Demo</small>
+                </div>
+                <div class="d-flex align-items-center">
+                  <div class="bg-secondary rounded-circle me-2" style="width: 12px; height: 12px;"></div>
+                  <small class="text-muted">Object Recognition: Demo</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-3">
+  <div class="col-12 text-center">
+    <a href="{{ url_for('logout') }}" class="btn btn-outline-secondary">Logout</a>
+  </div>
+</div>
+{% endblock %}
+
