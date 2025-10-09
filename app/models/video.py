@@ -48,7 +48,7 @@ class Video(BaseModel):
     frames = db.relationship('Frame', backref='video', lazy='dynamic')
     clips = db.relationship('Clip', backref='video', lazy='dynamic')
     segments = db.relationship('Segment', backref='video', lazy='dynamic')
-    analytics = db.relationship('Analytics', backref='video', lazy='dynamic')
+    view_events = db.relationship('ViewEvent', backref='video', lazy='dynamic')
     
     def __repr__(self):
         return f'<Video {self.filename}>'

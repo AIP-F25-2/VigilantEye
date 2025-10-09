@@ -34,19 +34,25 @@ services:
   web:
     build: .
     ports:
-      - "5000:5000"
+      - "8000:8000"
     environment:
       DATABASE_URL: mysql+pymysql://flaskuser:flaskpass@db:3306/flaskapi
       SECRET_KEY: your-secret-key-here
-      FLASK_ENV: production
+      JWT_SECRET_KEY: jwt-secret-string
+      FLASK_ENV: development
     depends_on:
       db:
         condition: service_healthy
     volumes:
       - .:/app
     command: >
-      sh -c "flask db upgrade &&
-             gunicorn --bind 0.0.0.0:5000 run:app"
+      sh -c "
+        echo 'Starting application...' &&
+        echo 'Running migrations...' &&
+        flask db upgrade &&
+        echo 'Starting Gunicorn...' &&
+        gunicorn --bind 0.0.0.0:8000 --workers 1 --log-level debug run:app
+      "
 
 volumes:
   mysql_data:

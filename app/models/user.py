@@ -1,6 +1,8 @@
+
 from app import db
 from app.models.base import BaseModel
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy import JSON
 
 class User(BaseModel):
     """User model"""
@@ -8,8 +10,10 @@ class User(BaseModel):
     
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128))
+    password_hash = db.Column(db.String(255))
     is_active = db.Column(db.Boolean, default=True)
+    roles = db.Column(JSON, default=list)  # List of user roles
+    site_id = db.Column(db.String(100), default="default")  # Site identifier
     
     def __repr__(self):
         return f'<User {self.username}>'
@@ -27,3 +31,12 @@ class User(BaseModel):
         data = super().to_dict()
         data.pop('password_hash', None)
         return data
+    
+    def get_identity(self):
+        """Get user identity for JWT"""
+        return {
+            'id': self.id,
+            'email': self.email,
+            'roles': self.roles or [],
+            'site_id': self.site_id
+        }
