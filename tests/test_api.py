@@ -198,3 +198,263 @@ def test_user_signup_edge_cases(client):
                           },
                           content_type='application/json')
     assert response.status_code == 201
+
+# 7. User Login Tests
+def test_user_login_success(client):
+    """Test successful user login with valid credentials"""
+    # First create a user to login with
+    sample_user = {
+        "username": "logintest",
+        "email": "login@example.com",
+        "password": "password123"
+    }
+    
+    # Create user
+    create_response = client.post('/api/users', 
+                                json=sample_user,
+                                content_type='application/json')
+    assert create_response.status_code == 201
+    
+    # Now test login
+    login_data = {
+        "email": "login@example.com",
+        "password": "password123"
+    }
+    
+    response = client.post('/api/auth/login', 
+                          json=login_data,
+                          content_type='application/json')
+    
+    assert response.status_code == 200
+    data = response.get_json()
+    assert 'access_token' in data
+    assert 'refresh_token' in data
+    assert 'user' in data
+    
+    # Check user data in response
+    user_data = data['user']
+    assert user_data['email'] == login_data['email']
+    assert 'id' in user_data
+    assert 'roles' in user_data
+    assert 'site_id' in user_data
+
+def test_user_login_invalid_email(client):
+    """Test login with invalid email format"""
+    login_data = {
+        "email": "invalid-email-format",
+        "password": "password123"
+    }
+    
+    response = client.post('/api/auth/login', 
+                          json=login_data,
+                          content_type='application/json')
+    
+    assert response.status_code == 400
+    data = response.get_json()
+    assert data['error'] == 'Validation error'
+    assert 'details' in data
+
+def test_user_login_invalid_password_length(client):
+    """Test login with password too short"""
+    login_data = {
+        "email": "test@example.com",
+        "password": "12345"  # Less than 6 characters
+    }
+    
+    response = client.post('/api/auth/login', 
+                          json=login_data,
+                          content_type='application/json')
+    
+    assert response.status_code == 400
+    data = response.get_json()
+    assert data['error'] == 'Validation error'
+    assert 'details' in data
+
+def test_user_login_missing_email(client):
+    """Test login with missing email field"""
+    login_data = {
+        "password": "password123"
+    }
+    
+    response = client.post('/api/auth/login', 
+                          json=login_data,
+                          content_type='application/json')
+    
+    assert response.status_code == 400
+    data = response.get_json()
+    assert data['error'] == 'Validation error'
+    assert 'details' in data
+
+def test_user_login_missing_password(client):
+    """Test login with missing password field"""
+    login_data = {
+        "email": "test@example.com"
+    }
+    
+    response = client.post('/api/auth/login', 
+                          json=login_data,
+                          content_type='application/json')
+    
+    assert response.status_code == 400
+    data = response.get_json()
+    assert data['error'] == 'Validation error'
+    assert 'details' in data
+
+def test_user_login_wrong_password(client):
+    """Test login with correct email but wrong password"""
+    # First create a user
+    sample_user = {
+        "username": "wrongpassuser",
+        "email": "wrongpass@example.com",
+        "password": "password123"
+    }
+    
+    create_response = client.post('/api/users', 
+                                json=sample_user,
+                                content_type='application/json')
+    assert create_response.status_code == 201
+    
+    # Now test login with wrong password
+    login_data = {
+        "email": "wrongpass@example.com",
+        "password": "wrongpassword"
+    }
+    
+    response = client.post('/api/auth/login', 
+                          json=login_data,
+                          content_type='application/json')
+    
+    assert response.status_code == 401
+    data = response.get_json()
+    assert data['error'] == 'Invalid credentials'
+
+def test_user_login_nonexistent_user(client):
+    """Test login with non-existent user email"""
+    login_data = {
+        "email": "nonexistent@example.com",
+        "password": "password123"
+    }
+    
+    response = client.post('/api/auth/login', 
+                          json=login_data,
+                          content_type='application/json')
+    
+    assert response.status_code == 401
+    data = response.get_json()
+    assert data['error'] == 'Invalid credentials'
+
+def test_user_login_case_sensitivity(client):
+    """Test login with different case email"""
+    # First create a user
+    sample_user = {
+        "username": "caseuser",
+        "email": "case@example.com",
+        "password": "password123"
+    }
+    
+    create_response = client.post('/api/users', 
+                                json=sample_user,
+                                content_type='application/json')
+    assert create_response.status_code == 201
+    
+    # Test login with different case email
+    login_data = {
+        "email": "CASE@EXAMPLE.COM",  # Different case
+        "password": "password123"
+    }
+    
+    response = client.post('/api/auth/login', 
+                          json=login_data,
+                          content_type='application/json')
+    
+    # This might succeed or fail depending on email case sensitivity implementation
+    # We'll test both scenarios
+    assert response.status_code in [200, 401]
+    
+    if response.status_code == 401:
+        data = response.get_json()
+        assert data['error'] == 'Invalid credentials'
+
+def test_user_login_empty_credentials(client):
+    """Test login with empty email and password"""
+    login_data = {
+        "email": "",
+        "password": ""
+    }
+    
+    response = client.post('/api/auth/login', 
+                          json=login_data,
+                          content_type='application/json')
+    
+    assert response.status_code == 400
+    data = response.get_json()
+    assert data['error'] == 'Validation error'
+    assert 'details' in data
+
+def test_user_login_whitespace_credentials(client):
+    """Test login with whitespace-only credentials"""
+    login_data = {
+        "email": "   ",
+        "password": "   "
+    }
+    
+    response = client.post('/api/auth/login', 
+                          json=login_data,
+                          content_type='application/json')
+    
+    assert response.status_code == 400
+    data = response.get_json()
+    assert data['error'] == 'Validation error'
+    assert 'details' in data
+
+def test_user_login_multiple_users(client):
+    """Test login with multiple users to ensure isolation"""
+    # Create first user
+    user1 = {
+        "username": "user1",
+        "email": "user1@example.com",
+        "password": "password123"
+    }
+    create_response1 = client.post('/api/users', 
+                                 json=user1,
+                                 content_type='application/json')
+    assert create_response1.status_code == 201
+    
+    # Create second user
+    user2 = {
+        "username": "user2",
+        "email": "user2@example.com",
+        "password": "password456"
+    }
+    create_response2 = client.post('/api/users', 
+                                 json=user2,
+                                 content_type='application/json')
+    assert create_response2.status_code == 201
+    
+    # Login with first user
+    login1 = {
+        "email": "user1@example.com",
+        "password": "password123"
+    }
+    response1 = client.post('/api/auth/login', 
+                           json=login1,
+                           content_type='application/json')
+    assert response1.status_code == 200
+    data1 = response1.get_json()
+    assert data1['user']['email'] == "user1@example.com"
+    
+    # Login with second user
+    login2 = {
+        "email": "user2@example.com",
+        "password": "password456"
+    }
+    response2 = client.post('/api/auth/login', 
+                           json=login2,
+                           content_type='application/json')
+    assert response2.status_code == 200
+    data2 = response2.get_json()
+    assert data2['user']['email'] == "user2@example.com"
+    
+    # Ensure tokens are different
+    assert data1['access_token'] != data2['access_token']
+    assert data1['refresh_token'] != data2['refresh_token']

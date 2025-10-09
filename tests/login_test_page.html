@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Test Page - VIGILANTEye</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .auth-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            max-width: 900px;
+            margin: 2rem auto;
+        }
+        .auth-illustration {
+            background: linear-gradient(135deg, #0f766e 0%, #059669 100%);
+            color: white;
+            padding: 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        .auth-form {
+            padding: 3rem;
+        }
+        .brand-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #0f766e;
+            margin-bottom: 1rem;
+        }
+        .sample-credentials {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        .sample-credentials h6 {
+            color: #0f766e;
+            margin-bottom: 0.5rem;
+        }
+        .sample-credentials .badge {
+            margin: 0.25rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .sample-credentials .badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .test-info {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+        .api-info {
+            background: #f3e5f5;
+            border-left: 4px solid #9c27b0;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="auth-card">
+            <div class="row g-0">
+                <!-- Left Side - Illustration -->
+                <div class="col-lg-6 d-none d-lg-block auth-illustration">
+                    <div>
+                        <i class="bi bi-camera-video-fill display-3 mb-3"></i>
+                        <h2 class="mb-3">Test Login Interface</h2>
+                        <p class="mb-0">Sample data for testing authentication endpoints</p>
+                    </div>
+                </div>
+                
+                <!-- Right Side - Login Form -->
+                <div class="col-lg-6 col-12">
+                    <div class="auth-form">
+                        <div class="text-center mb-4">
+                            <div class="brand-badge">
+                                <i class="bi bi-eye-fill"></i>
+                                <span>VIGILANTEye</span>
+                            </div>
+                            <h3 class="mb-1">Test Login</h3>
+                            <p class="text-muted">API Testing Interface</p>
+                        </div>
+
+                        <!-- Sample Credentials Section -->
+                        <div class="sample-credentials">
+                            <h6><i class="bi bi-info-circle"></i> Sample Test Credentials</h6>
+                            <p class="small text-muted mb-2">Click on any badge to auto-fill the form:</p>
+                            
+                            <div class="mb-2">
+                                <span class="badge bg-primary" onclick="fillCredentials('testuser@example.com', 'password123')">
+                                    testuser@example.com
+                                </span>
+                                <span class="badge bg-secondary" onclick="fillCredentials('admin@example.com', 'admin123')">
+                                    admin@example.com
+                                </span>
+                                <span class="badge bg-success" onclick="fillCredentials('operator@example.com', 'operator123')">
+                                    operator@example.com
+                                </span>
+                            </div>
+                            
+                            <div class="mb-2">
+                                <span class="badge bg-warning" onclick="fillCredentials('user1@example.com', 'password123')">
+                                    user1@example.com
+                                </span>
+                                <span class="badge bg-info" onclick="fillCredentials('user2@example.com', 'password456')">
+                                    user2@example.com
+                                </span>
+                                <span class="badge bg-dark" onclick="fillCredentials('longuser@example.com', 'password123')">
+                                    longuser@example.com
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- API Testing Info -->
+                        <div class="test-info">
+                            <h6><i class="bi bi-code-slash"></i> API Endpoint</h6>
+                            <code>POST /api/auth/login</code>
+                            <p class="small mb-0 mt-1">Test the authentication API with sample data</p>
+                        </div>
+
+                        <!-- Login Form -->
+                        <form id="loginForm" novalidate>
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                                    <input type="email" class="form-control" id="email" name="email" 
+                                           placeholder="Enter email for testing" required>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                <div class="input-group">
+                                    <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                                    <input type="password" class="form-control" id="password" name="password" 
+                                           placeholder="Enter password for testing" required>
+                                    <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
+                                        <i class="bi bi-eye" id="toggleIcon"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i class="bi bi-box-arrow-in-right"></i> Test Login
+                                </button>
+                                <button type="button" class="btn btn-outline-primary" onclick="testAPI()">
+                                    <i class="bi bi-cloud-arrow-up"></i> Test API Directly
+                                </button>
+                            </div>
+                        </form>
+
+                        <!-- Test Results -->
+                        <div id="testResults" class="mt-4" style="display: none;">
+                            <h6><i class="bi bi-clipboard-check"></i> Test Results</h6>
+                            <div id="resultContent"></div>
+                        </div>
+
+                        <!-- API Information -->
+                        <div class="api-info">
+                            <h6><i class="bi bi-gear"></i> API Information</h6>
+                            <p class="small mb-1"><strong>Endpoint:</strong> <code>/api/auth/login</code></p>
+                            <p class="small mb-1"><strong>Method:</strong> <code>POST</code></p>
+                            <p class="small mb-1"><strong>Content-Type:</strong> <code>application/json</code></p>
+                            <p class="small mb-0"><strong>Expected Response:</strong> JWT tokens + user data</p>
+                        </div>
+
+                        <!-- Sample JSON -->
+                        <div class="mt-4">
+                            <h6><i class="bi bi-file-code"></i> Sample Request JSON</h6>
+                            <pre class="bg-light p-3 rounded"><code id="sampleJson">{
+  "email": "test@example.com",
+  "password": "password123"
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Auto-fill credentials when badge is clicked
+        function fillCredentials(email, password) {
+            document.getElementById('email').value = email;
+            document.getElementById('password').value = password;
+            updateSampleJson();
+        }
+
+        // Toggle password visibility
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleIcon = document.getElementById('toggleIcon');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.className = 'bi bi-eye-slash';
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.className = 'bi bi-eye';
+            }
+        }
+
+        // Update sample JSON based on form values
+        function updateSampleJson() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            const sampleJson = {
+                "email": email || "test@example.com",
+                "password": password || "password123"
+            };
+            
+            document.getElementById('sampleJson').textContent = JSON.stringify(sampleJson, null, 2);
+        }
+
+        // Test API directly
+        async function testAPI() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            if (!email || !password) {
+                alert('Please fill in both email and password');
+                return;
+            }
+
+            const testResults = document.getElementById('testResults');
+            const resultContent = document.getElementById('resultContent');
+            
+            try {
+                resultContent.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"></div><br>Testing API...</div>';
+                testResults.style.display = 'block';
+                
+                const response = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        email: email,
+                        password: password
+                    })
+                });
+
+                const data = await response.json();
+                
+                let resultHtml = '';
+                if (response.ok) {
+                    resultHtml = `
+                        <div class="alert alert-success">
+                            <h6><i class="bi bi-check-circle"></i> Login Successful!</h6>
+                            <p class="mb-1"><strong>Status Code:</strong> ${response.status}</p>
+                            <p class="mb-1"><strong>User ID:</strong> ${data.user?.id || 'N/A'}</p>
+                            <p class="mb-1"><strong>Email:</strong> ${data.user?.email || 'N/A'}</p>
+                            <p class="mb-1"><strong>Roles:</strong> ${data.user?.roles?.join(', ') || 'N/A'}</p>
+                            <p class="mb-0"><strong>Access Token:</strong> ${data.access_token ? 'Generated' : 'N/A'}</p>
+                        </div>
+                    `;
+                } else {
+                    resultHtml = `
+                        <div class="alert alert-danger">
+                            <h6><i class="bi bi-x-circle"></i> Login Failed</h6>
+                            <p class="mb-1"><strong>Status Code:</strong> ${response.status}</p>
+                            <p class="mb-1"><strong>Error:</strong> ${data.error || 'Unknown error'}</p>
+                            <p class="mb-0"><strong>Message:</strong> ${data.message || 'No message provided'}</p>
+                        </div>
+                    `;
+                }
+                
+                resultContent.innerHTML = resultHtml;
+                
+            } catch (error) {
+                resultContent.innerHTML = `
+                    <div class="alert alert-warning">
+                        <h6><i class="bi bi-exclamation-triangle"></i> Connection Error</h6>
+                        <p class="mb-0">Could not connect to the API: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Handle form submission
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            testAPI();
+        });
+
+        // Update JSON when form fields change
+        document.getElementById('email').addEventListener('input', updateSampleJson);
+        document.getElementById('password').addEventListener('input', updateSampleJson);
+
+        // Initialize with default values
+        updateSampleJson();
+    </script>
+</body>
+</html>
