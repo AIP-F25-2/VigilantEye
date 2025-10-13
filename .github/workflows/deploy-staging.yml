@@ -1,0 +1,78 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [ develop ]
+  workflow_dispatch:
+
+env:
+  AZURE_CONTAINER_APP_NAME: vigilanteye-app-staging
+  AZURE_RESOURCE_GROUP: vigilanteye-docker-rg
+  ACR_NAME: vigilanteyeacr
+
+jobs:
+  deploy-staging:
+    name: Deploy to Staging Environment
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://vigilanteye-app-staging.politepond-67bfac4f.eastus.azurecontainerapps.io
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Build and push to ACR
+        run: |
+          az acr login --name ${{ env.ACR_NAME }}
+          docker build -t ${{ env.ACR_NAME }}.azurecr.io/vigilanteye-web:staging .
+          docker push ${{ env.ACR_NAME }}.azurecr.io/vigilanteye-web:staging
+
+      - name: Deploy to Staging Container App
+        run: |
+          az containerapp update \
+            --name ${{ env.AZURE_CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --image ${{ env.ACR_NAME }}.azurecr.io/vigilanteye-web:staging \
+            --set-env-vars \
+              FLASK_ENV=staging \
+              SECRET_KEY="${{ secrets.STAGING_SECRET_KEY }}" \
+              JWT_SECRET_KEY="${{ secrets.STAGING_JWT_SECRET_KEY }}" \
+              DATABASE_URL="${{ secrets.STAGING_DATABASE_URL }}" \
+            || echo "Creating staging container app..." && \
+          az containerapp create \
+            --name ${{ env.AZURE_CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --environment vigilanteye-env \
+            --image ${{ env.ACR_NAME }}.azurecr.io/vigilanteye-web:staging \
+            --registry-server ${{ env.ACR_NAME }}.azurecr.io \
+            --registry-username ${{ secrets.ACR_USERNAME }} \
+            --registry-password ${{ secrets.ACR_PASSWORD }} \
+            --target-port 8000 \
+            --ingress external \
+            --cpu 1 \
+            --memory 2Gi \
+            --min-replicas 1 \
+            --max-replicas 2 \
+            --env-vars \
+              FLASK_ENV=staging \
+              SECRET_KEY="${{ secrets.STAGING_SECRET_KEY }}" \
+              JWT_SECRET_KEY="${{ secrets.STAGING_JWT_SECRET_KEY }}" \
+              DATABASE_URL="${{ secrets.STAGING_DATABASE_URL }}"
+
+      - name: Run Migrations
+        run: |
+          az containerapp exec \
+            --name ${{ env.AZURE_CONTAINER_APP_NAME }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --command "flask db upgrade"
+
+      - name: Health Check
+        run: |
+          sleep 30
+          curl -f https://vigilanteye-app-staging.politepond-67bfac4f.eastus.azurecontainerapps.io/health
