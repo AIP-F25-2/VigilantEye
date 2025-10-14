@@ -67,8 +67,3 @@ def ingest():
         return jsonify({"error": "server error", "details": str(e)}), 500
     finally:
         db.close()
-
-
-@bp.route("/test", methods=["GET"])
-def test():
-    return "Success"
