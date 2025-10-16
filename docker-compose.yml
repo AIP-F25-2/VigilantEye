@@ -40,6 +40,12 @@ services:
       SECRET_KEY: your-secret-key-here
       JWT_SECRET_KEY: jwt-secret-string
       FLASK_ENV: development
+      TELEGRAM_BOT_TOKEN: 8345256867:AAFMasgNavOAstsxPdnOazZfHNRHoNJTbQ0
+      TELEGRAM_WEBHOOK_SECRET: supersecret
+      ALT_CHANNELS_FILE: alternate_channels.json
+      ESCALATE_AFTER_SECONDS: 900
+      CLOSE_AFTER_SECONDS: 3600
+      FLASK_DEBUG: 1
     depends_on:
       db:
         condition: service_healthy

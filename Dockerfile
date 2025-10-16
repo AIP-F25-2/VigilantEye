@@ -30,5 +30,5 @@ USER appuser
 # Expose port
 EXPOSE 8000
 
-# Command to run the application
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "run:app"]
+# Command to run the application with optimized settings
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "--workers", "4", "--threads", "2", "--timeout", "120", "--keep-alive", "5", "--log-level", "info", "run:app"]
