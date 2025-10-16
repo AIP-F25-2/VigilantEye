@@ -4,5 +4,11 @@
     "username": "sameerkeshvani",
     "email": "sameerkeshvani@gmail.com",
     "password_hash": "$2b$12$68fc6vCGpJfJhOqKuedg1ONuA5EAJ/3hpI.f29GUsJ3sbsaB9Q3im"
+  },
+  "Abdullah": {
+    "id": 2,
+    "username": "Abdullah",
+    "email": "abdullah@gmail.com",
+    "password_hash": "$2b$12$kqKhpePzNFOp8Zo6YRHzHehj4vX3zk/7GhmH/eqP27He2ZUtgsN6y"
   }
 }
