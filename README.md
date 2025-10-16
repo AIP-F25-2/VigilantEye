@@ -119,8 +119,3 @@ curl -X POST \
 - LLM requires compatible PyTorch version and sufficient RAM.
 
 ---
-
-## License
-
-MIT (update if different)
-```
