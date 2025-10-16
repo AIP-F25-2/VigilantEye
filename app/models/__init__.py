@@ -8,6 +8,7 @@ from .segment import Segment
 from .device import Device, DeviceType
 from .project import Project, ProjectMember
 from .analytics import Analytics, ViewEvent
+from .outbound_message import OutboundMessage, MessageStatus
 
 __all__ = [
     'BaseModel',
@@ -18,5 +19,6 @@ __all__ = [
     'Clip', 'Segment',
     'Device', 'DeviceType',
     'Project', 'ProjectMember',
-    'Analytics', 'ViewEvent'
+    'Analytics', 'ViewEvent',
+    'OutboundMessage', 'MessageStatus'
 ]

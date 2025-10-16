@@ -20,6 +20,10 @@ def create_app():
     app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'jwt-secret-string')
     app.config['JWT_ACCESS_TOKEN_EXPIRES'] = False  # We'll handle expiration in tokens
     
+    # Telegram Bot Configuration
+    app.config['TELEGRAM_BOT_TOKEN'] = os.environ.get('TELEGRAM_BOT_TOKEN', '')
+    app.config['TELEGRAM_WEBHOOK_SECRET'] = os.environ.get('TELEGRAM_WEBHOOK_SECRET', 'your-webhook-secret')
+    
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
@@ -36,17 +40,23 @@ def create_app():
     from app.controllers.video_controller import video_bp
     from app.controllers.recording_controller import recording_bp
     from app.controllers.project_controller import project_bp
+    from app.controllers.telegram_controller import bp as telegram_bp
+    from app.controllers.webhook_controller import bp as webhook_bp
     
     # Register main blueprints
     app.register_blueprint(main_bp)
     app.register_blueprint(web_auth_bp)  # Web authentication routes (/, /login, /register, /logout)
-    app.register_blueprint(api_bp, url_prefix='/api')
+    app.register_blueprint(api_bp, url_prefix='/api/v1')
     app.register_blueprint(auth_bp, url_prefix='/api/auth')  # API authentication routes
     
     # Register new API blueprints
     app.register_blueprint(video_bp, url_prefix='/api/v2')
     app.register_blueprint(recording_bp, url_prefix='/api/v2')
     app.register_blueprint(project_bp, url_prefix='/api/v2')
+    
+    # Register Telegram integration blueprints
+    app.register_blueprint(telegram_bp)  # Telegram API routes (/api/telegram/ingest)
+    app.register_blueprint(webhook_bp)  # Webhook routes (/webhook/telegram/<secret>)
     
     # Note: Server blueprints removed - using new API structure
     
