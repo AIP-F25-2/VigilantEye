@@ -7,6 +7,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 from demographics import DemographicsAnalyzer
 from FaceDetection import ImprovedFaceDetector
 from Ambiguity import SimpleAmbiguityChecker
+from pathlib import Path
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -14,20 +15,24 @@ app = Flask(__name__)
 # === Configuration and Initialization ===
 
 # Local model directory and device setup for the LLM
-LOCAL_DIR = os.environ.get("LOCAL_DIR", os.path.join(os.path.dirname(__file__), "models", "tinyllama"))
+LOCAL_DIR = Path(__file__).parent / "models" / "tinyllama"
 os.environ.setdefault("TRANSFORMERS_OFFLINE", "1")
+local_dir_path = Path(__file__).parent / "models" / "tinyllama"
+model_path_str = str(local_dir_path.resolve())
 
 dtype = torch.float16 if torch.cuda.is_available() else torch.float32
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 # Load tokenizer and model (LLM)
-tokenizer = AutoTokenizer.from_pretrained(LOCAL_DIR, use_fast=True)
+tokenizer = AutoTokenizer.from_pretrained(model_path_str, use_fast=True, local_files_only=True)
 model = AutoModelForCausalLM.from_pretrained(
-    LOCAL_DIR,
+    model_path_str,
     torch_dtype=dtype,
     low_cpu_mem_usage=True,
-    trust_remote_code=True
+    trust_remote_code=True,
+    local_files_only=True
 ).to(device)
+
 
 # Upload folder for image-based APIs
 UPLOAD_FOLDER = "uploads"
