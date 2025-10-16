@@ -1,121 +1,54 @@
 # Python
 __pycache__/
 *.py[cod]
-*$py.class
+*.pyo
+*.pyd
 *.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
 *.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+.eggs/
+.pytest_cache/
+.mypy_cache/
+.coverage*
+htmlcov/
 
 # Virtual environments
+.venv/
 venv/
 env/
 ENV/
-env.bak/
-venv.bak/
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# Node.js
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# Environment/config
+.env
+.env.*
+*.env
+*.ini
+*.cfg
 
 # Logs
 *.log
-logs/
 
-# Database
-*.db
-*.sqlite
-*.sqlite3
+# OS / Editor junk
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.cursor/
 
-# Face AI uploads
-face_ai/uploads/*
-!face_ai/uploads/.gitkeep
+# Build artifacts
+build/
+dist/
+*.spec
 
-# Temporary files
-*.tmp
-*.temp
+# Node (if any frontend present)
+node_modules/
 
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+# Local data files
+users.json
+uploads/
 
-# Coverage reports
-htmlcov/
-.coverage
-.coverage.*
-coverage.xml
-*.cover
-.hypothesis/
-.pytest_cache/
+# Cache
+.cache/
 
-# Jupyter Notebook
-.ipynb_checkpoints
-
-# pyenv
-.python-version
-
-# pipenv
-Pipfile.lock
-
-# PEP 582
-__pypackages__/
-
-# Celery
-celerybeat-schedule
-celerybeat.pid
-
-# SageMath parsed files
-*.sage.py
-
-# Spyder project settings
-.spyderproject
-.spyproject
-
-# Rope project settings
-.ropeproject
-
-# mkdocs documentation
-/site
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pyre type checker
-.pyre/
+# Misc
+*.swp
+*.swo
