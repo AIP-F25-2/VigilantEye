@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram Notification Test Page - VIGILANTEye</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .test-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+            max-width: 1200px;
+            margin: 2rem auto;
+        }
+        .test-header {
+            background: linear-gradient(135deg, #0f766e 0%, #059669 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        .test-content {
+            padding: 2rem;
+        }
+        .brand-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #0f766e;
+            margin-bottom: 1rem;
+        }
+        .sample-templates {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        .sample-templates h6 {
+            color: #0f766e;
+            margin-bottom: 0.5rem;
+        }
+        .template-badge {
+            margin: 0.25rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .template-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .api-info {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+        .webhook-info {
+            background: #f3e5f5;
+            border-left: 4px solid #9c27b0;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+        .test-results {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .message-type-tabs {
+            margin-bottom: 1rem;
+        }
+        .json-preview {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .status-badge {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="test-card">
+            <!-- Header -->
+            <div class="test-header">
+                <div class="brand-badge">
+                    <i class="bi bi-telegram"></i>
+                    <span>VIGILANTEye</span>
+                </div>
+                <h2 class="mb-3">Telegram Notification Testing</h2>
+                <p class="mb-0">Test surveillance alert notifications and webhook callbacks</p>
+            </div>
+            
+            <!-- Content -->
+            <div class="test-content">
+                <div class="row">
+                    <!-- Left Column - Test Interface -->
+                    <div class="col-lg-6">
+                        <!-- Sample Templates -->
+                        <div class="sample-templates">
+                            <h6><i class="bi bi-template"></i> Sample Alert Templates</h6>
+                            <p class="small text-muted mb-2">Click on any template to auto-fill the form:</p>
+                            
+                            <div class="mb-2">
+                                <span class="badge bg-danger template-badge" onclick="fillTemplate('intrusion')">
+                                    🚨 Intrusion Alert
+                                </span>
+                                <span class="badge bg-warning template-badge" onclick="fillTemplate('motion')">
+                                    ⚠️ Motion Detection
+                                </span>
+                                <span class="badge bg-info template-badge" onclick="fillTemplate('system')">
+                                    ℹ️ System Status
+                                </span>
+                            </div>
+                            
+                            <div class="mb-2">
+                                <span class="badge bg-success template-badge" onclick="fillTemplate('fire')">
+                                    🔥 Fire Alert
+                                </span>
+                                <span class="badge bg-primary template-badge" onclick="fillTemplate('access')">
+                                    🚪 Access Control
+                                </span>
+                                <span class="badge bg-secondary template-badge" onclick="fillTemplate('maintenance')">
+                                    🔧 Maintenance
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Message Type Tabs -->
+                        <div class="message-type-tabs">
+                            <ul class="nav nav-tabs" id="messageTypeTabs" role="tablist">
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link active" id="text-tab" data-bs-toggle="tab" 
+                                            data-bs-target="#text-panel" type="button" role="tab">
+                                        <i class="bi bi-chat-text"></i> Text Message
+                                    </button>
+                                </li>
+                                <li class="nav-item" role="presentation">
+                                    <button class="nav-link" id="image-tab" data-bs-toggle="tab" 
+                                            data-bs-target="#image-panel" type="button" role="tab">
+                                        <i class="bi bi-image"></i> Image Message
+                                    </button>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <!-- Text Message Panel -->
+                        <div class="tab-content" id="messageTypeContent">
+                            <div class="tab-pane fade show active" id="text-panel" role="tabpanel">
+                                <form id="telegramForm">
+                                    <div class="mb-3">
+                                        <label for="channelId" class="form-label">Channel ID</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-hash"></i></span>
+                                            <input type="text" class="form-control" id="channelId" 
+                                                   placeholder="-1001234567890" required>
+                                        </div>
+                                        <div class="form-text">Telegram channel or chat ID (must start with -100 for channels)</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="messageContent" class="form-label">Message Content</label>
+                                        <textarea class="form-control" id="messageContent" rows="6" 
+                                                  placeholder="Enter your alert message here..." required></textarea>
+                                        <div class="form-text">HTML formatting supported</div>
+                                    </div>
+                                    
+                                    <div class="d-grid gap-2">
+                                        <button type="submit" class="btn btn-success btn-lg">
+                                            <i class="bi bi-send"></i> Send Text Message
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+
+                            <!-- Image Message Panel -->
+                            <div class="tab-pane fade" id="image-panel" role="tabpanel">
+                                <form id="imageForm">
+                                    <div class="mb-3">
+                                        <label for="imageChannelId" class="form-label">Channel ID</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-hash"></i></span>
+                                            <input type="text" class="form-control" id="imageChannelId" 
+                                                   placeholder="-1001234567890" required>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="imageUrl" class="form-label">Image URL</label>
+                                        <div class="input-group">
+                                            <span class="input-group-text"><i class="bi bi-link"></i></span>
+                                            <input type="url" class="form-control" id="imageUrl" 
+                                                   placeholder="https://example.com/surveillance-image.jpg" required>
+                                        </div>
+                                        <div class="form-text">URL to surveillance image or screenshot</div>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="imageCaption" class="form-label">Caption (Optional)</label>
+                                        <textarea class="form-control" id="imageCaption" rows="3" 
+                                                  placeholder="Optional caption for the image..."></textarea>
+                                    </div>
+                                    
+                                    <div class="d-grid gap-2">
+                                        <button type="submit" class="btn btn-info btn-lg">
+                                            <i class="bi bi-image"></i> Send Image Message
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right Column - API Info and Results -->
+                    <div class="col-lg-6">
+                        <!-- API Information -->
+                        <div class="api-info">
+                            <h6><i class="bi bi-code-slash"></i> API Endpoints</h6>
+                            <p class="small mb-1"><strong>Ingest:</strong> <code>POST /api/telegram/ingest</code></p>
+                            <p class="small mb-1"><strong>Webhook:</strong> <code>POST /webhook/telegram/{secret}</code></p>
+                            <p class="small mb-0"><strong>Content-Type:</strong> <code>application/json</code></p>
+                        </div>
+
+                        <!-- Webhook Information -->
+                        <div class="webhook-info">
+                            <h6><i class="bi bi-webhook"></i> Webhook Testing</h6>
+                            <p class="small mb-1">Test webhook callback with sample data:</p>
+                            <button class="btn btn-outline-primary btn-sm" onclick="testWebhook()">
+                                <i class="bi bi-arrow-clockwise"></i> Test Webhook Callback
+                            </button>
+                        </div>
+
+                        <!-- JSON Preview -->
+                        <div class="mb-3">
+                            <h6><i class="bi bi-file-code"></i> Request JSON Preview</h6>
+                            <div class="json-preview" id="jsonPreview">
+{
+  "type": "text",
+  "content": "Sample alert message",
+  "channel_id": "-1001234567890"
+}
+                            </div>
+                        </div>
+
+                        <!-- Test Results -->
+                        <div class="test-results">
+                            <h6><i class="bi bi-clipboard-check"></i> Test Results</h6>
+                            <div id="testResultsContent">
+                                <p class="text-muted small">No tests run yet. Send a message to see results.</p>
+                            </div>
+                        </div>
+
+                        <!-- Sample Channel IDs -->
+                        <div class="mt-4">
+                            <h6><i class="bi bi-list"></i> Sample Channel IDs</h6>
+                            <div class="small">
+                                <code>-1001234567890</code> - Main Alerts Channel<br>
+                                <code>-1001111111111</code> - Security Channel<br>
+                                <code>-1002222222222</code> - Admin Channel<br>
+                                <code>-1003333333333</code> - Escalation Channel
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Sample templates data
+        const templates = {
+            intrusion: {
+                type: 'text',
+                content: '🚨 INTRUSION ALERT 🚨\n\nLocation: Building A - Main Entrance\nTime: ' + new Date().toLocaleString() + '\nConfidence: 95%\nCamera: CAM-01\nStatus: Active',
+                channel_id: '-1001234567890'
+            },
+            motion: {
+                type: 'text',
+                content: '⚠️ MOTION DETECTED\n\nArea: Parking Lot - Zone B\nTime: ' + new Date().toLocaleString() + '\nDuration: 2 minutes\nCamera: CAM-03\nConfidence: 87%',
+                channel_id: '-1001234567890'
+            },
+            system: {
+                type: 'text',
+                content: 'ℹ️ SYSTEM STATUS UPDATE\n\nAll cameras: Online ✓\nStorage: 85% used\nNetwork: Stable\nLast backup: ' + new Date().toLocaleString() + '\nUptime: 99.9%',
+                channel_id: '-1001234567890'
+            },
+            fire: {
+                type: 'text',
+                content: '🔥 FIRE ALERT 🔥\n\nLocation: Building B - Floor 2\nTime: ' + new Date().toLocaleString() + '\nSensor: Smoke Detector SD-05\nTemperature: 45°C\nAction Required: IMMEDIATE',
+                channel_id: '-1001234567890'
+            },
+            access: {
+                type: 'text',
+                content: '🚪 ACCESS CONTROL EVENT\n\nDoor: Main Entrance - Building A\nTime: ' + new Date().toLocaleString() + '\nCard ID: 1234567890\nUser: John Doe\nAccess: GRANTED ✓',
+                channel_id: '-1001234567890'
+            },
+            maintenance: {
+                type: 'text',
+                content: '🔧 MAINTENANCE REMINDER\n\nCamera: CAM-07 (Reception)\nLast cleaned: 30 days ago\nNext maintenance due: ' + new Date(Date.now() + 7*24*60*60*1000).toLocaleDateString() + '\nStatus: Scheduled',
+                channel_id: '-1001234567890'
+            }
+        };
+
+        // Fill template data
+        function fillTemplate(templateName) {
+            const template = templates[templateName];
+            if (!template) return;
+
+            document.getElementById('channelId').value = template.channel_id;
+            document.getElementById('imageChannelId').value = template.channel_id;
+            document.getElementById('messageContent').value = template.content;
+            document.getElementById('imageUrl').value = 'https://example.com/surveillance/' + templateName + '_' + Date.now() + '.jpg';
+            document.getElementById('imageCaption').value = template.content;
+
+            updateJsonPreview();
+        }
+
+        // Update JSON preview
+        function updateJsonPreview() {
+            const activeTab = document.querySelector('#messageTypeTabs .nav-link.active');
+            const isTextTab = activeTab.id === 'text-tab';
+            
+            let jsonData;
+            if (isTextTab) {
+                jsonData = {
+                    type: "text",
+                    content: document.getElementById('messageContent').value || "Sample alert message",
+                    channel_id: document.getElementById('channelId').value || "-1001234567890"
+                };
+            } else {
+                jsonData = {
+                    type: "image",
+                    content: document.getElementById('imageUrl').value || "https://example.com/surveillance-image.jpg",
+                    channel_id: document.getElementById('imageChannelId').value || "-1001234567890"
+                };
+            }
+            
+            document.getElementById('jsonPreview').textContent = JSON.stringify(jsonData, null, 2);
+        }
+
+        // Send Telegram message
+        async function sendTelegramMessage(data) {
+            const resultsContent = document.getElementById('testResultsContent');
+            
+            try {
+                resultsContent.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"></div><br>Sending message...</div>';
+                
+                const response = await fetch('/api/telegram/ingest', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                
+                let resultHtml = '';
+                if (response.ok) {
+                    resultHtml = `
+                        <div class="alert alert-success">
+                            <h6><i class="bi bi-check-circle"></i> Message Sent Successfully!</h6>
+                            <p class="mb-1"><strong>Message ID:</strong> ${result.id}</p>
+                            <p class="mb-1"><strong>Status:</strong> <span class="badge bg-success status-badge">${result.status}</span></p>
+                            <p class="mb-1"><strong>Telegram Message ID:</strong> ${result.telegram?.message_id || 'N/A'}</p>
+                            <p class="mb-0"><strong>Channel:</strong> ${data.channel_id}</p>
+                        </div>
+                    `;
+                } else {
+                    resultHtml = `
+                        <div class="alert alert-danger">
+                            <h6><i class="bi bi-x-circle"></i> Failed to Send Message</h6>
+                            <p class="mb-1"><strong>Status Code:</strong> ${response.status}</p>
+                            <p class="mb-1"><strong>Error:</strong> ${result.error || 'Unknown error'}</p>
+                            <p class="mb-0"><strong>Details:</strong> ${result.details || 'No details provided'}</p>
+                        </div>
+                    `;
+                }
+                
+                resultsContent.innerHTML = resultHtml;
+                
+                // Store message ID for webhook testing
+                if (response.ok && result.id) {
+                    window.lastMessageId = result.id;
+                }
+                
+            } catch (error) {
+                resultsContent.innerHTML = `
+                    <div class="alert alert-warning">
+                        <h6><i class="bi bi-exclamation-triangle"></i> Connection Error</h6>
+                        <p class="mb-0">Could not connect to the API: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Test webhook callback
+        async function testWebhook() {
+            const resultsContent = document.getElementById('testResultsContent');
+            const messageId = window.lastMessageId || 'test-message-id';
+            
+            const webhookData = {
+                callback_query: {
+                    id: "callback_" + Date.now(),
+                    data: `ack:${messageId}`,
+                    from: {
+                        id: 12345,
+                        first_name: "Test",
+                        username: "testuser"
+                    },
+                    date: Math.floor(Date.now() / 1000)
+                }
+            };
+            
+            try {
+                resultsContent.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"></div><br>Testing webhook...</div>';
+                
+                const response = await fetch('/webhook/telegram/test-secret', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(webhookData)
+                });
+
+                const result = await response.json();
+                
+                let resultHtml = '';
+                if (response.ok) {
+                    resultHtml = `
+                        <div class="alert alert-info">
+                            <h6><i class="bi bi-webhook"></i> Webhook Test Successful</h6>
+                            <p class="mb-1"><strong>Status Code:</strong> ${response.status}</p>
+                            <p class="mb-1"><strong>Response:</strong> ${JSON.stringify(result)}</p>
+                            <p class="mb-0"><strong>Message ID:</strong> ${messageId}</p>
+                        </div>
+                    `;
+                } else {
+                    resultHtml = `
+                        <div class="alert alert-danger">
+                            <h6><i class="bi bi-x-circle"></i> Webhook Test Failed</h6>
+                            <p class="mb-1"><strong>Status Code:</strong> ${response.status}</p>
+                            <p class="mb-0"><strong>Response:</strong> ${response.statusText}</p>
+                        </div>
+                    `;
+                }
+                
+                resultsContent.innerHTML = resultHtml;
+                
+            } catch (error) {
+                resultsContent.innerHTML = `
+                    <div class="alert alert-warning">
+                        <h6><i class="bi bi-exclamation-triangle"></i> Webhook Error</h6>
+                        <p class="mb-0">Could not test webhook: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Handle form submissions
+        document.getElementById('telegramForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const data = {
+                type: "text",
+                content: document.getElementById('messageContent').value,
+                channel_id: document.getElementById('channelId').value
+            };
+            
+            sendTelegramMessage(data);
+        });
+
+        document.getElementById('imageForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const data = {
+                type: "image",
+                content: document.getElementById('imageUrl').value,
+                channel_id: document.getElementById('imageChannelId').value
+            };
+            
+            sendTelegramMessage(data);
+        });
+
+        // Update JSON preview when form fields change
+        document.getElementById('messageContent').addEventListener('input', updateJsonPreview);
+        document.getElementById('channelId').addEventListener('input', updateJsonPreview);
+        document.getElementById('imageUrl').addEventListener('input', updateJsonPreview);
+        document.getElementById('imageChannelId').addEventListener('input', updateJsonPreview);
+        document.getElementById('imageCaption').addEventListener('input', updateJsonPreview);
+
+        // Update JSON preview when switching tabs
+        document.getElementById('messageTypeTabs').addEventListener('shown.bs.tab', function (event) {
+            updateJsonPreview();
+        });
+
+        // Initialize with default values
+        updateJsonPreview();
+    </script>
+</body>
+</html>
