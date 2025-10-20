@@ -1,0 +1,236 @@
+### Enterprise Backend API Examples
+### Use with REST Client extension in VS Code or any HTTP client
+
+@baseUrl = http://localhost:8000/api
+@contentType = application/json
+
+### Variables (will be set from responses)
+@accessToken = 
+@refreshToken = 
+
+###############################################################################
+### HEALTH CHECKS
+###############################################################################
+
+### Health Check
+GET {{baseUrl}}/health
+
+### Database Health Check
+GET {{baseUrl}}/health/db
+
+###############################################################################
+### AUTHENTICATION - SIGN UP
+###############################################################################
+
+### Sign Up - Create new user account
+POST {{baseUrl}}/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "john.doe@example.com",
+  "username": "johndoe",
+  "password": "SecurePass123",
+  "full_name": "John Doe"
+}
+
+### Sign Up - Another user
+POST {{baseUrl}}/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "jane.smith@example.com",
+  "username": "janesmith",
+  "password": "AnotherSecure456",
+  "full_name": "Jane Smith"
+}
+
+### Sign Up - Duplicate Email (will fail with 409)
+POST {{baseUrl}}/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "john.doe@example.com",
+  "username": "different_username",
+  "password": "SecurePass123"
+}
+
+### Sign Up - Weak Password (will fail with 422)
+POST {{baseUrl}}/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "weak@example.com",
+  "username": "weakuser",
+  "password": "weak"
+}
+
+###############################################################################
+### AUTHENTICATION - LOGIN
+###############################################################################
+
+### Login - Get access token
+# @name login
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "john.doe@example.com",
+  "password": "SecurePass123"
+}
+
+### Extract tokens from login response (for REST Client)
+# After running login, these will be available
+@accessToken = {{login.response.body.access_token}}
+@refreshToken = {{login.response.body.refresh_token}}
+
+### Login - Invalid credentials (will fail with 401)
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "john.doe@example.com",
+  "password": "WrongPassword"
+}
+
+### Login - Non-existent user (will fail with 401)
+POST {{baseUrl}}/auth/login
+Content-Type: {{contentType}}
+
+{
+  "email": "nonexistent@example.com",
+  "password": "SomePassword123"
+}
+
+###############################################################################
+### AUTHENTICATED ENDPOINTS
+###############################################################################
+
+### Get Current User Info (Authenticate)
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{accessToken}}
+
+### Verify Token
+GET {{baseUrl}}/auth/verify
+Authorization: Bearer {{accessToken}}
+
+### Get Current User - Invalid Token (will fail with 401)
+GET {{baseUrl}}/auth/me
+Authorization: Bearer invalid_token_here
+
+### Get Current User - No Token (will fail with 403)
+GET {{baseUrl}}/auth/me
+
+###############################################################################
+### TOKEN REFRESH
+###############################################################################
+
+### Refresh Access Token
+# @name refresh
+POST {{baseUrl}}/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refresh_token": "{{refreshToken}}"
+}
+
+### Update access token from refresh response
+@accessToken = {{refresh.response.body.access_token}}
+
+### Refresh Token - Invalid token (will fail with 401)
+POST {{baseUrl}}/auth/refresh
+Content-Type: {{contentType}}
+
+{
+  "refresh_token": "invalid_refresh_token"
+}
+
+###############################################################################
+### EXAMPLE WORKFLOW
+###############################################################################
+
+### Complete Authentication Flow:
+### 1. Sign up to create account
+### 2. Login to get tokens
+### 3. Use access token for authenticated requests
+### 4. When access token expires, use refresh token
+### 5. Continue using new access token
+
+###############################################################################
+### TESTING DIFFERENT SCENARIOS
+###############################################################################
+
+### Sign Up - Admin User (will be created as STAFF by default)
+# To make this user an ADMIN, you need to manually update the database:
+# UPDATE users SET role = 'ADMIN' WHERE email = 'admin@example.com';
+POST {{baseUrl}}/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "admin@example.com",
+  "username": "admin",
+  "password": "AdminPass123",
+  "full_name": "System Administrator"
+}
+
+### Sign Up - Minimal Data
+POST {{baseUrl}}/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "minimal@example.com",
+  "username": "minimaluser",
+  "password": "MinimalPass123"
+}
+
+### Sign Up - Special Characters in Username (will fail)
+POST {{baseUrl}}/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "special@example.com",
+  "username": "user@name!",
+  "password": "SecurePass123"
+}
+
+### Sign Up - Email Format Invalid (will fail)
+POST {{baseUrl}}/auth/signup
+Content-Type: {{contentType}}
+
+{
+  "email": "not-an-email",
+  "username": "testuser",
+  "password": "SecurePass123"
+}
+
+###############################################################################
+### NOTES
+###############################################################################
+
+# Password Requirements:
+# - Minimum 8 characters
+# - At least one uppercase letter
+# - At least one lowercase letter
+# - At least one digit
+
+# Username Requirements:
+# - 3-50 characters
+# - Alphanumeric characters and underscores only
+# - Automatically converted to lowercase
+
+# Token Expiration:
+# - Access Token: 30 minutes (configurable)
+# - Refresh Token: 7 days (configurable)
+
+# User Roles:
+# - STAFF: Default role, standard permissions
+# - ADMIN: Administrative privileges (must be set manually)
+
+# HTTP Status Codes:
+# - 200: Success (Login, Get User)
+# - 201: Created (Sign Up)
+# - 400: Bad Request
+# - 401: Unauthorized (Invalid credentials/token)
+# - 403: Forbidden (No token provided)
+# - 409: Conflict (Email/username exists)
+# - 422: Validation Error
+# - 500: Internal Server Error
