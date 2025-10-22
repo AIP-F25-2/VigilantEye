@@ -11,6 +11,11 @@ class AIConfig(BaseSettings):
     openai_api_key: str = Field(default="", alias="OPENAI_API_KEY")
     openai_model: str = Field(default="gpt-4-turbo-preview", alias="OPENAI_MODEL")
     
+    # Telegram Integration
+    telegram_bot_token: str = Field(default="", alias="TELEGRAM_BOT_TOKEN")
+    telegram_webhook_secret: str = Field(default="", alias="TELEGRAM_WEBHOOK_SECRET")
+    telegram_escalation_channel: str = Field(default="", alias="TELEGRAM_ESCALATION_CHANNEL")
+    
     # Whisper (Speech-to-Text)
     whisper_model: str = Field(default="base", alias="WHISPER_MODEL")  # tiny, base, small, medium, large
     whisper_device: str = Field(default="cpu", alias="WHISPER_DEVICE")  # cpu or cuda
@@ -52,6 +57,13 @@ class AIConfig(BaseSettings):
     model_cache_path: str = Field(default="storage/model_cache", alias="MODEL_CACHE_PATH")
     model_cache_enabled: bool = Field(default=True, alias="MODEL_CACHE_ENABLED")
     model_cache_max_size_gb: float = Field(default=10.0, alias="MODEL_CACHE_MAX_SIZE_GB")
+    
+    # Periodic Cleanup
+    cleanup_enabled: bool = Field(default=True, alias="CLEANUP_ENABLED")
+    cleanup_interval_hours: int = Field(default=24, alias="CLEANUP_INTERVAL_HOURS")
+    person_data_retention_days: int = Field(default=30, alias="PERSON_DATA_RETENTION_DAYS")
+    embedding_data_retention_days: int = Field(default=90, alias="EMBEDDING_DATA_RETENTION_DAYS")
+    media_retention_days: int = Field(default=60, alias="MEDIA_RETENTION_DAYS")
     
     model_config = SettingsConfigDict(
         env_file=".env",

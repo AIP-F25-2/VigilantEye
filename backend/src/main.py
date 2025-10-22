@@ -6,10 +6,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 
-from src.api import auth, health, video, ticket, model_cache
+from src.api import auth, health, video, ticket, model_cache, cleanup
 from src.config import get_settings
 from src.database import DatabaseSession
 from src.middleware.error_handler import error_handler_middleware
+from src.services.periodic_cleanup_service import start_cleanup_scheduler
 from src.utils.logger import get_logger, setup_logging
 
 # Initialize logging
@@ -82,8 +83,39 @@ app.include_router(auth.router, prefix="/api")
 app.include_router(video.router, prefix="/api")
 app.include_router(ticket.router, prefix="/api")
 app.include_router(model_cache.router, prefix="/api/models")
+app.include_router(cleanup.router, prefix="/api")
     
     logger.info("Application configured successfully")
+    
+    # Start background services
+    import asyncio
+    from contextlib import asynccontextmanager
+    
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        # Startup
+        logger.info("Starting background services...")
+        
+        # Start cleanup scheduler if enabled
+        if settings.cleanup_enabled:
+            logger.info("Starting periodic cleanup scheduler...")
+            cleanup_task = asyncio.create_task(start_cleanup_scheduler())
+        else:
+            logger.info("Periodic cleanup is disabled")
+            cleanup_task = None
+        
+        yield
+        
+        # Shutdown
+        logger.info("Shutting down background services...")
+        if cleanup_task:
+            cleanup_task.cancel()
+            try:
+                await cleanup_task
+            except asyncio.CancelledError:
+                logger.info("Cleanup scheduler stopped")
+    
+    app.router.lifespan_context = lifespan
     
     return app
 

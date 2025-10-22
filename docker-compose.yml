@@ -23,23 +23,6 @@ services:
     networks:
       - vigilanteye-network
 
-  # Redis for caching and sessions
-  redis:
-    image: redis:7-alpine
-    container_name: vigilanteye-redis
-    command: redis-server --appendonly yes --requirepass vigilanteye123
-    volumes:
-      - redis_data:/data
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-    networks:
-      - vigilanteye-network
-
   # Backend API
   backend:
     build:
@@ -49,9 +32,6 @@ services:
     environment:
       # Database
       DATABASE_URL: postgresql://vigilanteye:vigilanteye123@postgres:5432/vigilanteye
-      
-      # Redis
-      REDIS_URL: redis://:vigilanteye123@redis:6379/0
       
       # Application
       APP_NAME: VigilantEye
@@ -73,8 +53,16 @@ services:
       
       # External APIs
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
-      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+      TELEGRAM_BOT_TOKEN: 8345256867:AAFMasgNavOAstsxPdnOazZfHNRHoNJTbQ0
+      TELEGRAM_WEBHOOK_SECRET: supersecret
+      TELEGRAM_ESCALATION_CHANNEL: -4672336726
+      
+      # Cleanup Configuration
+      CLEANUP_ENABLED: "true"
+      CLEANUP_INTERVAL_HOURS: "24"
+      PERSON_DATA_RETENTION_DAYS: "30"
+      EMBEDDING_DATA_RETENTION_DAYS: "90"
+      MEDIA_RETENTION_DAYS: "60"
       
     volumes:
       - ./backend:/app
@@ -85,8 +73,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
       interval: 30s
@@ -96,6 +82,13 @@ services:
     networks:
       - vigilanteye-network
     restart: unless-stopped
+    command: >
+      sh -c "
+        echo 'Waiting for database to be ready...' &&
+        python scripts/setup_database.py &&
+        echo 'Starting application...' &&
+        python -m uvicorn src.main:app --host 0.0.0.0 --port 8000
+      "
 
   # Frontend
   frontend:
@@ -116,27 +109,8 @@ services:
       - vigilanteye-network
     restart: unless-stopped
 
-  # Nginx Reverse Proxy (Optional)
-  nginx:
-    image: nginx:alpine
-    container_name: vigilanteye-nginx
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/ssl:/etc/nginx/ssl
-    depends_on:
-      - frontend
-      - backend
-    networks:
-      - vigilanteye-network
-    restart: unless-stopped
-
 volumes:
   postgres_data:
-    driver: local
-  redis_data:
     driver: local
   backend_storage:
     driver: local

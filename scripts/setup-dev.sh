@@ -102,6 +102,10 @@ else
     echo -e "${RED}❌ Database connection failed${NC}"
 fi
 
+# Setup database tables and default admin
+echo -e "${YELLOW}🗄️ Setting up database...${NC}"
+docker-compose exec backend python scripts/setup_database.py
+
 # Check Redis connection
 if docker-compose exec -T redis redis-cli ping > /dev/null 2>&1; then
     echo -e "${GREEN}✅ Redis is ready${NC}"

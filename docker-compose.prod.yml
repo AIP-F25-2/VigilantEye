@@ -74,8 +74,9 @@ services:
       
       # External APIs
       OPENAI_API_KEY: ${OPENAI_API_KEY}
-      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
-      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID}
+      TELEGRAM_BOT_TOKEN: 8345256867:AAFMasgNavOAstsxPdnOazZfHNRHoNJTbQ0
+      TELEGRAM_WEBHOOK_SECRET: supersecret
+      TELEGRAM_ESCALATION_CHANNEL: -4672336726
       
     volumes:
       - backend_storage:/app/storage

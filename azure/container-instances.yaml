@@ -29,9 +29,11 @@ properties:
       - name: OPENAI_API_KEY
         secureValue: ${OPENAI_API_KEY}
       - name: TELEGRAM_BOT_TOKEN
-        secureValue: ${TELEGRAM_BOT_TOKEN}
-      - name: TELEGRAM_CHAT_ID
-        secureValue: ${TELEGRAM_CHAT_ID}
+        secureValue: 8345256867:AAFMasgNavOAstsxPdnOazZfHNRHoNJTbQ0
+      - name: TELEGRAM_WEBHOOK_SECRET
+        secureValue: supersecret
+      - name: TELEGRAM_ESCALATION_CHANNEL
+        secureValue: -4672336726
       - name: APP_ENV
         value: production
       - name: AI_DEVICE
