@@ -112,6 +112,83 @@ export const videoAPI = {
     const response = await api.get('/video/list')
     return response.data
   },
+
+  startStream: async (data) => {
+    const response = await api.post('/video/stream/start', data)
+    return response.data
+  },
+
+  uploadChunk: async (videoId, chunk) => {
+    const formData = new FormData()
+    formData.append('chunk', chunk)
+    
+    const response = await api.post(`/video/stream/${videoId}/chunk`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    })
+    return response.data
+  },
+
+  stopStream: async (videoId) => {
+    const response = await api.post(`/video/stream/${videoId}/stop`)
+    return response.data
+  },
+}
+
+// Ticket API
+export const ticketAPI = {
+  getTickets: async (params = {}) => {
+    const response = await api.get('/tickets', { params })
+    return response.data
+  },
+
+  getTicket: async (ticketId) => {
+    const response = await api.get(`/tickets/${ticketId}`)
+    return response.data
+  },
+
+  acknowledgeTicket: async (ticketId, notes = null) => {
+    const response = await api.post(`/tickets/${ticketId}/acknowledge`, { notes })
+    return response.data
+  },
+
+  closeTicket: async (ticketId, notes = null) => {
+    const response = await api.post(`/tickets/${ticketId}/close`, { notes })
+    return response.data
+  },
+
+  addNote: async (ticketId, note) => {
+    const response = await api.post(`/tickets/${ticketId}/note`, { note })
+    return response.data
+  },
+
+  getTicketEvidence: async (ticketId) => {
+    const response = await api.get(`/tickets/${ticketId}/evidence`)
+    return response.data
+  },
+
+  getTicketStats: async () => {
+    const response = await api.get('/tickets/stats/summary')
+    return response.data
+  },
+
+  deleteEvidence: async (ticketId, evidenceId) => {
+    const response = await api.delete(`/tickets/${ticketId}/evidence/${evidenceId}`)
+    return response.data
+  },
+
+  deleteTicket: async (ticketId) => {
+    const response = await api.delete(`/tickets/${ticketId}`)
+    return response.data
+  },
+
+  downloadAllEvidence: async (ticketId) => {
+    const response = await api.get(`/tickets/${ticketId}/evidence/download`, {
+      responseType: 'blob'
+    })
+    return response.data
+  },
 }
 
 export default api

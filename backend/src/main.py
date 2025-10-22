@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 
-from src.api import auth, health, video
+from src.api import auth, health, video, ticket, model_cache
 from src.config import get_settings
 from src.database import DatabaseSession
 from src.middleware.error_handler import error_handler_middleware
@@ -77,9 +77,11 @@ def create_app() -> FastAPI:
     app.middleware("http")(error_handler_middleware)
     
     # Register routers
-    app.include_router(health.router, prefix="/api")
-    app.include_router(auth.router, prefix="/api")
-    app.include_router(video.router, prefix="/api")
+app.include_router(health.router, prefix="/api")
+app.include_router(auth.router, prefix="/api")
+app.include_router(video.router, prefix="/api")
+app.include_router(ticket.router, prefix="/api")
+app.include_router(model_cache.router, prefix="/api/models")
     
     logger.info("Application configured successfully")
     

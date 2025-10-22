@@ -20,6 +20,7 @@ from src.services.ai.audio_services import process_audio_parallel
 from src.services.ai.face_recognition_service import analyze_faces_in_image
 from src.services.ai.image_analysis_service import analyze_image_complete
 from src.services.ai.threat_detection_service import detect_threats_in_frame
+from src.services.ai.clothing_recognition_service import analyze_persons_in_image
 from src.services.ai.threadpool_manager import get_ai_threadpool
 from src.services.ai.vector_db_manager import VectorDBManager, find_or_create_face_id
 from src.utils.logger import get_logger
@@ -214,6 +215,15 @@ class AIOrchestrator:
                 'frame_path': frame['path'],
                 'task_type': 'image'
             })
+            
+            # Task 3: Person/Clothing analysis
+            all_tasks.append({
+                'func': analyze_persons_in_image,
+                'args': (frame['path'], frame['timestamp_ms']),
+                'kwargs': {},
+                'frame_path': frame['path'],
+                'task_type': 'person'
+            })
         
         # Execute all tasks in parallel
         task_list = [
@@ -243,12 +253,13 @@ class AIOrchestrator:
         final_results = []
         
         for frame_path, combined_result in frame_results_map.items():
-            # Task 3: Threat detection (uses results from face and image analysis)
+            # Task 3: Threat detection (uses results from face, image, and person analysis)
             threat_result = await self._run_threat_detection(
                 frame_path,
                 combined_result['timestamp_ms'],
                 combined_result.get('image', {}),
                 combined_result.get('face', {}),
+                combined_result.get('person', {}),
                 audio_result,
                 processing_id
             )
@@ -267,6 +278,7 @@ class AIOrchestrator:
                 'frame_path': frame_path,
                 'timestamp_ms': combined_result['timestamp_ms'],
                 'face_count': combined_result.get('face', {}).get('face_count', 0),
+                'person_count': combined_result.get('person', {}).get('person_count', 0),
                 'object_count': combined_result.get('image', {}).get('objects', {}).get('total_objects', 0),
                 'has_text': combined_result.get('image', {}).get('text', {}).get('has_text', False),
                 'is_threat': threat_result.get('threat_assessment', {}).get('is_threat', False),
@@ -284,6 +296,7 @@ class AIOrchestrator:
         timestamp_ms: int,
         image_analysis: Dict,
         face_analysis: Dict,
+        person_analysis: Dict,
         audio_analysis: Optional[Dict],
         processing_id: str
     ) -> Dict:
@@ -291,7 +304,7 @@ class AIOrchestrator:
         try:
             result = await self.threadpool.submit_batch_async(
                 detect_threats_in_frame,
-                [(frame_path, timestamp_ms, image_analysis, face_analysis, audio_analysis, processing_id)]
+                [(frame_path, timestamp_ms, image_analysis, face_analysis, person_analysis, audio_analysis, processing_id)]
             )
             return result[0] if result else {}
         except Exception as e:

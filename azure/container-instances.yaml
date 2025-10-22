@@ -1,0 +1,105 @@
+# Azure Container Instances deployment configuration
+apiVersion: 2021-07-01
+location: eastus
+name: vigilanteye-backend
+properties:
+  containers:
+  - name: vigilanteye-backend
+    properties:
+      image: vigilanteye.azurecr.io/vigilanteye-backend:latest
+      resources:
+        requests:
+          cpu: 2
+          memoryInGb: 4
+        limits:
+          cpu: 4
+          memoryInGb: 8
+      ports:
+      - port: 8000
+        protocol: TCP
+      environmentVariables:
+      - name: DATABASE_URL
+        secureValue: ${DATABASE_URL}
+      - name: REDIS_URL
+        secureValue: ${REDIS_URL}
+      - name: SECRET_KEY
+        secureValue: ${SECRET_KEY}
+      - name: JWT_SECRET_KEY
+        secureValue: ${JWT_SECRET_KEY}
+      - name: OPENAI_API_KEY
+        secureValue: ${OPENAI_API_KEY}
+      - name: TELEGRAM_BOT_TOKEN
+        secureValue: ${TELEGRAM_BOT_TOKEN}
+      - name: TELEGRAM_CHAT_ID
+        secureValue: ${TELEGRAM_CHAT_ID}
+      - name: APP_ENV
+        value: production
+      - name: AI_DEVICE
+        value: cpu
+      volumeMounts:
+      - name: storage
+        mountPath: /app/storage
+      - name: logs
+        mountPath: /app/logs
+      livenessProbe:
+        httpGet:
+          path: /api/health/liveness
+          port: 8000
+        initialDelaySeconds: 60
+        periodSeconds: 30
+        timeoutSeconds: 10
+        failureThreshold: 3
+      readinessProbe:
+        httpGet:
+          path: /api/health/readiness
+          port: 8000
+        initialDelaySeconds: 30
+        periodSeconds: 10
+        timeoutSeconds: 5
+        failureThreshold: 3
+  - name: vigilanteye-frontend
+    properties:
+      image: vigilanteye.azurecr.io/vigilanteye-frontend:latest
+      resources:
+        requests:
+          cpu: 0.5
+          memoryInGb: 1
+        limits:
+          cpu: 1
+          memoryInGb: 2
+      ports:
+      - port: 80
+        protocol: TCP
+      livenessProbe:
+        httpGet:
+          path: /health
+          port: 80
+        initialDelaySeconds: 30
+        periodSeconds: 30
+        timeoutSeconds: 10
+        failureThreshold: 3
+  volumes:
+  - name: storage
+    azureFile:
+      shareName: vigilanteye-storage
+      storageAccountName: vigilanteyestorage
+      storageAccountKey: ${STORAGE_ACCOUNT_KEY}
+  - name: logs
+    azureFile:
+      shareName: vigilanteye-logs
+      storageAccountName: vigilanteyestorage
+      storageAccountKey: ${STORAGE_ACCOUNT_KEY}
+  ipAddress:
+    type: Public
+    ports:
+    - protocol: TCP
+      port: 8000
+    - protocol: TCP
+      port: 80
+    dnsNameLabel: vigilanteye-backend
+  osType: Linux
+  restartPolicy: Always
+tags:
+  Environment: Production
+  Application: VigilantEye
+  Component: Backend

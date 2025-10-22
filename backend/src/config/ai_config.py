@@ -48,6 +48,11 @@ class AIConfig(BaseSettings):
     # Device
     ai_device: str = Field(default="cpu", alias="AI_DEVICE")  # cpu, cuda, mps
     
+    # Model Cache
+    model_cache_path: str = Field(default="storage/model_cache", alias="MODEL_CACHE_PATH")
+    model_cache_enabled: bool = Field(default=True, alias="MODEL_CACHE_ENABLED")
+    model_cache_max_size_gb: float = Field(default=10.0, alias="MODEL_CACHE_MAX_SIZE_GB")
+    
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

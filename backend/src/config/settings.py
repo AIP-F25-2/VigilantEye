@@ -46,6 +46,12 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO", alias="LOG_LEVEL")
     log_file: str = Field(default="logs/app.log", alias="LOG_FILE")
 
+    # Video Processing
+    frame_extraction_interval_ms: int = Field(default=30, alias="FRAME_EXTRACTION_INTERVAL_MS")
+    video_storage_path: str = Field(default="storage/videos", alias="VIDEO_STORAGE_PATH")
+    frames_storage_path: str = Field(default="storage/frames", alias="FRAMES_STORAGE_PATH")
+    audio_storage_path: str = Field(default="storage/audio", alias="AUDIO_STORAGE_PATH")
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
@@ -113,3 +119,5 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     """Get cached settings instance."""
     return Settings()
+
+FRAME_EXTRACTION_INTERVAL_MS=30

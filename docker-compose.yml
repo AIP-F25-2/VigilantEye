@@ -1,0 +1,148 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: vigilanteye-postgres
+    environment:
+      POSTGRES_DB: vigilanteye
+      POSTGRES_USER: vigilanteye
+      POSTGRES_PASSWORD: vigilanteye123
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/scripts/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vigilanteye -d vigilanteye"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - vigilanteye-network
+
+  # Redis for caching and sessions
+  redis:
+    image: redis:7-alpine
+    container_name: vigilanteye-redis
+    command: redis-server --appendonly yes --requirepass vigilanteye123
+    volumes:
+      - redis_data:/data
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - vigilanteye-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: vigilanteye-backend
+    environment:
+      # Database
+      DATABASE_URL: postgresql://vigilanteye:vigilanteye123@postgres:5432/vigilanteye
+      
+      # Redis
+      REDIS_URL: redis://:vigilanteye123@redis:6379/0
+      
+      # Application
+      APP_NAME: VigilantEye
+      APP_ENV: development
+      DEBUG: "true"
+      
+      # AI Configuration
+      AI_DEVICE: cpu
+      MODEL_CACHE_PATH: /app/storage/model_cache
+      MODEL_CACHE_ENABLED: "true"
+      
+      # Storage
+      EVIDENCE_STORAGE_PATH: /app/storage/evidence
+      VECTOR_DB_PATH: /app/storage/vector_db
+      
+      # Security
+      SECRET_KEY: your-secret-key-change-in-production
+      JWT_SECRET_KEY: your-jwt-secret-key-change-in-production
+      
+      # External APIs
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_CHAT_ID: ${TELEGRAM_CHAT_ID:-}
+      
+    volumes:
+      - ./backend:/app
+      - backend_storage:/app/storage
+      - backend_logs:/app/logs
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - vigilanteye-network
+    restart: unless-stopped
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: vigilanteye-frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - vigilanteye-network
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy (Optional)
+  nginx:
+    image: nginx:alpine
+    container_name: vigilanteye-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - vigilanteye-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  backend_storage:
+    driver: local
+  backend_logs:
+    driver: local
+
+networks:
+  vigilanteye-network:
+    driver: bridge

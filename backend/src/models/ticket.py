@@ -172,6 +172,13 @@ class Ticket(Base):
         nullable=True,
         comment="Additional notes/comments"
     )
+    
+    # Soft delete
+    deleted_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime,
+        nullable=True,
+        comment="Soft delete timestamp"
+    )
 
     def __repr__(self) -> str:
         return f"<Ticket(number={self.ticket_number}, status={self.status.value}, priority={self.priority.value})>"

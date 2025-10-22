@@ -75,7 +75,7 @@ class TicketRepository:
         limit: int = 50,
     ) -> Tuple[List[Ticket], int]:
         """Get all tickets with filters."""
-        query = select(Ticket)
+        query = select(Ticket).where(Ticket.deleted_at.is_(None))  # Exclude soft-deleted tickets
         
         if status:
             query = query.where(Ticket.status == status)
@@ -84,7 +84,7 @@ class TicketRepository:
             query = query.where(Ticket.priority == priority)
         
         # Count total
-        count_query = select(func.count()).select_from(Ticket)
+        count_query = select(func.count()).select_from(Ticket).where(Ticket.deleted_at.is_(None))
         if status:
             count_query = count_query.where(Ticket.status == status)
         if priority:

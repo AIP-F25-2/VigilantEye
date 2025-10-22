@@ -11,6 +11,7 @@ from PIL import Image
 from ultralytics import YOLO
 
 from src.config.ai_config import AIConfig
+from src.services.ai.model_cache_manager import get_cached_model
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -22,9 +23,18 @@ class ObjectDetectionService:
 
     def __init__(self):
         """Initialize object detection model."""
-        self.model = YOLO(ai_config.object_detection_model)
+        self.device = ai_config.ai_device
         self.confidence_threshold = ai_config.object_detection_confidence
-        logger.info(f"Object detection model loaded: {ai_config.object_detection_model}")
+        
+        # Load cached YOLO model
+        model_name = ai_config.object_detection_model.replace('.pt', '')
+        self.model = get_cached_model(model_name, self.device)
+        
+        if self.model is None:
+            logger.error("Failed to load object detection model")
+            raise RuntimeError("Object detection model could not be loaded")
+        
+        logger.info(f"Object detection model loaded from cache: {ai_config.object_detection_model}")
 
     def detect_objects(self, image_path: str) -> Dict:
         """
@@ -109,8 +119,15 @@ class OCRService:
     def __init__(self):
         """Initialize OCR reader."""
         languages = ai_config.ocr_languages.split(',')
-        self.reader = easyocr.Reader(languages, gpu=(ai_config.ai_device == 'cuda'))
-        logger.info(f"OCR service initialized with languages: {languages}")
+        
+        # Load cached EasyOCR model
+        self.reader = get_cached_model('easyocr', ai_config.ai_device)
+        
+        if self.reader is None:
+            logger.error("Failed to load OCR model")
+            raise RuntimeError("OCR model could not be loaded")
+        
+        logger.info(f"OCR service initialized with cached model for languages: {languages}")
 
     def extract_text(self, image_path: str) -> Dict:
         """

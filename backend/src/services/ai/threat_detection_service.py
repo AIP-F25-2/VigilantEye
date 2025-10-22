@@ -33,6 +33,7 @@ class ThreatDetectionService:
         image_description: str,
         objects: Dict,
         faces: Dict,
+        persons: Dict = None,
         audio_analysis: Dict = None
     ) -> Dict:
         """
@@ -55,6 +56,7 @@ class ThreatDetectionService:
                 image_description,
                 objects,
                 faces,
+                persons,
                 audio_analysis
             )
             
@@ -88,6 +90,7 @@ class ThreatDetectionService:
         description: str,
         objects: Dict,
         faces: Dict,
+        persons: Dict = None,
         audio: Dict = None
     ) -> str:
         """Build context string for LLM."""
@@ -109,6 +112,20 @@ class ThreatDetectionService:
             emotions = [f['emotion'] for f in faces['faces'] if 'emotion' in f]
             if emotions:
                 context_parts.append(f"Facial Expressions: {', '.join(emotions)}")
+        
+        # Persons (clothing/appearance analysis)
+        if persons and persons.get('persons'):
+            person_count = persons.get('person_count', 0)
+            context_parts.append(f"Persons Detected: {person_count}")
+            
+            for i, person in enumerate(persons['persons'][:3], 1):  # Limit to 3 persons
+                clothing_info = person.get('clothing_analysis', {})
+                if clothing_info.get('clothing_signature'):
+                    context_parts.append(f"Person {i} Clothing: {clothing_info['clothing_signature']}")
+                
+                face_info = person.get('face_analysis')
+                if face_info:
+                    context_parts.append(f"Person {i} Face: Age {face_info.get('estimated_age', 'unknown')}, Gender {face_info.get('gender', 'unknown')}")
         
         # Audio
         if audio:
@@ -257,6 +274,7 @@ def detect_threats_in_frame(
     frame_timestamp_ms: int,
     image_analysis: Dict,
     face_analysis: Dict,
+    person_analysis: Dict = None,
     audio_analysis: Dict = None,
     processing_id: str = None
 ) -> Dict:
@@ -286,6 +304,7 @@ def detect_threats_in_frame(
             image_description=image_analysis.get('combined_description', ''),
             objects=image_analysis.get('objects', {}),
             faces=face_analysis,
+            persons=person_analysis,
             audio_analysis=audio_analysis
         )
         

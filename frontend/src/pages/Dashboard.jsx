@@ -11,6 +11,7 @@ import {
   User,
   Shield,
   Loader2,
+  Ticket,
 } from 'lucide-react'
 import Logo from '../components/Logo'
 import { useAuthStore } from '../store/authStore'
@@ -194,6 +195,22 @@ const Dashboard = () => {
             <Logo size="md" />
             
             <div className="flex items-center gap-6">
+              {/* Navigation */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => navigate('/dashboard')}
+                  className="px-4 py-2 bg-primary-600 text-white rounded-lg"
+                >
+                  Dashboard
+                </button>
+                <button
+                  onClick={() => navigate('/tickets')}
+                  className="px-4 py-2 text-gray-400 hover:text-white transition-colors"
+                >
+                  Tickets
+                </button>
+              </div>
+
               {/* User Info */}
               <div className="flex items-center gap-3 px-4 py-2 bg-dark-800 rounded-lg border border-gray-700">
                 <div className="w-8 h-8 bg-primary-500/20 rounded-full flex items-center justify-center">

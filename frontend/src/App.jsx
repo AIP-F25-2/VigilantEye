@@ -3,6 +3,7 @@ import { useAuthStore } from './store/authStore'
 import Login from './pages/Login'
 import SignUp from './pages/SignUp'
 import Dashboard from './pages/Dashboard'
+import UnifiedTicketsPage from './pages/UnifiedTicketsPage'
 
 function App() {
   const { isAuthenticated } = useAuthStore()
@@ -21,6 +22,10 @@ function App() {
         <Route 
           path="/dashboard" 
           element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/tickets" 
+          element={isAuthenticated ? <UnifiedTicketsPage /> : <Navigate to="/login" />} 
         />
         <Route 
           path="/" 

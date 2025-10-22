@@ -12,6 +12,7 @@ from deepface import DeepFace
 from facenet_pytorch import MTCNN, InceptionResnetV1
 
 from src.config.ai_config import AIConfig
+from src.services.ai.model_cache_manager import get_cached_model
 from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -25,18 +26,15 @@ class FaceRecognitionService:
         """Initialize face recognition models."""
         self.device = torch.device(ai_config.ai_device)
         
-        # Face detection
-        self.mtcnn = MTCNN(
-            keep_all=True,
-            device=self.device,
-            min_face_size=40,
-            thresholds=[0.6, 0.7, ai_config.face_detection_confidence]
-        )
+        # Load cached models or create new ones
+        self.mtcnn = get_cached_model('mtcnn', str(self.device))
+        self.resnet = get_cached_model('facenet_resnet', str(self.device))
         
-        # Face embedding
-        self.resnet = InceptionResnetV1(pretrained='vggface2').eval().to(self.device)
+        if self.mtcnn is None or self.resnet is None:
+            logger.error("Failed to load face recognition models")
+            raise RuntimeError("Face recognition models could not be loaded")
         
-        logger.info("Face recognition service initialized")
+        logger.info("Face recognition service initialized with cached models")
 
     def detect_faces(self, image_path: str) -> List[Dict]:
         """
