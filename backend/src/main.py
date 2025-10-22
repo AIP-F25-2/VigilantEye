@@ -5,7 +5,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.api import auth, health
+
+from src.api import auth, health, video
 from src.config import get_settings
 from src.database import DatabaseSession
 from src.middleware.error_handler import error_handler_middleware
@@ -78,6 +79,7 @@ def create_app() -> FastAPI:
     # Register routers
     app.include_router(health.router, prefix="/api")
     app.include_router(auth.router, prefix="/api")
+    app.include_router(video.router, prefix="/api")
     
     logger.info("Application configured successfully")
     

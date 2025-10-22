@@ -1,0 +1,8 @@
+# Video Processing Dependencies
+opencv-python==4.8.1.78
+opencv-python-headless==4.8.1.78
+moviepy==1.0.3
+Pillow==10.1.0
+numpy==1.24.3
+imageio==2.33.0
+imageio-ffmpeg==0.4.9

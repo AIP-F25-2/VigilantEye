@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import Logo from '../components/Logo'
 import { useAuthStore } from '../store/authStore'
+import { videoAPI } from '../services/api'
 
 const Dashboard = () => {
   const navigate = useNavigate()
@@ -29,6 +30,9 @@ const Dashboard = () => {
   const videoRef = useRef(null)
   const fileInputRef = useRef(null)
   const mediaStreamRef = useRef(null)
+  const mediaRecorderRef = useRef(null)
+  const recordedChunksRef = useRef([])
+  const streamVideoIdRef = useRef(null)
 
   const handleLogout = () => {
     clearAuth()
@@ -50,19 +54,28 @@ const Dashboard = () => {
     setUploading(true)
     setUploadProgress(0)
 
-    // Simulate upload progress
-    const interval = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval)
-          setUploading(false)
-          alert('Video uploaded successfully! (Demo)')
-          setSelectedFile(null)
-          return 0
-        }
-        return prev + 10
+    try {
+      const response = await videoAPI.uploadVideo(selectedFile, (progress) => {
+        setUploadProgress(progress)
       })
-    }, 500)
+
+      console.log('Upload response:', response)
+      alert(
+        `Video uploaded successfully!\n\n` +
+        `File: ${response.original_filename}\n` +
+        `Size: ${(response.file_size / 1024 / 1024).toFixed(2)} MB\n` +
+        `Status: ${response.status}\n\n` +
+        `Video ID: ${response.id}`
+      )
+      setSelectedFile(null)
+      setUploadProgress(0)
+    } catch (error) {
+      console.error('Upload error:', error)
+      const errorMsg = error.response?.data?.detail || error.message || 'Failed to upload video'
+      alert('Upload failed: ' + errorMsg)
+    } finally {
+      setUploading(false)
+    }
   }
 
   const startCamera = async () => {
@@ -95,13 +108,71 @@ const Dashboard = () => {
     setRecording(false)
   }
 
-  const toggleRecording = () => {
-    setRecording(!recording)
-    // In a real implementation, this would start/stop recording
+  const toggleRecording = async () => {
     if (!recording) {
-      alert('Recording started! (Demo)')
+      // Start recording
+      try {
+        // Start stream on backend
+        const response = await videoAPI.startStream({
+          device: 'webcam',
+          timestamp: new Date().toISOString(),
+        })
+        
+        streamVideoIdRef.current = response.id
+        recordedChunksRef.current = []
+
+        // Create MediaRecorder
+        const options = { mimeType: 'video/webm;codecs=vp9' }
+        if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+          options.mimeType = 'video/webm'
+        }
+
+        const mediaRecorder = new MediaRecorder(mediaStreamRef.current, options)
+        mediaRecorderRef.current = mediaRecorder
+
+        mediaRecorder.ondataavailable = async (event) => {
+          if (event.data && event.data.size > 0) {
+            recordedChunksRef.current.push(event.data)
+            
+            // Upload chunk to backend
+            try {
+              await videoAPI.uploadChunk(streamVideoIdRef.current, event.data)
+              console.log('Chunk uploaded:', event.data.size, 'bytes')
+            } catch (error) {
+              console.error('Failed to upload chunk:', error)
+            }
+          }
+        }
+
+        mediaRecorder.start(1000) // Collect data every 1 second
+        setRecording(true)
+        console.log('Recording started, video ID:', response.id)
+      } catch (error) {
+        console.error('Failed to start recording:', error)
+        alert('Failed to start recording: ' + (error.response?.data?.detail || error.message))
+      }
     } else {
-      alert('Recording stopped! (Demo)')
+      // Stop recording
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop()
+        
+        // Wait a bit for final chunks
+        setTimeout(async () => {
+          try {
+            // Stop stream on backend
+            const response = await videoAPI.stopStream(streamVideoIdRef.current)
+            console.log('Recording stopped:', response)
+            alert(`Recording saved successfully! File size: ${(response.file_size / 1024 / 1024).toFixed(2)} MB`)
+            
+            recordedChunksRef.current = []
+            streamVideoIdRef.current = null
+          } catch (error) {
+            console.error('Failed to stop stream:', error)
+            alert('Failed to save recording: ' + (error.response?.data?.detail || error.message))
+          }
+        }, 1000)
+      }
+      setRecording(false)
     }
   }
 
