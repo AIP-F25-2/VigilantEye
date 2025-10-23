@@ -1,0 +1,9 @@
+opencv-python>=4.5.0
+numpy>=1.21.0
+spacy>=3.4.0
+pytesseract>=0.3.10
+Pillow>=8.3.0
+requests>=2.25.0
+pathlib2>=2.3.0
+Flask>=2.0.0
+Werkzeug>=2.0.0
