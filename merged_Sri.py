@@ -191,3 +191,31 @@ def check_ambiguity():
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)), debug=True)
+
+# Step 1: Clone the Git repository (run this in your terminal, not Python)
+# git clone <repo-url>
+
+# Step 2: Navigate to the project directory (in terminal)
+# cd "E:\AIP 2025\Git-AIP 2025\VigilantEye-1"
+
+# Step 3: Create a virtual environment (in terminal)
+# python -m venv venv
+
+# Step 4: Activate the virtual environment
+# In PowerShell:
+# .\venv\Scripts\Activate.ps1
+# In Command Prompt:
+# .\venv\Scripts\activate.bat
+
+# Step 5: Install required dependencies
+# If requirements.txt exists:
+# pip install -r requirements.txt
+# Otherwise, install manually:
+# pip install face_recognition matplotlib scikit-learn flask transformers torch numpy opencv-python
+
+# Step 6: Run the Python script
+# python merged_Sri.py
+
+# Additional notes:
+# - Always activate the virtual environment before running/installing packages
+# - If you get missing module errors, install them using pip install <module>
