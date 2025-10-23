@@ -9,6 +9,10 @@ from .device import Device, DeviceType
 from .project import Project, ProjectMember
 from .analytics import Analytics, ViewEvent
 from .outbound_message import OutboundMessage, MessageStatus
+from .faceai_models import (
+    FaceDetection, DemographicsAnalysis, AmbiguityAnalysis, 
+    FaceEncoding, FaceAiConfiguration
+)
 
 __all__ = [
     'BaseModel',
@@ -20,5 +24,7 @@ __all__ = [
     'Device', 'DeviceType',
     'Project', 'ProjectMember',
     'Analytics', 'ViewEvent',
-    'OutboundMessage', 'MessageStatus'
+    'OutboundMessage', 'MessageStatus',
+    'FaceDetection', 'DemographicsAnalysis', 'AmbiguityAnalysis',
+    'FaceEncoding', 'FaceAiConfiguration'
 ]

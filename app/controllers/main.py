@@ -31,6 +31,12 @@ def profile():
     """User profile page"""
     return render_template('profile.html')
 
+@main_bp.route('/faceai')
+@login_required
+def faceai_dashboard():
+    """FaceAi dashboard page"""
+    return render_template('faceai_dashboard.html')
+
 @main_bp.route('/health')
 def health():
     """Health check endpoint - API"""

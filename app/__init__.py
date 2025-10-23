@@ -42,6 +42,7 @@ def create_app():
     from app.controllers.project_controller import project_bp
     from app.controllers.telegram_controller import bp as telegram_bp
     from app.controllers.webhook_controller import bp as webhook_bp
+    from app.controllers.faceai_controller import faceai_bp
     
     # Register main blueprints
     app.register_blueprint(main_bp)
@@ -57,6 +58,9 @@ def create_app():
     # Register Telegram integration blueprints
     app.register_blueprint(telegram_bp)  # Telegram API routes (/api/telegram/ingest)
     app.register_blueprint(webhook_bp)  # Webhook routes (/webhook/telegram/<secret>)
+    
+    # Register FaceAi integration blueprint
+    app.register_blueprint(faceai_bp)  # FaceAi API routes (/api/faceai/*)
     
     # Note: Server blueprints removed - using new API structure
     

@@ -1,0 +1,448 @@
+{% extends "base.html" %}
+
+{% block title %}FaceAi Dashboard - VIGILANTEye{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">🤖 FaceAi Dashboard</h1>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#detectModal">
+                        <i class="fas fa-search"></i> Detect Faces
+                    </button>
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#demographicsModal">
+                        <i class="fas fa-user-tag"></i> Demographics
+                    </button>
+                    <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#ambiguityModal">
+                        <i class="fas fa-balance-scale"></i> Ambiguity Check
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="totalDetections">0</h4>
+                            <p class="card-text">Total Detections</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-eye fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="totalAnalyses">0</h4>
+                            <p class="card-text">Demographics Analyses</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-chart-pie fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="totalAmbiguity">0</h4>
+                            <p class="card-text">Ambiguity Checks</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-balance-scale fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="serviceStatus">Unknown</h4>
+                            <p class="card-text">Service Status</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-cog fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Recent Face Detection Activity</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="detectionsTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Source Type</th>
+                                    <th>Faces Detected</th>
+                                    <th>Processing Time</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data will be loaded via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Face Detection Modal -->
+<div class="modal fade" id="detectModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Face Detection</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="detectForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="detectImage" class="form-label">Upload Image</label>
+                        <input type="file" class="form-control" id="detectImage" name="image" accept="image/*" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="detectSourceType" class="form-label">Source Type</label>
+                        <select class="form-select" id="detectSourceType" name="source_type">
+                            <option value="image">Image</option>
+                            <option value="video_frame">Video Frame</option>
+                            <option value="camera">Camera</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="detectShowResult" name="show_result">
+                            <label class="form-check-label" for="detectShowResult">
+                                Show visualization result
+                            </label>
+                        </div>
+                    </div>
+                </form>
+                <div id="detectResult" class="mt-3" style="display: none;">
+                    <!-- Results will be displayed here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="detectFaces()">Detect Faces</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Demographics Analysis Modal -->
+<div class="modal fade" id="demographicsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Demographics Analysis</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="demographicsForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="demographicsImage" class="form-label">Upload Image</label>
+                        <input type="file" class="form-control" id="demographicsImage" name="image" accept="image/*" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="demographicsSourceType" class="form-label">Source Type</label>
+                        <select class="form-select" id="demographicsSourceType" name="source_type">
+                            <option value="image">Image</option>
+                            <option value="video_frame">Video Frame</option>
+                            <option value="camera">Camera</option>
+                        </select>
+                    </div>
+                </form>
+                <div id="demographicsResult" class="mt-3" style="display: none;">
+                    <!-- Results will be displayed here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-success" onclick="analyzeDemographics()">Analyze Demographics</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ambiguity Check Modal -->
+<div class="modal fade" id="ambiguityModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Ambiguity Check</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="ambiguityForm" enctype="multipart/form-data">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="ambiguityImage1" class="form-label">First Image</label>
+                                <input type="file" class="form-control" id="ambiguityImage1" name="image1" accept="image/*" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="ambiguityImage2" class="form-label">Second Image</label>
+                                <input type="file" class="form-control" id="ambiguityImage2" name="image2" accept="image/*" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="ambiguitySourceType" class="form-label">Source Type</label>
+                        <select class="form-select" id="ambiguitySourceType" name="source_type">
+                            <option value="comparison">Comparison</option>
+                            <option value="surveillance">Surveillance</option>
+                            <option value="verification">Verification</option>
+                        </select>
+                    </div>
+                </form>
+                <div id="ambiguityResult" class="mt-3" style="display: none;">
+                    <!-- Results will be displayed here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-warning" onclick="checkAmbiguity()">Check Ambiguity</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// FaceAi Dashboard JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardData();
+    setInterval(loadDashboardData, 30000); // Refresh every 30 seconds
+});
+
+function loadDashboardData() {
+    // Load service status
+    fetch('/api/faceai/status')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const status = data.status.available ? 'Online' : 'Offline';
+                document.getElementById('serviceStatus').textContent = status;
+                document.getElementById('serviceStatus').parentElement.parentElement.className = 
+                    data.status.available ? 'card bg-success text-white' : 'card bg-danger text-white';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading status:', error);
+            document.getElementById('serviceStatus').textContent = 'Error';
+        });
+
+    // Load recent detections
+    fetch('/api/faceai/detections?per_page=10')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('totalDetections').textContent = data.pagination.total;
+                updateDetectionsTable(data.detections);
+            }
+        })
+        .catch(error => console.error('Error loading detections:', error));
+}
+
+function updateDetectionsTable(detections) {
+    const tbody = document.querySelector('#detectionsTable tbody');
+    tbody.innerHTML = '';
+    
+    detections.forEach(detection => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${detection.id.substring(0, 8)}...</td>
+            <td><span class="badge bg-primary">${detection.source_type}</span></td>
+            <td><span class="badge bg-info">${detection.faces_detected}</span></td>
+            <td>${detection.processing_time_ms ? detection.processing_time_ms.toFixed(2) + 'ms' : 'N/A'}</td>
+            <td>${new Date(detection.created_at).toLocaleString()}</td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="viewDetection('${detection.id}')">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function detectFaces() {
+    const form = document.getElementById('detectForm');
+    const formData = new FormData(form);
+    const resultDiv = document.getElementById('detectResult');
+    
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div><p>Processing...</p></div>';
+    
+    fetch('/api/faceai/detect', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <h6>Detection Results</h6>
+                    <p><strong>Faces Detected:</strong> ${data.faces_detected}</p>
+                    <p><strong>Processing Time:</strong> ${data.processing_time_ms.toFixed(2)}ms</p>
+                    <p><strong>Detection ID:</strong> ${data.detection_id}</p>
+                </div>
+            `;
+            loadDashboardData(); // Refresh dashboard
+        } else {
+            resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+        }
+    })
+    .catch(error => {
+        resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+    });
+}
+
+function analyzeDemographics() {
+    const form = document.getElementById('demographicsForm');
+    const formData = new FormData(form);
+    const resultDiv = document.getElementById('demographicsResult');
+    
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div><p>Processing...</p></div>';
+    
+    fetch('/api/faceai/demographics', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            let resultsHtml = `
+                <div class="alert alert-success">
+                    <h6>Demographics Analysis Results</h6>
+                    <p><strong>Faces Analyzed:</strong> ${data.faces_analyzed}</p>
+                    <p><strong>Processing Time:</strong> ${data.processing_time_ms.toFixed(2)}ms</p>
+                    <p><strong>Analysis ID:</strong> ${data.analysis_id}</p>
+                </div>
+            `;
+            
+            if (data.results && data.results.length > 0) {
+                resultsHtml += '<div class="mt-3"><h6>Analysis Details:</h6>';
+                data.results.forEach((result, index) => {
+                    resultsHtml += `
+                        <div class="card mb-2">
+                            <div class="card-body">
+                                <h6>Face ${index + 1}</h6>
+                                <p><strong>Gender:</strong> ${result.gender || 'Unknown'}</p>
+                                <p><strong>Age Group:</strong> ${result.age_group || 'Unknown'}</p>
+                                ${result.gender_score ? `<p><strong>Gender Confidence:</strong> ${(result.gender_score * 100).toFixed(1)}%</p>` : ''}
+                                ${result.age_score ? `<p><strong>Age Confidence:</strong> ${(result.age_score * 100).toFixed(1)}%</p>` : ''}
+                            </div>
+                        </div>
+                    `;
+                });
+                resultsHtml += '</div>';
+            }
+            
+            resultDiv.innerHTML = resultsHtml;
+            loadDashboardData(); // Refresh dashboard
+        } else {
+            resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+        }
+    })
+    .catch(error => {
+        resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+    });
+}
+
+function checkAmbiguity() {
+    const form = document.getElementById('ambiguityForm');
+    const formData = new FormData(form);
+    const resultDiv = document.getElementById('ambiguityResult');
+    
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div><p>Processing...</p></div>';
+    
+    fetch('/api/faceai/ambiguity', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const ambiguousClass = data.ambiguous ? 'alert-warning' : 'alert-success';
+            const ambiguousText = data.ambiguous ? 'AMBIGUOUS - Possibly Same Person' : 'DIFFERENT - Not Same Person';
+            
+            let resultsHtml = `
+                <div class="alert ${ambiguousClass}">
+                    <h6>Ambiguity Analysis Results</h6>
+                    <p><strong>Result:</strong> ${ambiguousText}</p>
+                    <p><strong>Ambiguity Score:</strong> ${(data.score * 100).toFixed(1)}%</p>
+                    <p><strong>Processing Time:</strong> ${data.processing_time_ms.toFixed(2)}ms</p>
+                    <p><strong>Analysis ID:</strong> ${data.analysis_id}</p>
+                </div>
+            `;
+            
+            if (data.similarities) {
+                resultsHtml += '<div class="mt-3"><h6>Similarity Scores:</h6><ul>';
+                Object.entries(data.similarities).forEach(([key, value]) => {
+                    resultsHtml += `<li><strong>${key}:</strong> ${(value * 100).toFixed(1)}%</li>`;
+                });
+                resultsHtml += '</ul></div>';
+            }
+            
+            if (data.reasons && data.reasons.length > 0) {
+                resultsHtml += '<div class="mt-3"><h6>Reasons:</h6><ul>';
+                data.reasons.forEach(reason => {
+                    resultsHtml += `<li>${reason}</li>`;
+                });
+                resultsHtml += '</ul></div>';
+            }
+            
+            resultDiv.innerHTML = resultsHtml;
+            loadDashboardData(); // Refresh dashboard
+        } else {
+            resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+        }
+    })
+    .catch(error => {
+        resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+    });
+}
+
+function viewDetection(detectionId) {
+    // Implement view detection details
+    window.open(`/api/faceai/detections/${detectionId}`, '_blank');
+}
+</script>
+{% endblock %}
