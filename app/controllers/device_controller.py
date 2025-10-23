@@ -58,21 +58,36 @@ def create_device():
         data = request.get_json()
         
         # Validate required fields
-        required_fields = ['device_id', 'name', 'device_type', 'ip_address']
+        required_fields = ['device_id', 'name', 'device_type']
         for field in required_fields:
             if field not in data:
                 return jsonify({'status': 'error', 'message': f'Missing required field: {field}'}), 400
+        
+        # Convert device_type string to enum
+        from app.models.device import DeviceType, DeviceStatus
+        device_type_enum = DeviceType(data['device_type'])
         
         # Create device
         device = Device(
             device_id=data['device_id'],
             name=data['name'],
-            device_type=data['device_type'],
-            ip_address=data['ip_address'],
-            status=data.get('status', 'available'),
+            device_type=device_type_enum,
+            connection_string=data.get('connection_string'),
+            rtsp_url=data.get('rtsp_url'),
+            ip_address=data.get('ip_address'),
+            port=data.get('port'),
             manufacturer=data.get('manufacturer'),
             model=data.get('model'),
-            rtsp_url=data.get('rtsp_url')
+            version=data.get('version'),
+            serial_number=data.get('serial_number'),
+            driver=data.get('driver'),
+            capabilities=data.get('capabilities', {}),
+            supported_formats=data.get('supported_formats', []),
+            supported_resolutions=data.get('supported_resolutions', []),
+            supported_framerates=data.get('supported_framerates', []),
+            default_settings=data.get('default_settings', {}),
+            current_settings=data.get('current_settings', {}),
+            user_id=data.get('user_id')
         )
         
         db.session.add(device)
@@ -94,6 +109,15 @@ def update_device(device_id):
     try:
         device = Device.query.get_or_404(device_id)
         data = request.get_json()
+        
+        # Handle enum fields
+        from app.models.device import DeviceType, DeviceStatus
+        
+        if 'device_type' in data:
+            data['device_type'] = DeviceType(data['device_type'])
+        
+        if 'status' in data:
+            data['status'] = DeviceStatus(data['status'])
         
         # Update fields
         for field, value in data.items():
