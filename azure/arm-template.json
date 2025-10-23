@@ -67,7 +67,6 @@
     "nicName": "[concat(parameters('appName'), '-nic')]",
     "storageAccountName": "[concat(parameters('appName'), 'storage', uniqueString(resourceGroup().id))]",
     "postgresServerName": "[concat(parameters('appName'), '-postgres')]",
-    "redisCacheName": "[concat(parameters('appName'), '-redis')]",
     "containerRegistryName": "[concat(parameters('appName'), 'acr')]"
   },
   "resources": [
@@ -104,21 +103,6 @@
           "backupRetentionDays": 7,
           "geoRedundantBackup": "Disabled"
         }
-      }
-    },
-    {
-      "type": "Microsoft.Cache/Redis",
-      "apiVersion": "2020-06-01",
-      "name": "[variables('redisCacheName')]",
-      "location": "[parameters('location')]",
-      "properties": {
-        "sku": {
-          "name": "Standard",
-          "family": "C",
-          "capacity": 1
-        },
-        "enableNonSslPort": false,
-        "minimumTlsVersion": "1.2"
       }
     },
     {
@@ -298,10 +282,6 @@
     "postgresServerName": {
       "type": "string",
       "value": "[variables('postgresServerName')]"
-    },
-    "redisCacheName": {
-      "type": "string",
-      "value": "[variables('redisCacheName')]"
     },
     "containerRegistryName": {
       "type": "string",

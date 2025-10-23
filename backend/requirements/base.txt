@@ -15,10 +15,6 @@ pymysql==1.1.0
 cryptography==41.0.7
 aiomysql==0.2.0
 
-# Caching
-redis==5.0.1
-hiredis==2.2.3
-
 # Authentication
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4

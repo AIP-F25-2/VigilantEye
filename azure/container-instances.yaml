@@ -20,8 +20,8 @@ properties:
       environmentVariables:
       - name: DATABASE_URL
         secureValue: ${DATABASE_URL}
-      - name: REDIS_URL
-        secureValue: ${REDIS_URL}
+      - name: CACHE_DIR
+        value: "/app/storage/local_cache"
       - name: SECRET_KEY
         secureValue: ${SECRET_KEY}
       - name: JWT_SECRET_KEY

@@ -54,14 +54,12 @@ az deployment group create \
 echo -e "${YELLOW}📋 Getting deployment outputs...${NC}"
 VM_PUBLIC_IP=$(az deployment group show --resource-group $RESOURCE_GROUP --name arm-template --query properties.outputs.vmPublicIP.value -o tsv)
 POSTGRES_SERVER=$(az deployment group show --resource-group $RESOURCE_GROUP --name arm-template --query properties.outputs.postgresServerName.value -o tsv)
-REDIS_CACHE=$(az deployment group show --resource-group $RESOURCE_GROUP --name arm-template --query properties.outputs.redisCacheName.value -o tsv)
 ACR_NAME=$(az deployment group show --resource-group $RESOURCE_GROUP --name arm-template --query properties.outputs.containerRegistryName.value -o tsv)
 STORAGE_ACCOUNT=$(az deployment group show --resource-group $RESOURCE_GROUP --name arm-template --query properties.outputs.storageAccountName.value -o tsv)
 
 echo -e "${GREEN}✅ Azure resources created successfully!${NC}"
 echo -e "${BLUE}VM Public IP: $VM_PUBLIC_IP${NC}"
 echo -e "${BLUE}PostgreSQL Server: $POSTGRES_SERVER${NC}"
-echo -e "${BLUE}Redis Cache: $REDIS_CACHE${NC}"
 echo -e "${BLUE}Container Registry: $ACR_NAME${NC}"
 echo -e "${BLUE}Storage Account: $STORAGE_ACCOUNT${NC}"
 
@@ -95,7 +93,10 @@ echo -e "${YELLOW}🚀 Deploying to Azure Container Instances...${NC}"
 # Create environment file for deployment
 cat > .env.azure << EOF
 DATABASE_URL=postgresql://vigilanteye:VigilantEye123!@$POSTGRES_SERVER.postgres.database.azure.com:5432/vigilanteye
-REDIS_URL=redis://:$REDIS_CACHE.redis.cache.windows.net:6380/0
+CACHE_DIR=/app/storage/local_cache
+CACHE_MAX_MEMORY_ITEMS=1000
+CACHE_DEFAULT_TTL=3600
+CACHE_CLEANUP_INTERVAL=300
 SECRET_KEY=VigilantEyeSecretKey123!
 JWT_SECRET_KEY=VigilantEyeJWTSecret123!
 OPENAI_API_KEY=${OPENAI_API_KEY:-}

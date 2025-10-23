@@ -35,8 +35,11 @@ POSTGRES_DB=vigilanteye
 POSTGRES_USER=vigilanteye
 POSTGRES_PASSWORD=vigilanteye123
 
-# Redis Configuration
-REDIS_PASSWORD=vigilanteye123
+# Local Cache Configuration
+CACHE_DIR=storage/local_cache
+CACHE_MAX_MEMORY_ITEMS=1000
+CACHE_DEFAULT_TTL=3600
+CACHE_CLEANUP_INTERVAL=300
 
 # Application Configuration
 SECRET_KEY=your-secret-key-change-in-production
@@ -106,11 +109,11 @@ fi
 echo -e "${YELLOW}🗄️ Setting up database...${NC}"
 docker-compose exec backend python scripts/setup_database.py
 
-# Check Redis connection
-if docker-compose exec -T redis redis-cli ping > /dev/null 2>&1; then
-    echo -e "${GREEN}✅ Redis is ready${NC}"
+# Check local cache directory
+if [ -d "backend/storage/local_cache" ]; then
+    echo -e "${GREEN}✅ Local cache directory is ready${NC}"
 else
-    echo -e "${RED}❌ Redis connection failed${NC}"
+    echo -e "${YELLOW}⚠️ Local cache directory will be created automatically${NC}"
 fi
 
 # Show service URLs
@@ -128,6 +131,6 @@ echo -e "${BLUE}  Stop services: docker-compose down${NC}"
 echo -e "${BLUE}  Restart services: docker-compose restart${NC}"
 echo -e "${BLUE}  Rebuild images: docker-compose build --no-cache${NC}"
 echo -e "${BLUE}  Access database: docker-compose exec postgres psql -U vigilanteye -d vigilanteye${NC}"
-echo -e "${BLUE}  Access Redis: docker-compose exec redis redis-cli${NC}"
+echo -e "${BLUE}  View cache stats: docker-compose exec backend python -c \"from src.services.local_cache import get_cache; print(get_cache().get_stats())\"${NC}"
 
 echo -e "${GREEN}✨ Happy coding!${NC}"

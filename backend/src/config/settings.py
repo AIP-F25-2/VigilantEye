@@ -25,10 +25,11 @@ class Settings(BaseSettings):
     db_user: str = Field(default="root", alias="DB_USER")
     db_password: str = Field(default="root", alias="DB_PASSWORD")
 
-    # Redis
-    redis_host: str = Field(default="localhost", alias="REDIS_HOST")
-    redis_port: int = Field(default=6379, alias="REDIS_PORT")
-    redis_db: int = Field(default=0, alias="REDIS_DB")
+    # Local Cache Configuration
+    cache_dir: str = Field(default="storage/local_cache", alias="CACHE_DIR")
+    cache_max_memory_items: int = Field(default=1000, alias="CACHE_MAX_MEMORY_ITEMS")
+    cache_default_ttl: int = Field(default=3600, alias="CACHE_DEFAULT_TTL")
+    cache_cleanup_interval: int = Field(default=300, alias="CACHE_CLEANUP_INTERVAL")
 
     # JWT Authentication
     jwt_secret_key: str = Field(default="change-this-secret", alias="JWT_SECRET_KEY")
@@ -95,9 +96,14 @@ class Settings(BaseSettings):
         )
 
     @property
-    def redis_url(self) -> str:
-        """Construct Redis URL."""
-        return f"redis://{self.redis_host}:{self.redis_port}/{self.redis_db}"
+    def cache_config(self) -> Dict[str, Any]:
+        """Get cache configuration."""
+        return {
+            "cache_dir": self.cache_dir,
+            "max_memory_items": self.cache_max_memory_items,
+            "default_ttl": self.cache_default_ttl,
+            "cleanup_interval": self.cache_cleanup_interval
+        }
 
     @property
     def cors_origins_list(self) -> List[str]:

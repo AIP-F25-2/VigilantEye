@@ -23,24 +23,6 @@ services:
       - vigilanteye-network
     restart: unless-stopped
 
-  # Redis for caching and sessions
-  redis:
-    image: redis:7-alpine
-    container_name: vigilanteye-redis-prod
-    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
-    volumes:
-      - redis_data:/data
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-    networks:
-      - vigilanteye-network
-    restart: unless-stopped
-
   # Backend API
   backend:
     build:
@@ -51,8 +33,11 @@ services:
       # Database
       DATABASE_URL: postgresql://${POSTGRES_USER:-vigilanteye}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-vigilanteye}
       
-      # Redis
-      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      # Local Cache Configuration
+      CACHE_DIR: /app/storage/local_cache
+      CACHE_MAX_MEMORY_ITEMS: 1000
+      CACHE_DEFAULT_TTL: 3600
+      CACHE_CLEANUP_INTERVAL: 300
       
       # Application
       APP_NAME: VigilantEye
@@ -85,8 +70,6 @@ services:
       - "8000:8000"
     depends_on:
       postgres:
-        condition: service_healthy
-      redis:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
@@ -127,8 +110,6 @@ services:
 
 volumes:
   postgres_data:
-    driver: local
-  redis_data:
     driver: local
   backend_storage:
     driver: local

@@ -1,0 +1,26 @@
+# Test Dockerfile for Frontend
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm ci
+
+# Copy source code
+COPY src/ src/
+COPY public/ public/
+COPY vite.config.js .
+COPY tailwind.config.js .
+COPY postcss.config.js .
+
+# Create test results directory
+RUN mkdir -p test-results
+
+# Set environment variables
+ENV NODE_ENV=test
+
+# Default command
+CMD ["npm", "run", "test:coverage"]

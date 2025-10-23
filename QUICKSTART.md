@@ -1,284 +1,347 @@
-# Quick Start Guide
+# VigilantEye Quick Start Guide
 
-Get the authentication system running in 5 minutes!
+Get VigilantEye running in 5 minutes!
 
-## Prerequisites
+## 🚀 Prerequisites
 
-- Python 3.10 or higher
-- MySQL 5.7+ or MariaDB 10.3+
-- pip (Python package manager)
+- **Docker & Docker Compose** (recommended)
+- **Node.js 18+** (for frontend development)
+- **Python 3.11+** (for backend development)
+- **Git** (for version control)
 
-## Step 1: Setup MySQL Database
+## ⚡ Quick Start Options
+
+### Option 1: Docker (Recommended - 2 minutes)
 
 ```bash
-# Login to MySQL
-mysql -u root -p
+# Clone repository
+git clone https://github.com/your-org/vigilanteye.git
+cd vigilanteye
 
-# Create database
-CREATE DATABASE enterprise_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+# Start everything with one command
+docker-compose up -d
 
-# Create user (optional, for better security)
-CREATE USER 'enterprise_user'@'localhost' IDENTIFIED BY 'your_secure_password';
-GRANT ALL PRIVILEGES ON enterprise_db.* TO 'enterprise_user'@'localhost';
-FLUSH PRIVILEGES;
+# Wait for services to start (30 seconds)
+sleep 30
 
-# Exit MySQL
-EXIT;
+# Setup database
+docker-compose exec backend python scripts/setup_database.py
 ```
 
-## Step 2: Setup Backend
+**Access the application:**
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000
+- API Docs: http://localhost:8000/docs
+
+### Option 2: Automated Setup Script
 
 ```bash
-# Navigate to backend directory
+# Clone repository
+git clone https://github.com/your-org/vigilanteye.git
+cd vigilanteye
+
+# Run setup script (Linux/Mac)
+chmod +x scripts/setup-dev.sh
+./scripts/setup-dev.sh
+
+# Or run setup script (Windows)
+scripts\setup-dev.bat
+```
+
+### Option 3: Windows Batch File
+
+```cmd
+# Double-click START_ALL.bat
+# Or run from command prompt:
+START_ALL.bat
+```
+
+### Option 4: Manual Setup
+
+#### Backend Setup
+```bash
 cd backend
 
 # Create virtual environment
 python -m venv venv
 
 # Activate virtual environment
-# On Linux/Mac:
+# Linux/Mac:
 source venv/bin/activate
-# On Windows:
+# Windows:
 venv\Scripts\activate
 
 # Install dependencies
 pip install -r requirements/development.txt
-```
 
-## Step 3: Configure Environment
-
-```bash
-# Copy environment template
+# Configure environment
 cp .env.example .env
+# Edit .env with your settings
 
-# Edit .env file with your settings
-# At minimum, update these:
+# Start backend
+python run.py
 ```
 
-Edit `.env`:
+#### Frontend Setup
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your settings
+
+# Start frontend
+npm run dev
+```
+
+## 🔧 Configuration
+
+### Environment Variables
+
+Create `.env` file in the root directory:
+
 ```env
-DB_HOST=localhost
-DB_PORT=3306
-DB_NAME=enterprise_db
-DB_USER=root  # or enterprise_user if you created one
-DB_PASSWORD=your_mysql_password
+# Database Configuration
+POSTGRES_DB=vigilanteye
+POSTGRES_USER=vigilanteye
+POSTGRES_PASSWORD=vigilanteye123
 
-JWT_SECRET_KEY=change-this-to-a-random-secret-key-at-least-32-characters-long
+# Local Cache Configuration
+CACHE_DIR=storage/local_cache
+CACHE_MAX_MEMORY_ITEMS=1000
+CACHE_DEFAULT_TTL=3600
+CACHE_CLEANUP_INTERVAL=300
+
+# Application Configuration
+SECRET_KEY=your-secret-key-change-in-production
+JWT_SECRET_KEY=your-jwt-secret-key-change-in-production
+
+# External APIs (Optional)
+OPENAI_API_KEY=your-openai-api-key
+TELEGRAM_BOT_TOKEN=your-telegram-bot-token
+TELEGRAM_CHAT_ID=your-telegram-chat-id
+
+# AI Configuration
+AI_DEVICE=cpu
+MODEL_CACHE_ENABLED=true
 ```
 
-## Step 4: Create Database Tables
+## 🧪 Testing the Setup
 
+### 1. Health Check
 ```bash
-# Run migration script
-python scripts/migrate.py create
-```
-
-You should see:
-```
-INFO - Creating database tables...
-INFO - Database tables created successfully
-```
-
-## Step 5: Start the Server
-
-```bash
-# Start the development server
-python src/main.py
-```
-
-You should see:
-```
-INFO:     Started server process
-INFO:     Waiting for application startup.
-INFO - Starting application...
-INFO - Database initialized
-INFO - Application started - Environment: development
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:8000
-```
-
-## Step 6: Test the API
-
-### Option A: Using Browser
-
-1. Open your browser and go to: `http://localhost:8000/api/docs`
-2. You'll see the interactive Swagger UI
-3. Try the `/api/health` endpoint first
-
-### Option B: Using curl
-
-```bash
-# Test health check
 curl http://localhost:8000/api/health
+```
 
-# Sign up a new user
-curl -X POST http://localhost:8000/api/auth/signup \
+Expected response:
+```json
+{
+  "status": "healthy",
+  "timestamp": "2024-01-01T00:00:00Z"
+}
+```
+
+### 2. API Documentation
+Open your browser and go to: http://localhost:8000/docs
+
+### 3. Frontend Access
+Open your browser and go to: http://localhost:3000
+
+### 4. Test Authentication
+```bash
+# Register a new user
+curl -X POST http://localhost:8000/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "test@example.com",
     "username": "testuser",
-    "password": "TestPass123",
-    "full_name": "Test User"
+    "email": "test@example.com",
+    "password": "testpassword123",
+    "role": "user"
   }'
-
-# You'll get back tokens like:
-# {
-#   "access_token": "eyJ...",
-#   "refresh_token": "eyJ...",
-#   "token_type": "bearer",
-#   "expires_in": 1800
-# }
 
 # Login
 curl -X POST http://localhost:8000/api/auth/login \
   -H "Content-Type: application/json" \
   -d '{
-    "email": "test@example.com",
-    "password": "TestPass123"
-  }'
-
-# Get current user info (replace YOUR_TOKEN with the access_token from above)
-curl -X GET http://localhost:8000/api/auth/me \
-  -H "Authorization: Bearer YOUR_TOKEN"
-```
-
-### Option C: Using the included HTTP file
-
-If you use VS Code with the REST Client extension:
-
-1. Open `backend/examples.http`
-2. Click "Send Request" above any request
-3. See the response inline
-
-## Common Endpoints
-
-| Method | Endpoint | Description | Auth Required |
-|--------|----------|-------------|---------------|
-| GET | `/api/health` | Health check | No |
-| POST | `/api/auth/signup` | Create new user | No |
-| POST | `/api/auth/login` | Login user | No |
-| GET | `/api/auth/me` | Get current user | Yes |
-| POST | `/api/auth/refresh` | Refresh token | No |
-| GET | `/api/auth/verify` | Verify token | Yes |
-
-## Example: Complete Flow
-
-### 1. Sign Up
-```bash
-curl -X POST http://localhost:8000/api/auth/signup \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "john@example.com",
-    "username": "johndoe",
-    "password": "SecurePass123",
-    "full_name": "John Doe"
+    "username": "testuser",
+    "password": "testpassword123"
   }'
 ```
 
-Response:
-```json
-{
-  "access_token": "eyJhbGc...",
-  "refresh_token": "eyJhbGc...",
-  "token_type": "bearer",
-  "expires_in": 1800
-}
-```
+## 🎯 Default Credentials
 
-### 2. Get User Info
+After running `setup_database.py`, you'll have:
+- **Admin User**: `admin` / `admin123`
+- **Database**: `vigilanteye` / `vigilanteye123`
+
+## 📱 Application Features
+
+### Dashboard
+- Upload videos for AI analysis
+- View recent threats and tickets
+- Monitor system status
+
+### Video Processing
+- Upload video files
+- Real-time processing status
+- Download processed results
+
+### Ticket Management
+- View security incidents
+- Manage evidence
+- Download reports
+
+### AI Analysis
+- Face recognition
+- Object detection
+- Threat assessment
+- Text extraction
+
+## 🛠️ Useful Commands
+
+### Docker Commands
 ```bash
-curl -X GET http://localhost:8000/api/auth/me \
-  -H "Authorization: Bearer eyJhbGc..."
+# View logs
+docker-compose logs -f
+
+# Restart services
+docker-compose restart
+
+# Stop services
+docker-compose down
+
+# Rebuild images
+docker-compose build --no-cache
+
+# Access backend container
+docker-compose exec backend bash
+
+# Access database
+docker-compose exec postgres psql -U vigilanteye -d vigilanteye
 ```
 
-Response:
-```json
-{
-  "user": {
-    "id": 1,
-    "email": "john@example.com",
-    "username": "johndoe",
-    "full_name": "John Doe",
-    "role": "STAFF",
-    "is_active": true,
-    "is_verified": false,
-    "created_at": "2024-01-15T10:30:00",
-    "updated_at": "2024-01-15T10:30:00"
-  },
-  "permissions": ["users:read"]
-}
+### Development Commands
+```bash
+# Run tests
+docker-compose exec backend pytest tests/
+docker-compose exec frontend npm test
+
+# Check cache status
+docker-compose exec backend python -c "from src.services.local_cache import get_cache; print(get_cache().get_stats())"
+
+# View system metrics
+curl http://localhost:8000/api/health/detailed
 ```
 
-## Troubleshooting
+## 🚨 Troubleshooting
 
-### "Can't connect to MySQL server"
-- Ensure MySQL is running: `mysql -u root -p`
-- Check credentials in `.env` file
-- Verify database exists: `SHOW DATABASES;`
+### Common Issues
 
-### "ModuleNotFoundError"
-- Ensure virtual environment is activated
-- Reinstall dependencies: `pip install -r requirements/development.txt`
-- Check you're in the `backend` directory
+#### "Port already in use"
+```bash
+# Check what's using the port
+lsof -i :8000  # Linux/Mac
+netstat -ano | findstr :8000  # Windows
 
-### "Table doesn't exist"
-- Run migrations: `python scripts/migrate.py create`
-- To reset database: `python scripts/migrate.py reset`
-
-### "Invalid token"
-- Token might be expired (30 min default)
-- Use refresh token to get new access token
-- Ensure Bearer token format: `Authorization: Bearer YOUR_TOKEN`
-
-### Port already in use
-- Change port in `.env`: `APP_PORT=8001`
-- Or kill process using port 8000
-
-## Next Steps
-
-1. **Create an Admin User**: 
-   ```sql
-   UPDATE users SET role = 'ADMIN' WHERE email = 'john@example.com';
-   ```
-
-2. **Explore API Documentation**: 
-   Visit `http://localhost:8000/api/docs`
-
-3. **Add More Features**:
-   - Create new models in `src/models/`
-   - Add repositories in `src/repositories/`
-   - Implement services in `src/services/`
-   - Create controllers in `src/api/`
-
-4. **Connect Frontend**: 
-   Use the tokens for authenticated requests from your React app
-
-5. **Read Full Documentation**: 
-   Check `backend/README.md` for detailed information
-
-## Architecture at a Glance
-
-```
-Request → Controller (API) → Service (Business Logic) → Repository (Data Access) → Database
-                                                                                      ↓
-Response ← Controller ← Service ← Repository ←────────────────────────────────────┘
+# Kill the process or change port in .env
+APP_PORT=8001
 ```
 
-## Key Files
+#### "Database connection failed"
+```bash
+# Check if PostgreSQL is running
+docker-compose exec postgres pg_isready -U vigilanteye -d vigilanteye
 
-- `src/main.py` - Application entry point
-- `src/api/auth.py` - Authentication endpoints
-- `src/services/auth.py` - Authentication business logic
-- `src/repositories/user.py` - User data access
-- `src/models/user.py` - User database model
-- `src/config/settings.py` - Configuration management
+# Reset database
+docker-compose exec postgres psql -U vigilanteye -d vigilanteye -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+docker-compose exec backend python scripts/setup_database.py
+```
 
-## Support
+#### "Module not found"
+```bash
+# Reinstall dependencies
+docker-compose exec backend pip install -r requirements/development.txt
+docker-compose exec frontend npm install
+```
+
+#### "Permission denied" (Linux/Mac)
+```bash
+# Fix script permissions
+chmod +x scripts/setup-dev.sh
+chmod +x scripts/deploy-azure.sh
+```
+
+### Health Checks
+
+```bash
+# Backend health
+curl http://localhost:8000/api/health
+
+# Frontend health
+curl http://localhost:3000/health
+
+# Database health
+docker-compose exec postgres pg_isready -U vigilanteye -d vigilanteye
+
+# Cache health
+docker-compose exec backend python -c "from src.services.local_cache import get_cache; print('Cache OK' if get_cache().get_stats() else 'Cache Error')"
+```
+
+## 🌐 Next Steps
+
+### 1. Explore the Application
+- Upload a test video
+- Create a ticket
+- Test AI analysis features
+
+### 2. Customize Configuration
+- Update environment variables
+- Configure AI models
+- Set up external APIs
+
+### 3. Deploy to Production
+- See `AZURE_DEPLOYMENT_GUIDE.md` for cloud deployment
+- Configure SSL/TLS
+- Set up monitoring
+
+### 4. Development
+- Check `backend/README.md` for backend details
+- Check `frontend/README.md` for frontend details
+- See `TESTING_AND_QUALITY_STANDARDS.md` for testing
+
+## 📚 Additional Resources
+
+- **Full Documentation**: `README.md`
+- **Azure Deployment**: `AZURE_DEPLOYMENT_GUIDE.md`
+- **Testing Guide**: `TESTING_AND_QUALITY_STANDARDS.md`
+- **Backend API**: http://localhost:8000/docs
+- **Frontend Source**: `frontend/src/`
+
+## 🆘 Getting Help
 
 If you encounter issues:
-1. Check the logs in `logs/app.log`
-2. Verify all environment variables in `.env`
-3. Ensure database is accessible
-4. Check Python version: `python --version` (should be 3.10+)
 
-Happy coding! 🚀
+1. **Check the logs**: `docker-compose logs -f`
+2. **Verify configuration**: Check `.env` file
+3. **Test health endpoints**: Use the health check URLs
+4. **Check prerequisites**: Ensure Docker and dependencies are installed
+5. **Create an issue**: Use GitHub issues for bugs or feature requests
+
+## 🎉 Success!
+
+If everything is working, you should see:
+- ✅ Backend running on http://localhost:8000
+- ✅ Frontend running on http://localhost:3000
+- ✅ Database connected and initialized
+- ✅ Local cache working
+- ✅ Health checks passing
+
+**Happy coding!** 🚀
+
+---
+
+**Last Updated**: 2024-01-01  
+**Version**: 1.0.0

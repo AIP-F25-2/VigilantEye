@@ -1,0 +1,99 @@
+version: '3.8'
+
+services:
+  # Test Database
+  test-postgres:
+    image: postgres:15
+    container_name: vigilanteye-test-db
+    environment:
+      POSTGRES_DB: test_vigilanteye
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - test_postgres_data:/var/lib/postgresql/data
+    networks:
+      - test-network
+
+  # Backend Tests
+  backend-tests:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.test
+    container_name: vigilanteye-backend-tests
+    environment:
+      DATABASE_URL: postgresql://test_user:test_password@test-postgres:5432/test_vigilanteye
+      CACHE_DIR: /app/storage/local_cache
+      JWT_SECRET_KEY: test-secret-key
+      TESTING: true
+    depends_on:
+      - test-postgres
+    volumes:
+      - ./backend:/app
+      - backend_test_results:/app/test-results
+    networks:
+      - test-network
+    command: pytest tests/ --cov=src --cov-report=xml --cov-report=html --junitxml=test-results.xml
+
+  # Frontend Tests
+  frontend-tests:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.test
+    container_name: vigilanteye-frontend-tests
+    volumes:
+      - ./frontend:/app
+      - frontend_test_results:/app/test-results
+    networks:
+      - test-network
+    command: npm run test:coverage
+
+  # Integration Tests
+  integration-tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.integration
+    container_name: vigilanteye-integration-tests
+    environment:
+      DATABASE_URL: postgresql://test_user:test_password@test-postgres:5432/test_vigilanteye
+      CACHE_DIR: /app/storage/local_cache
+      JWT_SECRET_KEY: test-secret-key
+    depends_on:
+      - test-postgres
+    volumes:
+      - ./:/app
+      - integration_test_results:/app/test-results
+    networks:
+      - test-network
+    command: python -m pytest tests/integration/ --junitxml=test-results.xml
+
+  # Performance Tests
+  performance-tests:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.test
+    container_name: vigilanteye-performance-tests
+    environment:
+      DATABASE_URL: postgresql://test_user:test_password@test-postgres:5432/test_vigilanteye
+      CACHE_DIR: /app/storage/local_cache
+      JWT_SECRET_KEY: test-secret-key
+    depends_on:
+      - test-postgres
+    volumes:
+      - ./backend:/app
+      - performance_test_results:/app/test-results
+    networks:
+      - test-network
+    command: locust -f tests/performance/locustfile.py --headless -u 100 -r 10 -t 60s --html performance-report.html
+
+volumes:
+  test_postgres_data:
+  backend_test_results:
+  frontend_test_results:
+  integration_test_results:
+  performance_test_results:
+
+networks:
+  test-network:
+    driver: bridge
