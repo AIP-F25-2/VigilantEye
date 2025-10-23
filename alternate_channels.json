@@ -1,0 +1,11 @@
+{
+  "escalation_channel": "",
+  "default_channel": "",
+  "channels": {
+    "alerts": "",
+    "notifications": "",
+    "escalation": "",
+    "admin": ""
+  },
+  "description": "Configure your Telegram channels here. Get channel IDs by adding the bot to your channels and sending a message, then check the bot's getUpdates API."
+}

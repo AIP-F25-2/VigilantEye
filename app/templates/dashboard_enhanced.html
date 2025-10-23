@@ -1,0 +1,546 @@
+{% extends "base.html" %}
+
+{% block title %}Live Dashboard - VIGILANTEye{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-6 fw-bold">
+                <i class="bi bi-speedometer2 me-2"></i>Live Surveillance Dashboard
+            </h1>
+            <p class="text-muted">Real-time monitoring and control center</p>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon bg-primary-light text-primary">
+                        <i class="bi bi-camera-video-fill"></i>
+                    </div>
+                    <div class="ms-3 flex-grow-1">
+                        <div class="stat-label">Active Cameras</div>
+                        <div class="stat-value" id="active-cameras">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon" style="background-color: #dcfce7; color: #16a34a;">
+                        <i class="bi bi-folder-fill"></i>
+                    </div>
+                    <div class="ms-3 flex-grow-1">
+                        <div class="stat-label">Projects</div>
+                        <div class="stat-value" id="total-projects">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon" style="background-color: #fef3c7; color: #f59e0b;">
+                        <i class="bi bi-bell-fill"></i>
+                    </div>
+                    <div class="ms-3 flex-grow-1">
+                        <div class="stat-label">Alerts Today</div>
+                        <div class="stat-value" id="total-alerts">0</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <div class="d-flex align-items-center">
+                    <div class="stat-icon" style="background-color: #fce7f3; color: #be185d;">
+                        <i class="bi bi-hdd-fill"></i>
+                    </div>
+                    <div class="ms-3 flex-grow-1">
+                        <div class="stat-label">Storage Used</div>
+                        <div class="stat-value" id="storage-used">0%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Live Camera Feeds -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="bi bi-camera-video me-2"></i>Live Camera Feeds</h5>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-primary" onclick="refreshCameraFeeds()">
+                            <i class="bi bi-arrow-clockwise me-1"></i>Refresh
+                        </button>
+                        <button class="btn btn-outline-success" onclick="startAllRecordings()">
+                            <i class="bi bi-record-circle me-1"></i>Start All
+                        </button>
+                        <button class="btn btn-outline-danger" onclick="stopAllRecordings()">
+                            <i class="bi bi-stop-circle me-1"></i>Stop All
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="camera-feeds" class="row g-3">
+                        <div class="col-12 text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading cameras...</span>
+                            </div>
+                            <p class="mt-3">Loading camera feeds...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Control Panel and Recent Activity -->
+    <div class="row">
+        <!-- Control Panel -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-gear me-2"></i>Control Panel</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-danger btn-lg" onclick="openSecurityDashboard()">
+                            <i class="bi bi-shield-exclamation me-2"></i>Security Command Center
+                        </button>
+                        <button class="btn btn-primary" onclick="manageCameras()">
+                            <i class="bi bi-camera-video me-2"></i>Manage Cameras
+                        </button>
+                        <button class="btn btn-success" onclick="createProject()">
+                            <i class="bi bi-folder-plus me-2"></i>New Project
+                        </button>
+                        <button class="btn btn-info" onclick="viewRecordings()">
+                            <i class="bi bi-film me-2"></i>View Recordings
+                        </button>
+                        <button class="btn btn-warning" onclick="viewVideos()">
+                            <i class="bi bi-camera-video me-2"></i>Video Library
+                        </button>
+                    </div>
+                    
+                    <hr>
+                    
+                    <h6>System Status</h6>
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between">
+                            <span>CPU Usage</span>
+                            <span id="cpu-usage">0%</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar" id="cpu-progress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <div class="d-flex justify-content-between">
+                            <span>Memory Usage</span>
+                            <span id="memory-usage">0%</span>
+                        </div>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-info" id="memory-progress" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Activity</h5>
+                </div>
+                <div class="card-body">
+                    <div id="recent-activity">
+                        <div class="text-center py-3">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <span class="ms-2">Loading recent activity...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Camera Modal -->
+<div class="modal fade" id="cameraModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Camera</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="cameraForm">
+                    <div class="mb-3">
+                        <label for="cameraName" class="form-label">Camera Name</label>
+                        <input type="text" class="form-control" id="cameraName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cameraType" class="form-label">Camera Type</label>
+                        <select class="form-select" id="cameraType" required>
+                            <option value="rtsp">RTSP Stream</option>
+                            <option value="usb">USB Camera</option>
+                            <option value="ip">IP Camera</option>
+                            <option value="webcam">Webcam</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cameraUrl" class="form-label">Stream URL</label>
+                        <input type="url" class="form-control" id="cameraUrl" placeholder="rtsp://192.168.1.100:554/stream1">
+                    </div>
+                    <div class="mb-3">
+                        <label for="cameraLocation" class="form-label">Location</label>
+                        <input type="text" class="form-control" id="cameraLocation" placeholder="e.g., Main Entrance">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveCamera()">Add Camera</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let cameras = [];
+let recordings = {};
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardData();
+    loadCameraFeeds();
+    loadRecentActivity();
+    
+    // Update stats every 30 seconds
+    setInterval(updateStats, 30000);
+});
+
+function loadDashboardData() {
+    // Load projects count
+    fetch('/api/v2/projects')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                document.getElementById('total-projects').textContent = data.data.length;
+            }
+        })
+        .catch(error => console.error('Error loading projects:', error));
+
+    // Load devices count
+    fetch('/api/v2/devices')
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                document.getElementById('active-cameras').textContent = data.data.length;
+                cameras = data.data;
+            }
+        })
+        .catch(error => console.error('Error loading devices:', error));
+
+    // Simulate system stats
+    updateSystemStats();
+}
+
+function loadCameraFeeds() {
+    const container = document.getElementById('camera-feeds');
+    
+    if (cameras.length === 0) {
+        container.innerHTML = `
+            <div class="col-12 text-center py-5 text-muted">
+                <i class="bi bi-camera-video" style="font-size: 3rem;"></i>
+                <p class="mt-3">No cameras configured</p>
+                <p class="small">Click "Add Camera" to get started</p>
+            </div>
+        `;
+        return;
+    }
+
+    let html = '';
+    cameras.forEach(camera => {
+        const statusClass = camera.status === 'available' ? 'success' : 
+                          camera.status === 'recording' ? 'primary' : 'secondary';
+        const statusIcon = camera.status === 'available' ? 'play-circle' : 
+                         camera.status === 'recording' ? 'record-circle' : 'pause-circle';
+        
+        html += `
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100">
+                    <div class="card-body p-2">
+                        <div class="camera-feed" id="feed-${camera.id}">
+                            <div class="camera-placeholder">
+                                <i class="bi bi-camera-video" style="font-size: 2rem;"></i>
+                                <p class="small mt-2">${camera.name}</p>
+                                <div class="btn-group btn-group-sm">
+                                    <button class="btn btn-outline-primary" onclick="startCamera(${camera.id})">
+                                        <i class="bi bi-play"></i>
+                                    </button>
+                                    <button class="btn btn-outline-success" onclick="startRecording(${camera.id})">
+                                        <i class="bi bi-record-circle"></i>
+                                    </button>
+                                    <button class="btn btn-outline-danger" onclick="stopRecording(${camera.id})">
+                                        <i class="bi bi-stop-circle"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <small class="text-muted">${camera.name}</small>
+                            <span class="badge bg-${statusClass}">
+                                <i class="bi bi-${statusIcon}"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+function loadRecentActivity() {
+    const container = document.getElementById('recent-activity');
+    
+    // Simulate recent activity
+    const activities = [
+        { time: '2 minutes ago', action: 'Camera 1 started recording', type: 'recording' },
+        { time: '5 minutes ago', action: 'Motion detected at Main Entrance', type: 'alert' },
+        { time: '10 minutes ago', action: 'New project created: Night Security', type: 'project' },
+        { time: '15 minutes ago', action: 'Camera 2 connection restored', type: 'system' },
+        { time: '20 minutes ago', action: 'Recording saved: security_incident_001.mp4', type: 'video' }
+    ];
+    
+    let html = '';
+    activities.forEach(activity => {
+        const iconClass = activity.type === 'recording' ? 'bi-record-circle' :
+                         activity.type === 'alert' ? 'bi-exclamation-triangle' :
+                         activity.type === 'project' ? 'bi-folder-plus' :
+                         activity.type === 'system' ? 'bi-gear' : 'bi-camera-video';
+        const textClass = activity.type === 'alert' ? 'text-warning' : 'text-muted';
+        
+        html += `
+            <div class="d-flex align-items-center mb-2">
+                <i class="bi ${iconClass} me-3 ${textClass}"></i>
+                <div class="flex-grow-1">
+                    <div class="small">${activity.action}</div>
+                    <div class="text-muted" style="font-size: 0.75rem;">${activity.time}</div>
+                </div>
+            </div>
+        `;
+    });
+    
+    container.innerHTML = html;
+}
+
+function updateStats() {
+    // Simulate real-time stats updates
+    const cpuUsage = Math.floor(Math.random() * 30) + 20;
+    const memoryUsage = Math.floor(Math.random() * 40) + 30;
+    
+    document.getElementById('cpu-usage').textContent = cpuUsage + '%';
+    document.getElementById('cpu-progress').style.width = cpuUsage + '%';
+    
+    document.getElementById('memory-usage').textContent = memoryUsage + '%';
+    document.getElementById('memory-progress').style.width = memoryUsage + '%';
+}
+
+function updateSystemStats() {
+    updateStats();
+    setInterval(updateStats, 5000);
+}
+
+function refreshCameraFeeds() {
+    loadCameraFeeds();
+}
+
+function startAllRecordings() {
+    cameras.forEach(camera => {
+        if (camera.status === 'available') {
+            startRecording(camera.id);
+        }
+    });
+}
+
+function stopAllRecordings() {
+    cameras.forEach(camera => {
+        if (camera.status === 'recording') {
+            stopRecording(camera.id);
+        }
+    });
+}
+
+function startCamera(cameraId) {
+    const camera = cameras.find(c => c.id === cameraId);
+    if (camera) {
+        camera.status = 'available';
+        loadCameraFeeds();
+        showNotification(`Camera ${camera.name} started`, 'success');
+    }
+}
+
+function startRecording(cameraId) {
+    const camera = cameras.find(c => c.id === cameraId);
+    if (camera) {
+        camera.status = 'recording';
+        recordings[cameraId] = {
+            startTime: new Date(),
+            camera: camera
+        };
+        loadCameraFeeds();
+        showNotification(`Recording started on ${camera.name}`, 'success');
+    }
+}
+
+function stopRecording(cameraId) {
+    const camera = cameras.find(c => c.id === cameraId);
+    if (camera) {
+        camera.status = 'available';
+        delete recordings[cameraId];
+        loadCameraFeeds();
+        showNotification(`Recording stopped on ${camera.name}`, 'info');
+    }
+}
+
+function openSecurityDashboard() {
+    window.location.href = '/security';
+}
+
+function manageCameras() {
+    window.location.href = '/cameras';
+}
+
+function saveCamera() {
+    const name = document.getElementById('cameraName').value;
+    const type = document.getElementById('cameraType').value;
+    const url = document.getElementById('cameraUrl').value;
+    const location = document.getElementById('cameraLocation').value;
+    
+    if (!name || !type || !url) {
+        showNotification('Please fill in all required fields', 'error');
+        return;
+    }
+    
+    // Simulate adding camera
+    const newCamera = {
+        id: cameras.length + 1,
+        name: name,
+        device_type: type,
+        ip_address: url,
+        status: 'available',
+        location: location
+    };
+    
+    cameras.push(newCamera);
+    loadCameraFeeds();
+    
+    const modal = bootstrap.Modal.getInstance(document.getElementById('cameraModal'));
+    modal.hide();
+    
+    showNotification(`Camera ${name} added successfully`, 'success');
+}
+
+function createProject() {
+    window.location.href = '/projects';
+}
+
+function viewRecordings() {
+    window.location.href = '/recordings';
+}
+
+function viewVideos() {
+    window.location.href = '/videos';
+}
+
+function showNotification(message, type) {
+    const alertClass = type === 'error' ? 'danger' : type;
+    const alertHtml = `
+        <div class="alert alert-${alertClass} alert-dismissible fade show position-fixed" 
+             style="top: 20px; right: 20px; z-index: 9999;" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', alertHtml);
+    
+    // Auto-remove after 3 seconds
+    setTimeout(() => {
+        const alerts = document.querySelectorAll('.alert');
+        if (alerts.length > 0) {
+            alerts[alerts.length - 1].remove();
+        }
+    }, 3000);
+}
+</script>
+
+<style>
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border: 1px solid #e5e7eb;
+    transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+}
+
+.stat-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #1f2937;
+}
+
+.stat-label {
+    color: #6b7280;
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.camera-feed {
+    background: #f8f9fa;
+    border-radius: 8px;
+    height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed #dee2e6;
+}
+
+.camera-placeholder {
+    text-align: center;
+    color: #6c757d;
+}
+
+.btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Videos - VIGILANTEye{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-6 fw-bold">
+                <i class="bi bi-camera-video me-2"></i>Videos
+            </h1>
+            <p class="text-muted">Manage and view your surveillance videos.</p>
+        </div>
+    </div>
+
+    <!-- Videos List -->
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-list me-2"></i>Video Library</h5>
+                </div>
+                <div class="card-body">
+                    <div id="videos-container">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-3">Loading videos...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadVideos();
+});
+
+function loadVideos() {
+    fetch('/api/v2/videos')
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('videos-container');
+            
+            if (data.status === 'success' && data.data.length > 0) {
+                let html = '<div class="row g-3">';
+                
+                data.data.forEach(video => {
+                    html += `
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title">${video.filename}</h6>
+                                    <p class="card-text small text-muted">
+                                        <i class="bi bi-clock me-1"></i>${video.duration_seconds ? Math.round(video.duration_seconds) + 's' : 'N/A'}
+                                        <br>
+                                        <i class="bi bi-hdd me-1"></i>${video.size_human || 'N/A'}
+                                        <br>
+                                        <i class="bi bi-calendar me-1"></i>${new Date(video.created_at).toLocaleDateString()}
+                                    </p>
+                                    <div class="d-flex gap-2">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="viewVideo(${video.id})">
+                                            <i class="bi bi-eye me-1"></i>View
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-success" onclick="downloadVideo(${video.id})">
+                                            <i class="bi bi-download me-1"></i>Download
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = `
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-camera-video" style="font-size: 3rem;"></i>
+                        <p class="mt-3">No videos found</p>
+                        <p class="small">Upload some videos to get started</p>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading videos:', error);
+            document.getElementById('videos-container').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Error loading videos. Please try again.
+                </div>
+            `;
+        });
+}
+
+function viewVideo(videoId) {
+    // Open video in new tab
+    window.open(`/api/v2/videos/${videoId}/stream`, '_blank');
+}
+
+function downloadVideo(videoId) {
+    // Download video
+    window.open(`/api/v2/videos/${videoId}/download`, '_blank');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Projects - VIGILANTEye{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-6 fw-bold">
+                <i class="bi bi-folder me-2"></i>Projects
+            </h1>
+            <p class="text-muted">Manage your surveillance projects and monitoring setups.</p>
+        </div>
+    </div>
+
+    <!-- Projects List -->
+    <div class="row">
+        <div class="col">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="bi bi-list me-2"></i>Project List</h5>
+                </div>
+                <div class="card-body">
+                    <div id="projects-container">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-3">Loading projects...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadProjects();
+});
+
+function loadProjects() {
+    fetch('/api/v2/projects')
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('projects-container');
+            
+            if (data.status === 'success' && data.data.length > 0) {
+                let html = '<div class="row g-3">';
+                
+                data.data.forEach(project => {
+                    const statusClass = project.status === 'active' ? 'success' : 
+                                      project.status === 'paused' ? 'warning' : 'secondary';
+                    const statusIcon = project.status === 'active' ? 'play-circle' : 
+                                     project.status === 'paused' ? 'pause-circle' : 'stop-circle';
+                    
+                    html += `
+                        <div class="col-md-6 col-lg-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="card-title mb-0">${project.name}</h6>
+                                        <span class="badge bg-${statusClass}">
+                                            <i class="bi bi-${statusIcon} me-1"></i>${project.status}
+                                        </span>
+                                    </div>
+                                    <p class="card-text small text-muted">${project.description || 'No description available'}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">
+                                            <i class="bi bi-calendar me-1"></i>${new Date(project.created_at).toLocaleDateString()}
+                                        </small>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-primary" onclick="viewProject(${project.id})">
+                                                <i class="bi bi-eye me-1"></i>View
+                                            </button>
+                                            <button class="btn btn-outline-secondary" onclick="editProject(${project.id})">
+                                                <i class="bi bi-pencil me-1"></i>Edit
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = `
+                    <div class="text-center py-5 text-muted">
+                        <i class="bi bi-folder" style="font-size: 3rem;"></i>
+                        <p class="mt-3">No projects found</p>
+                        <p class="small">Create a new project to get started</p>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading projects:', error);
+            document.getElementById('projects-container').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Error loading projects. Please try again.
+                </div>
+            `;
+        });
+}
+
+function viewProject(projectId) {
+    // For now, just show an alert
+    alert(`View project ${projectId} - Feature coming soon!`);
+}
+
+function editProject(projectId) {
+    // For now, just show an alert
+    alert(`Edit project ${projectId} - Feature coming soon!`);
+}
+</script>
+{% endblock %}
