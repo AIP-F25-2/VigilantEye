@@ -57,6 +57,13 @@ def features():
     """Features page"""
     return render_template('features.html')
 
+@web_auth_bp.route('/live-cameras')
+def live_cameras():
+    """Live cameras page"""
+    if 'user_id' not in session:
+        return redirect(url_for('web_auth.login'))
+    return render_template('live_cameras.html')
+
 @web_auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     """Login page and handler"""

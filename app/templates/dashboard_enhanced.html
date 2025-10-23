@@ -115,6 +115,9 @@
                         <button class="btn btn-danger btn-lg" onclick="openSecurityDashboard()">
                             <i class="bi bi-shield-exclamation me-2"></i>Security Command Center
                         </button>
+                        <button class="btn btn-primary btn-lg" onclick="openLiveCameras()">
+                            <i class="bi bi-camera-video-fill me-2"></i>Live Cameras
+                        </button>
                         <button class="btn btn-primary" onclick="manageCameras()">
                             <i class="bi bi-camera-video me-2"></i>Manage Cameras
                         </button>
@@ -420,6 +423,10 @@ function stopRecording(cameraId) {
 
 function openSecurityDashboard() {
     window.location.href = '/security';
+}
+
+function openLiveCameras() {
+    window.location.href = '/live-cameras';
 }
 
 function manageCameras() {
