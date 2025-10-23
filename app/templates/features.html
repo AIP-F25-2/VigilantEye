@@ -1,0 +1,407 @@
+{% extends "base.html" %}
+
+{% block title %}Features - VIGILANTEye{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header -->
+    <div class="row mb-5">
+        <div class="col">
+            <h1 class="display-4 fw-bold text-center">
+                <i class="bi bi-shield-check me-3"></i>VIGILANTEye Features
+            </h1>
+            <p class="lead text-center text-muted">Advanced AI-Powered Security & Danger Detection System</p>
+        </div>
+    </div>
+
+    <!-- Security Features Section -->
+    <div class="row mb-5">
+        <div class="col">
+            <h2 class="h1 fw-bold text-danger mb-4">
+                <i class="bi bi-shield-exclamation me-2"></i>Security & Danger Detection
+            </h2>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <!-- Real-time Threat Monitoring -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card h-100 border-danger shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon bg-danger text-white rounded-circle mx-auto mb-3" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-eye-fill" style="font-size: 2rem;"></i>
+                    </div>
+                    <h4 class="card-title">Real-time Threat Monitoring</h4>
+                    <p class="card-text">Live camera feeds with continuous danger detection and instant threat alerts.</p>
+                    <ul class="list-unstyled text-start">
+                        <li><i class="bi bi-check-circle text-success me-2"></i>Live camera grid monitoring</li>
+                        <li><i class="bi bi-check-circle text-success me-2"></i>Continuous threat analysis</li>
+                        <li><i class="bi bi-check-circle text-success me-2"></i>Instant alert notifications</li>
+                        <li><i class="bi bi-check-circle text-success me-2"></i>Real-time status updates</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Emergency Panic System -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card h-100 border-warning shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon bg-warning text-dark rounded-circle mx-auto mb-3" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-exclamation-triangle-fill" style="font-size: 2rem;"></i>
+                    </div>
+                    <h4 class="card-title">Emergency Panic System</h4>
+                    <p class="card-text">One-click emergency alerts with location tracking and instant response.</p>
+                    <ul class="list-unstyled text-start">
+                        <li><i class="bi bi-check-circle text-success me-2"></i>One-click panic button</li>
+                        <li><i class="bi bi-check-circle text-success me-2"></i>Location tracking</li>
+                        <li><i class="bi bi-check-circle text-success me-2"></i>Emergency contacts</li>
+                        <li><i class="bi bi-check-circle text-success me-2"></i>Instant notifications</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Threat Detection -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card h-100 border-info shadow-sm">
+                <div class="card-body text-center p-4">
+                    <div class="feature-icon bg-info text-white rounded-circle mx-auto mb-3" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center;">
+                        <i class="bi bi-robot" style="font-size: 2rem;"></i>
+                    </div>
+                    <h4 class="card-title">AI Threat Detection</h4>
+                    <p class="card-text">Advanced AI-powered detection of weapons, fire, intrusion, and suspicious activities.</p>
+                    <ul class="list-unstyled text-start">
+                        <li><i class="bi bi-check-circle text-success me-2"></i>Weapon detection</li>
+                        <li><i class="bi bi-check-circle text-success me-2"></i>Fire & smoke detection</li>
+                        <li><i class="bi bi-check-circle text-success me-2"></i>Intrusion alerts</li>
+                        <li><i class="bi bi-check-circle text-success me-2"></i>Motion detection</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Features Section -->
+    <div class="row mb-5">
+        <div class="col">
+            <h2 class="h1 fw-bold text-primary mb-4">
+                <i class="bi bi-speedometer2 me-2"></i>Dashboard & Monitoring
+            </h2>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <!-- Security Command Center -->
+        <div class="col-lg-6 col-md-6">
+            <div class="card h-100 border-primary shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="feature-icon bg-primary text-white rounded-circle me-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-shield-exclamation" style="font-size: 1.5rem;"></i>
+                        </div>
+                        <h4 class="card-title mb-0">Security Command Center</h4>
+                    </div>
+                    <p class="card-text">Comprehensive security dashboard with live monitoring, threat indicators, and emergency controls.</p>
+                    <ul class="list-unstyled">
+                        <li><i class="bi bi-check-circle text-success me-2"></i>Live threat level indicators</li>
+                        <li><i class="bi bi-check-circle text-success me-2"></i>Active alert management</li>
+                        <li><i class="bi bi-check-circle text-success me-2"></i>Emergency response controls</li>
+                        <li><i class="bi bi-check-circle text-success me-2"></i>Security statistics</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Camera Management -->
+        <div class="col-lg-6 col-md-6">
+            <div class="card h-100 border-success shadow-sm">
+                <div class="card-body p-4">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="feature-icon bg-success text-white rounded-circle me-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                            <i class="bi bi-camera-video" style="font-size: 1.5rem;"></i>
+                        </div>
+                        <h4 class="card-title mb-0">Camera Management</h4>
+                    </div>
+                    <p class="card-text">Complete camera system management with live feeds, configuration, and threat detection controls.</p>
+                    <ul class="list-unstyled">
+                        <li><i class="bi bi-check-circle text-success me-2"></i>Multi-camera support</li>
+                        <li><i class="bi bi-check-circle text-success me-2"></i>Live feed monitoring</li>
+                        <li><i class="bi bi-check-circle text-success me-2"></i>Camera configuration</li>
+                        <li><i class="bi bi-check-circle text-success me-2"></i>Threat detection controls</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert System Features -->
+    <div class="row mb-5">
+        <div class="col">
+            <h2 class="h1 fw-bold text-warning mb-4">
+                <i class="bi bi-bell-fill me-2"></i>Alert & Notification System
+            </h2>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <!-- Threat Level System -->
+        <div class="col-lg-3 col-md-6">
+            <div class="card h-100 text-center border-0 shadow-sm">
+                <div class="card-body p-3">
+                    <div class="badge bg-success fs-6 mb-3 px-3 py-2">LOW</div>
+                    <h5>Low Threat</h5>
+                    <p class="small text-muted">Normal monitoring with basic alerts</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="card h-100 text-center border-0 shadow-sm">
+                <div class="card-body p-3">
+                    <div class="badge bg-info fs-6 mb-3 px-3 py-2">MEDIUM</div>
+                    <h5>Medium Threat</h5>
+                    <p class="small text-muted">Increased monitoring and notifications</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="card h-100 text-center border-0 shadow-sm">
+                <div class="card-body p-3">
+                    <div class="badge bg-warning fs-6 mb-3 px-3 py-2">HIGH</div>
+                    <h5>High Threat</h5>
+                    <p class="small text-muted">Immediate attention required</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-3 col-md-6">
+            <div class="card h-100 text-center border-0 shadow-sm">
+                <div class="card-body p-3">
+                    <div class="badge bg-danger fs-6 mb-3 px-3 py-2">CRITICAL</div>
+                    <h5>Critical Threat</h5>
+                    <p class="small text-muted">Emergency response activated</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Technical Features -->
+    <div class="row mb-5">
+        <div class="col">
+            <h2 class="h1 fw-bold text-info mb-4">
+                <i class="bi bi-gear-fill me-2"></i>Technical Capabilities
+            </h2>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <!-- API & Integration -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card h-100 border-info shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="card-title">
+                        <i class="bi bi-plug me-2"></i>RESTful API
+                    </h5>
+                    <p class="card-text">Comprehensive API endpoints for all security features and integrations.</p>
+                    <ul class="list-unstyled small">
+                        <li><i class="bi bi-check text-success me-2"></i>Security alerts API</li>
+                        <li><i class="bi bi-check text-success me-2"></i>Camera management API</li>
+                        <li><i class="bi bi-check text-success me-2"></i>Threat detection API</li>
+                        <li><i class="bi bi-check text-success me-2"></i>Emergency response API</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Database & Storage -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card h-100 border-success shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="card-title">
+                        <i class="bi bi-database me-2"></i>Data Management
+                    </h5>
+                    <p class="card-text">Robust database system for storing threats, alerts, and security data.</p>
+                    <ul class="list-unstyled small">
+                        <li><i class="bi bi-check text-success me-2"></i>SQLite/MySQL support</li>
+                        <li><i class="bi bi-check text-success me-2"></i>Threat history storage</li>
+                        <li><i class="bi bi-check text-success me-2"></i>Alert management</li>
+                        <li><i class="bi bi-check text-success me-2"></i>User authentication</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Real-time Processing -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card h-100 border-warning shadow-sm">
+                <div class="card-body p-4">
+                    <h5 class="card-title">
+                        <i class="bi bi-lightning-fill me-2"></i>Real-time Processing
+                    </h5>
+                    <p class="card-text">High-performance real-time threat detection and alert processing.</p>
+                    <ul class="list-unstyled small">
+                        <li><i class="bi bi-check text-success me-2"></i>Background processing</li>
+                        <li><i class="bi bi-check text-success me-2"></i>Live updates</li>
+                        <li><i class="bi bi-check text-success me-2"></i>Instant notifications</li>
+                        <li><i class="bi bi-check text-success me-2"></i>Scalable architecture</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detection Types -->
+    <div class="row mb-5">
+        <div class="col">
+            <h2 class="h1 fw-bold text-dark mb-4">
+                <i class="bi bi-search me-2"></i>Detection Capabilities
+            </h2>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <!-- Weapon Detection -->
+        <div class="col-lg-3 col-md-6">
+            <div class="card h-100 text-center border-danger">
+                <div class="card-body p-4">
+                    <i class="bi bi-shield-exclamation text-danger" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3">Weapon Detection</h5>
+                    <p class="small text-muted">AI-powered weapon identification with high accuracy</p>
+                    <span class="badge bg-danger">CRITICAL</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fire Detection -->
+        <div class="col-lg-3 col-md-6">
+            <div class="card h-100 text-center border-warning">
+                <div class="card-body p-4">
+                    <i class="bi bi-fire text-warning" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3">Fire Detection</h5>
+                    <p class="small text-muted">Smoke and fire recognition system</p>
+                    <span class="badge bg-warning">HIGH</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Intrusion Detection -->
+        <div class="col-lg-3 col-md-6">
+            <div class="card h-100 text-center border-info">
+                <div class="card-body p-4">
+                    <i class="bi bi-person-x text-info" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3">Intrusion Detection</h5>
+                    <p class="small text-muted">Unauthorized person alerts</p>
+                    <span class="badge bg-info">HIGH</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Motion Detection -->
+        <div class="col-lg-3 col-md-6">
+            <div class="card h-100 text-center border-success">
+                <div class="card-body p-4">
+                    <i class="bi bi-activity text-success" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3">Motion Detection</h5>
+                    <p class="small text-muted">Suspicious movement monitoring</p>
+                    <span class="badge bg-success">MEDIUM</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Emergency Response -->
+    <div class="row mb-5">
+        <div class="col">
+            <h2 class="h1 fw-bold text-danger mb-4">
+                <i class="bi bi-telephone-fill me-2"></i>Emergency Response
+            </h2>
+        </div>
+    </div>
+
+    <div class="row g-4 mb-5">
+        <div class="col-lg-4 col-md-6">
+            <div class="card h-100 border-danger text-center">
+                <div class="card-body p-4">
+                    <i class="bi bi-telephone text-danger" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3">Police (911)</h5>
+                    <p class="small text-muted">Direct emergency contact</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6">
+            <div class="card h-100 border-warning text-center">
+                <div class="card-body p-4">
+                    <i class="bi bi-shield text-warning" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3">Security Team</h5>
+                    <p class="small text-muted">Internal security response</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6">
+            <div class="card h-100 border-info text-center">
+                <div class="card-body p-4">
+                    <i class="bi bi-heart-pulse text-info" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3">Medical Emergency</h5>
+                    <p class="small text-muted">Medical emergency response</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="row">
+        <div class="col">
+            <div class="card bg-primary text-white text-center">
+                <div class="card-body py-5">
+                    <h2 class="card-title mb-3">
+                        <i class="bi bi-shield-check me-2"></i>Ready to Secure Your Premises?
+                    </h2>
+                    <p class="card-text lead mb-4">
+                        Experience the power of AI-driven danger detection and real-time security monitoring.
+                    </p>
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="/security" class="btn btn-danger btn-lg">
+                            <i class="bi bi-shield-exclamation me-2"></i>Security Dashboard
+                        </a>
+                        <a href="/dashboard" class="btn btn-light btn-lg">
+                            <i class="bi bi-speedometer2 me-2"></i>Main Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.feature-icon {
+    transition: transform 0.3s ease;
+}
+
+.card:hover .feature-icon {
+    transform: scale(1.1);
+}
+
+.card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15) !important;
+}
+
+.badge {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+}
+
+.list-unstyled li {
+    margin-bottom: 0.5rem;
+}
+</style>
+{% endblock %}

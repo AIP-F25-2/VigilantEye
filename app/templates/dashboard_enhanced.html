@@ -127,6 +127,9 @@
                         <button class="btn btn-warning" onclick="viewVideos()">
                             <i class="bi bi-camera-video me-2"></i>Video Library
                         </button>
+                        <button class="btn btn-outline-primary" onclick="viewFeatures()">
+                            <i class="bi bi-star me-2"></i>View Features
+                        </button>
                     </div>
                     
                     <hr>
@@ -463,6 +466,10 @@ function viewRecordings() {
 
 function viewVideos() {
     window.location.href = '/videos';
+}
+
+function viewFeatures() {
+    window.location.href = '/features';
 }
 
 function showNotification(message, type) {

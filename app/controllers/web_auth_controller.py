@@ -52,6 +52,11 @@ def security():
         return redirect(url_for('web_auth.login'))
     return render_template('security_dashboard.html')
 
+@web_auth_bp.route('/features')
+def features():
+    """Features page"""
+    return render_template('features.html')
+
 @web_auth_bp.route('/login', methods=['GET', 'POST'])
 def login():
     """Login page and handler"""
