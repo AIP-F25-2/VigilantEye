@@ -1,238 +1,147 @@
-# 🚀 VIGILANTEye - Video Surveillance Management System
+# VIGILANTEye - Multi-Agent Video Intelligence Platform
 
-A comprehensive video surveillance management system with Telegram integration, built with Flask and deployed on Azure.
+A next-generation, AI-powered, multi-agent security platform that combines anomaly detection, action recognition, face and vehicle identification, and human-in-the-loop feedback to deliver explainable, proactive, and scalable video intelligence.
 
-## 🌟 Features
+## 🚀 Features
 
-### Core Functionality
-- **Video Management**: Upload, process, and manage surveillance videos
-- **User Authentication**: Secure login/registration with JWT tokens
-- **Project Management**: Organize surveillance projects and recordings
-- **Analytics**: View events and analytics data
-- **Device Management**: Manage surveillance devices
+### Core Video Intelligence
+- **Face & Identity Agent**: Face detection, recognition, and re-identification across multiple cameras
+- **Watchlist Integration**: Employees, VIPs, suspects management
+- **Cross-age and Disguise Detection**: Masks, hats, glasses detection
+- **Demographics Estimation**: Age band, gender estimation for analytics (privacy configurable)
 
-### Telegram Integration
-- **Message Ingestion**: Send alerts and notifications via Telegram
-- **Webhook Support**: Handle Telegram callbacks and acknowledgments
-- **Auto-escalation**: Automatic message escalation after timeout
-- **Background Jobs**: Scheduled message processing and cleanup
+### Application Features
+- User authentication and authorization
+- Real-time CCTV video processing
+- Face detection and recognition
+- Person tracking across cameras
+- Watchlist alerts
+- Telegram integration for notifications
+- Web dashboards for monitoring
 
-### Technical Features
-- **REST API**: Complete RESTful API with proper error handling
-- **Database**: MySQL with SQLAlchemy ORM and migrations
-- **Security**: JWT authentication, HTTPS, SSL database connections
-- **Deployment**: Azure Container Apps with auto-scaling
-- **Monitoring**: Health checks and comprehensive logging
+## 📋 Prerequisites
 
-## 🏗️ Architecture
+- Python 3.11+
+- MySQL Database
+- Azure Account (for deployment)
+- Docker (for containerization)
 
-```
-VIGILANTEye/
-├── app/
-│   ├── controllers/          # API and web controllers
-│   ├── models/              # Database models
-│   ├── schemas/             # Marshmallow schemas
-│   ├── services/            # Business logic services
-│   ├── templates/           # HTML templates
-│   └── utils/               # Utility functions
-├── migrations/              # Database migrations
-├── config.py               # Configuration
-├── run.py                  # Application entry point
-└── requirements.txt        # Dependencies
-```
-
-## 🚀 Quick Start
+## 🛠️ Installation
 
 ### Local Development
 
-1. **Clone and Setup**:
+1. Clone the repository
+2. Install dependencies:
    ```bash
-   git clone <repository-url>
-   cd VIGILANTEye
    pip install -r requirements.txt
    ```
-
-2. **Database Setup**:
+3. Set up environment variables (see `.env.example`)
+4. Run database migrations:
    ```bash
-   export DATABASE_URL="mysql+pymysql://user:pass@localhost:3306/vigilanteye"
    flask db upgrade
    ```
-
-3. **Run Application**:
+5. Start the application:
    ```bash
    python run.py
    ```
 
-### Docker Development
+### Docker Deployment
 
-1. **Start Services**:
-   ```bash
-   docker-compose up -d
-   ```
+```bash
+docker-compose up -d
+```
 
-2. **Access Application**:
-   - Web: http://localhost:8000
-   - API: http://localhost:8000/api/v1/
-   - Health: http://localhost:8000/health
+## 📦 Azure Deployment
 
-## 🌐 API Endpoints
+### Quick Deployment
 
-### Authentication
-- `POST /api/auth/register` - User registration
-- `POST /api/auth/login` - User login
-- `POST /api/auth/refresh` - Refresh JWT token
-- `POST /api/auth/logout` - User logout
-- `GET /api/auth/me` - Get current user
+```powershell
+.\deploy-azure.ps1
+```
 
-### Core API
-- `GET /api/v1/users` - List users
-- `GET /api/v1/videos` - List videos
-- `GET /api/v1/projects` - List projects
-- `GET /api/v1/recordings` - List recordings
+### Manual Deployment
 
-### Telegram Integration
-- `POST /api/telegram/ingest` - Send message to Telegram
-- `POST /webhook/telegram/<secret>` - Telegram webhook
-
-### Web Interface
-- `GET /` - Homepage
-- `GET /login` - Login page
-- `GET /register` - Registration page
-- `GET /dashboard` - User dashboard
+See `MANUAL_DEPLOYMENT_STEPS.md` for detailed instructions.
 
 ## 🔧 Configuration
 
-### Environment Variables
+Key environment variables:
+- `DATABASE_URL`: MySQL connection string
+- `SECRET_KEY`: Flask secret key
+- `JWT_SECRET_KEY`: JWT signing key
+- `TELEGRAM_BOT_TOKEN`: Telegram bot token
+- `TELEGRAM_WEBHOOK_SECRET`: Webhook secret
 
-```bash
-# Database
-DATABASE_URL=mysql+pymysql://user:pass@host:3306/database?ssl_ca=/path/to/ca.pem
+## 📚 API Endpoints
 
-# Security
-SECRET_KEY=your-secret-key
-JWT_SECRET_KEY=your-jwt-secret
+### Health Check
+- `GET /health` - Application health status
 
-# Telegram
-TELEGRAM_BOT_TOKEN=your-bot-token
-TELEGRAM_WEBHOOK_SECRET=your-webhook-secret
+### FaceAi API
+- `GET /api/faceai/status` - FaceAi service status
+- `POST /api/faceai/detect` - Face detection
+- `POST /api/faceai/demographics` - Demographics analysis
+- `POST /api/faceai/ambiguity` - Ambiguity detection
 
-# Message Processing
-ESCALATE_AFTER_SECONDS=900
-CLOSE_AFTER_SECONDS=3600
+### CCTV API
+- `GET /api/cctv/status` - Agent status
+- `POST /api/cctv/process` - Process CCTV video
+- `GET /api/cctv/watchlist` - Get watchlist
+- `POST /api/cctv/watchlist` - Add to watchlist
+
+### Telegram API
+- `POST /api/telegram/ingest` - Ingest messages
+- `POST /webhook/telegram/<secret>` - Webhook handler
+
+## 🎯 User Personas
+
+- Corporate Security Managers
+- Retail Security Leads
+- Event & Venue Organizers
+- Educational Institutions
+- Transport Hub Authorities
+- Government & Smart City Operators
+- Healthcare Facility Admins
+
+## 📖 Documentation
+
+- `FACEAI_INTEGRATION_GUIDE.md` - FaceAi integration details
+- `FACE_IDENTITY_AGENT_GUIDE.md` - CCTV agent documentation
+- `AZURE_DEPLOYMENT_FACEAI_GUIDE.md` - Azure deployment guide
+- `MIGRATION_SOLUTION.md` - Database migration guide
+- `DEPLOYMENT_SUMMARY.md` - Deployment status
+
+## 🏗️ Project Structure
+
 ```
-
-### Telegram Setup
-
-1. **Create Bot**: Message @BotFather on Telegram
-2. **Get Token**: Save the bot token
-3. **Configure Webhook**: Set webhook URL to your domain
-4. **Test Integration**: Use the ingest API endpoint
-
-## 🚀 Azure Deployment
-
-### Prerequisites
-- Azure CLI installed
-- Docker installed
-- Azure Container Registry
-
-### Deploy Steps
-
-1. **Build and Push**:
-   ```bash
-   docker build -t vigilanteye:latest .
-   az acr login --name your-registry
-   docker tag vigilanteye:latest your-registry.azurecr.io/vigilanteye:latest
-   docker push your-registry.azurecr.io/vigilanteye:latest
-   ```
-
-2. **Create Container App**:
-   ```bash
-   az containerapp create \
-     --name vigilanteye-app \
-     --resource-group your-rg \
-     --environment your-env \
-     --image your-registry.azurecr.io/vigilanteye:latest
-   ```
-
-3. **Configure Environment**:
-   ```bash
-   az containerapp update \
-     --name vigilanteye-app \
-     --resource-group your-rg \
-     --set-env-vars "DATABASE_URL=your-db-url" "TELEGRAM_BOT_TOKEN=your-token"
-   ```
-
-## 📊 Database Schema
-
-### Core Tables
-- `users` - User accounts and authentication
-- `projects` - Surveillance projects
-- `videos` - Video files and metadata
-- `recordings` - Recording sessions
-- `devices` - Surveillance devices
-- `analytics` - Analytics data
-
-### Telegram Integration
-- `outbound_messages` - Telegram messages and status
-
-## 🧪 Testing
-
-### API Testing
-```bash
-# Health check
-curl https://your-app.azurecontainerapps.io/health
-
-# Telegram message
-curl -X POST https://your-app.azurecontainerapps.io/api/telegram/ingest \
-  -H "Content-Type: application/json" \
-  -d '{"type":"text","content":"Test message","channel_id":"-123456789"}'
+VIGILANTEye/
+├── app/
+│   ├── controllers/      # API and web controllers
+│   ├── models/           # Database models
+│   ├── services/         # Business logic services
+│   ├── templates/       # HTML templates
+│   └── static/          # CSS, JS, images
+├── migrations/          # Database migrations
+├── Dockerfile           # Docker configuration
+├── requirements.txt     # Python dependencies
+└── run.py              # Application entry point
 ```
-
-### Web Interface
-- Visit https://your-app.azurecontainerapps.io/
-- Test login/registration
-- Access dashboard features
-
-## 📈 Monitoring
-
-### Health Checks
-- Application health: `/health`
-- Database connectivity: Automatic
-- Telegram bot status: Via API
-
-### Logs
-- Azure Container Apps logs
-- Application logs via Python logging
-- Database query logs
 
 ## 🔒 Security
 
-- **HTTPS**: SSL/TLS encryption
-- **JWT**: Secure token-based authentication
-- **Database SSL**: Encrypted database connections
-- **Input Validation**: Marshmallow schema validation
-- **CORS**: Configured cross-origin resource sharing
+- JWT-based API authentication
+- Session-based web authentication
+- Password hashing with bcrypt
+- HTTPS enabled on Azure deployment
+
+## 📝 License
+
+[Your License Here]
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
+[Contributing Guidelines]
 
-## 📄 License
+## 📧 Support
 
-This project is licensed under the MIT License.
-
-## 🆘 Support
-
-For support and questions:
-- Check the documentation
-- Review the API endpoints
-- Check Azure Container Apps logs
-- Test individual components
-
----
-
-**VIGILANTEye** - Professional video surveillance management with modern web technologies and Telegram integration.
+For issues and questions, please open an issue on GitHub.

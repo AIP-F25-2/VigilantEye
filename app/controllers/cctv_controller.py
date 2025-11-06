@@ -3,43 +3,34 @@ CCTV Video Processing Controller for VIGILANTEye
 Handles face detection, recognition, and watchlist management for CCTV feeds
 """
 
-from flask import Blueprint, request, jsonify, current_app
-from werkzeug.utils import secure_filename
-import os
-import time
+import json
 import logging
-from pathlib import Path
+from flask import Blueprint, request
 from app import db
 from app.services.face_identity_agent import get_face_identity_agent, PersonType
 from app.models.faceai_models import FaceDetection, FaceEncoding
+from app.utils.file_utils import (
+    save_uploaded_file, validate_file_upload, 
+    ALLOWED_VIDEO_EXTENSIONS, ALLOWED_IMAGE_EXTENSIONS,
+    DEFAULT_FRAME_SKIP
+)
+from app.utils.response_utils import (
+    success_response, error_response, handle_exception,
+    HTTP_BAD_REQUEST, HTTP_INTERNAL_ERROR, HTTP_NOT_FOUND
+)
+from app.utils.db_utils import save_model
 
 logger = logging.getLogger(__name__)
 
 # Create blueprint
 cctv_bp = Blueprint("cctv", __name__, url_prefix="/api/cctv")
 
-# Allowed video extensions
-ALLOWED_VIDEO_EXTENSIONS = {'mp4', 'avi', 'mov', 'mkv', 'wmv', 'flv', 'webm'}
-
-def allowed_video_file(filename):
-    """Check if video file extension is allowed"""
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_VIDEO_EXTENSIONS
-
-def save_uploaded_video(file, subfolder="cctv_videos"):
-    """Save uploaded video file and return path"""
-    if file and allowed_video_file(file.filename):
-        filename = secure_filename(file.filename)
-        # Add timestamp to avoid conflicts
-        name, ext = os.path.splitext(filename)
-        filename = f"{name}_{int(time.time())}{ext}"
-        
-        upload_dir = os.path.join(current_app.config.get('UPLOAD_FOLDER', 'uploads'), subfolder)
-        os.makedirs(upload_dir, exist_ok=True)
-        
-        filepath = os.path.join(upload_dir, filename)
-        file.save(filepath)
-        return filepath
-    return None
+# Constants
+CCTV_SOURCE_TYPE = "cctv_video"
+DEFAULT_CAMERA_ID = "camera_001"
+MODEL_VERSION = "face_identity_agent_v1.0"
+HOURS_24 = 24
+RECENT_DETECTIONS_LIMIT = 100
 
 @cctv_bp.route("/status", methods=["GET"])
 def get_agent_status():
@@ -48,36 +39,32 @@ def get_agent_status():
         agent = get_face_identity_agent()
         summary = agent.get_person_tracking_summary()
         
-        return jsonify({
-            "success": True,
+        return success_response({
             "agent_status": "active",
             "tracking_summary": summary,
             "privacy_mode": agent.privacy_mode,
             "similarity_threshold": agent.similarity_threshold
         })
     except Exception as e:
-        logger.error(f"Agent status error: {e}")
-        return jsonify({"error": str(e)}), 500
+        return handle_exception(e, "Agent status", HTTP_INTERNAL_ERROR)
 
 @cctv_bp.route("/process", methods=["POST"])
 def process_cctv_video():
     """Process CCTV video for face detection and identification"""
     try:
-        if 'video' not in request.files:
-            return jsonify({"error": "No video file provided"}), 400
-        
-        file = request.files['video']
-        if file.filename == '':
-            return jsonify({"error": "No file selected"}), 400
+        # Validate file upload
+        file, error_msg = validate_file_upload(request.files, 'video')
+        if error_msg:
+            return error_response(error_msg, status_code=HTTP_BAD_REQUEST)
         
         # Save uploaded video
-        video_path = save_uploaded_video(file)
+        video_path = save_uploaded_file(file, "cctv_videos", ALLOWED_VIDEO_EXTENSIONS)
         if not video_path:
-            return jsonify({"error": "Invalid video file type"}), 400
+            return error_response("Invalid video file type", status_code=HTTP_BAD_REQUEST)
         
         # Get parameters
-        camera_id = request.form.get('camera_id', 'camera_001')
-        frame_skip = int(request.form.get('frame_skip', 30))
+        camera_id = request.form.get('camera_id', DEFAULT_CAMERA_ID)
+        frame_skip = int(request.form.get('frame_skip', DEFAULT_FRAME_SKIP))
         privacy_mode = request.form.get('privacy_mode', 'false').lower() == 'true'
         
         # Get agent and process video
@@ -92,14 +79,14 @@ def process_cctv_video():
             try:
                 # Save face detection
                 face_detection = FaceDetection(
-                    source_type='cctv_video',
+                    source_type=CCTV_SOURCE_TYPE,
                     source_path=video_path,
                     video_id=video_path,  # Using file path as video ID
                     frame_number=result.frame_number,
                     faces_detected=len(result.person_identities),
                     detection_results=[p.__dict__ for p in result.person_identities],
                     processing_time_ms=result.processing_time_ms,
-                    model_version="face_identity_agent_v1.0"
+                    model_version=MODEL_VERSION
                 )
                 db.session.add(face_detection)
                 db.session.flush()  # Get the ID
@@ -114,7 +101,7 @@ def process_cctv_video():
                         bounding_box=result.face_locations[i],
                         is_known_person=person_identity.watchlist_status,
                         confidence_score=person_identity.confidence_score,
-                        model_version="face_identity_agent_v1.0"
+                        model_version=MODEL_VERSION
                     )
                     db.session.add(face_encoding_record)
                 
@@ -141,8 +128,7 @@ def process_cctv_video():
         
         db.session.commit()
         
-        return jsonify({
-            "success": True,
+        return success_response({
             "video_path": video_path,
             "camera_id": camera_id,
             "frames_processed": len(results),
@@ -156,9 +142,8 @@ def process_cctv_video():
         })
         
     except Exception as e:
-        logger.error(f"CCTV processing error: {e}")
         db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+        return handle_exception(e, "CCTV processing", HTTP_INTERNAL_ERROR)
 
 @cctv_bp.route("/watchlist", methods=["GET"])
 def get_watchlist():
@@ -172,32 +157,28 @@ def get_watchlist():
                 person_type_enum = PersonType(person_type)
                 watchlist = agent.watchlist_manager.watchlists[person_type_enum]
             except ValueError:
-                return jsonify({"error": "Invalid person type"}), 400
+                return error_response("Invalid person type", status_code=HTTP_BAD_REQUEST)
         else:
             watchlist = {}
             for ptype in PersonType:
                 watchlist[ptype.value] = agent.watchlist_manager.watchlists[ptype]
         
-        return jsonify({
-            "success": True,
+        return success_response({
             "watchlist": watchlist,
             "total_encodings": len(agent.watchlist_manager.face_encodings_cache)
         })
         
     except Exception as e:
-        logger.error(f"Get watchlist error: {e}")
-        return jsonify({"error": str(e)}), 500
+        return handle_exception(e, "Get watchlist", HTTP_INTERNAL_ERROR)
 
 @cctv_bp.route("/watchlist", methods=["POST"])
 def add_to_watchlist():
     """Add person to watchlist"""
     try:
-        if 'image' not in request.files:
-            return jsonify({"error": "No image file provided"}), 400
-        
-        file = request.files['image']
-        if file.filename == '':
-            return jsonify({"error": "No file selected"}), 400
+        # Validate file upload
+        file, error_msg = validate_file_upload(request.files, 'image')
+        if error_msg:
+            return error_response(error_msg, status_code=HTTP_BAD_REQUEST)
         
         # Get parameters
         person_type = request.form.get('person_type', 'unknown')
@@ -207,28 +188,25 @@ def add_to_watchlist():
         try:
             person_type_enum = PersonType(person_type)
         except ValueError:
-            return jsonify({"error": "Invalid person type"}), 400
+            return error_response("Invalid person type", status_code=HTTP_BAD_REQUEST)
         
         # Save uploaded image
-        image_path = save_uploaded_video(file, "watchlist_images")
+        image_path = save_uploaded_file(file, "watchlist_images", ALLOWED_IMAGE_EXTENSIONS)
         if not image_path:
-            return jsonify({"error": "Invalid image file type"}), 400
+            return error_response("Invalid image file type", status_code=HTTP_BAD_REQUEST)
         
         # Process image
         import cv2
-        import numpy as np
         import face_recognition
         
         image = cv2.imread(image_path)
         if image is None:
-            return jsonify({"error": "Could not load image"}), 400
+            return error_response("Could not load image", status_code=HTTP_BAD_REQUEST)
         
         # Get face encodings
         face_encodings = face_recognition.face_encodings(image)
         if not face_encodings:
-            return jsonify({"error": "No face found in image"}), 400
-        
-        face_encoding = face_encodings[0]
+            return error_response("No face found in image", status_code=HTTP_BAD_REQUEST)
         
         # Add to watchlist
         agent = get_face_identity_agent()
@@ -239,8 +217,7 @@ def add_to_watchlist():
             json.loads(metadata) if metadata else {}
         )
         
-        return jsonify({
-            "success": True,
+        return success_response({
             "person_id": person_id,
             "person_type": person_type,
             "name": name,
@@ -248,8 +225,7 @@ def add_to_watchlist():
         })
         
     except Exception as e:
-        logger.error(f"Add to watchlist error: {e}")
-        return jsonify({"error": str(e)}), 500
+        return handle_exception(e, "Add to watchlist", HTTP_INTERNAL_ERROR)
 
 @cctv_bp.route("/watchlist/<person_id>", methods=["DELETE"])
 def remove_from_watchlist(person_id):
@@ -259,16 +235,15 @@ def remove_from_watchlist(person_id):
         success = agent.watchlist_manager.remove_person(person_id)
         
         if success:
-            return jsonify({
-                "success": True,
+            return success_response({
                 "message": f"Removed person {person_id} from watchlist"
             })
         else:
-            return jsonify({"error": "Person not found in watchlist"}), 404
+            return error_response("Person not found in watchlist", 
+                                status_code=HTTP_NOT_FOUND)
             
     except Exception as e:
-        logger.error(f"Remove from watchlist error: {e}")
-        return jsonify({"error": str(e)}), 500
+        return handle_exception(e, "Remove from watchlist", HTTP_INTERNAL_ERROR)
 
 @cctv_bp.route("/tracking", methods=["GET"])
 def get_person_tracking():
@@ -277,8 +252,7 @@ def get_person_tracking():
         agent = get_face_identity_agent()
         summary = agent.get_person_tracking_summary()
         
-        return jsonify({
-            "success": True,
+        return success_response({
             "tracking_summary": summary,
             "known_persons": {
                 person_id: {
@@ -292,8 +266,7 @@ def get_person_tracking():
         })
         
     except Exception as e:
-        logger.error(f"Get tracking error: {e}")
-        return jsonify({"error": str(e)}), 500
+        return handle_exception(e, "Get tracking", HTTP_INTERNAL_ERROR)
 
 @cctv_bp.route("/cameras", methods=["GET"])
 def get_camera_status():
@@ -321,15 +294,13 @@ def get_camera_status():
                 if person.watchlist_status:
                     camera_activity[camera_id]["watchlist_alerts"] += 1
         
-        return jsonify({
-            "success": True,
+        return success_response({
             "cameras": list(camera_activity.values()),
             "total_cameras": len(camera_activity)
         })
         
     except Exception as e:
-        logger.error(f"Get camera status error: {e}")
-        return jsonify({"error": str(e)}), 500
+        return handle_exception(e, "Get camera status", HTTP_INTERNAL_ERROR)
 
 @cctv_bp.route("/alerts", methods=["GET"])
 def get_watchlist_alerts():
@@ -337,8 +308,11 @@ def get_watchlist_alerts():
     try:
         # Get recent detections with watchlist matches
         recent_detections = FaceDetection.query.filter(
-            FaceDetection.created_at >= db.func.date_sub(db.func.now(), db.text('INTERVAL 24 HOUR'))
-        ).order_by(FaceDetection.created_at.desc()).limit(100).all()
+            FaceDetection.created_at >= db.func.date_sub(
+                db.func.now(), 
+                db.text(f'INTERVAL {HOURS_24} HOUR')
+            )
+        ).order_by(FaceDetection.created_at.desc()).limit(RECENT_DETECTIONS_LIMIT).all()
         
         alerts = []
         for detection in recent_detections:
@@ -355,13 +329,11 @@ def get_watchlist_alerts():
                             "frame_number": detection.frame_number
                         })
         
-        return jsonify({
-            "success": True,
+        return success_response({
             "alerts": alerts,
             "total_alerts": len(alerts)
         })
         
     except Exception as e:
-        logger.error(f"Get alerts error: {e}")
-        return jsonify({"error": str(e)}), 500
+        return handle_exception(e, "Get alerts", HTTP_INTERNAL_ERROR)
 

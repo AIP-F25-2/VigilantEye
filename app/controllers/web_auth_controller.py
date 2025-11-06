@@ -16,13 +16,13 @@ def login():
             
             if not email or not password:
                 flash('Please provide email and password', 'error')
-                return render_template('login.html')
+                return render_template('auth/login.html')
             
             # Verify credentials
             user_data = verify_password(email, password)
             if not user_data:
                 flash('Invalid email or password', 'error')
-                return render_template('login.html')
+                return render_template('auth/login.html')
             
             # Set session
             session['user_id'] = user_data['id']
@@ -35,9 +35,9 @@ def login():
             
         except Exception as e:
             flash(f'Login failed: {str(e)}', 'error')
-            return render_template('login.html')
+            return render_template('auth/login.html')
     
-    return render_template('login.html')
+    return render_template('auth/login.html')
 
 
 @web_auth_bp.route('/signup', methods=['GET', 'POST'])
@@ -57,11 +57,11 @@ def signup():
             # Validate inputs
             if not all([email, password, username]):
                 flash('All fields are required', 'error')
-                return render_template('signup.html')
+                return render_template('auth/register.html')
             
             if password != confirm_password:
                 flash('Passwords do not match', 'error')
-                return render_template('signup.html')
+                return render_template('auth/register.html')
             
             # Create user
             user_data = create_user(
@@ -77,12 +77,12 @@ def signup():
             
         except ValueError as e:
             flash(str(e), 'error')
-            return render_template('signup.html')
+            return render_template('auth/register.html')
         except Exception as e:
             flash(f'Registration failed: {str(e)}', 'error')
-            return render_template('signup.html')
+            return render_template('auth/register.html')
     
-    return render_template('signup.html')
+    return render_template('auth/register.html')
 
 
 @web_auth_bp.route('/logout')

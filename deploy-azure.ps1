@@ -55,10 +55,10 @@ $fqdn = az containerapp show `
 Write-Host "Application URL: https://$fqdn" -ForegroundColor Cyan
 Write-Host ""
 
-# Step 5: Run database migrations
-Write-Host "[5/5] Running database migrations..." -ForegroundColor Yellow
-Write-Host "Note: You may need to run migrations manually using:" -ForegroundColor Yellow
-Write-Host "  az containerapp exec --name $ContainerAppName --resource-group $ResourceGroup --command 'flask db upgrade'" -ForegroundColor Yellow
+# Step 5: Database migrations
+Write-Host "[5/5] Database migrations..." -ForegroundColor Yellow
+Write-Host "Note: Migrations run automatically on container startup." -ForegroundColor Green
+Write-Host "Check logs to verify migrations completed successfully." -ForegroundColor Yellow
 Write-Host ""
 
 Write-Host "=========================================" -ForegroundColor Cyan
