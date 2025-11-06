@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VIGILANTEye API Test Suite</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .test-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            margin: 2rem auto;
+            max-width: 1400px;
+            overflow: hidden;
+        }
+        .test-header {
+            background: linear-gradient(135deg, #0f766e 0%, #059669 100%);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+        .test-content {
+            padding: 2rem;
+        }
+        .brand-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #0f766e;
+        }
+        .endpoint-card {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background: #f8f9fa;
+        }
+        .endpoint-card h6 {
+            color: #0f766e;
+            margin-bottom: 0.5rem;
+        }
+        .method-badge {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .method-get { background: #28a745; color: white; }
+        .method-post { background: #007bff; color: white; }
+        .method-put { background: #ffc107; color: black; }
+        .method-delete { background: #dc3545; color: white; }
+        .json-preview {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 0.5rem;
+        }
+        .response-area {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .response-success {
+            border-left: 4px solid #28a745;
+        }
+        .response-error {
+            border-left: 4px solid #dc3545;
+        }
+        .sample-data-btn {
+            margin: 0.25rem;
+        }
+        .nav-tabs .nav-link {
+            color: #0f766e;
+        }
+        .nav-tabs .nav-link.active {
+            background-color: #0f766e;
+            color: white;
+        }
+        .config-section {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid">
+        <div class="test-container">
+            <!-- Header -->
+            <div class="test-header">
+                <div class="brand-badge">
+                    <i class="bi bi-eye-fill"></i>
+                    <span>VIGILANTEye</span>
+                </div>
+                <h2 class="mb-3">API Test Suite</h2>
+                <p class="mb-0">Comprehensive testing interface for all endpoints</p>
+            </div>
+            
+            <!-- Content -->
+            <div class="test-content">
+                <!-- Configuration Section -->
+                <div class="config-section">
+                    <h6><i class="bi bi-gear"></i> API Configuration</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label for="apiBaseUrl" class="form-label">Base URL</label>
+                            <input type="text" class="form-control" id="apiBaseUrl" 
+                                   value="http://localhost:5000" placeholder="http://localhost:5000">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="authToken" class="form-label">Auth Token (Optional)</label>
+                            <input type="text" class="form-control" id="authToken" 
+                                   placeholder="JWT token for authenticated requests">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation Tabs -->
+                <ul class="nav nav-tabs" id="apiTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="auth-tab" data-bs-toggle="tab" 
+                                data-bs-target="#auth-panel" type="button">
+                            <i class="bi bi-shield-lock"></i> Authentication
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="users-tab" data-bs-toggle="tab" 
+                                data-bs-target="#users-panel" type="button">
+                            <i class="bi bi-people"></i> Users
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="projects-tab" data-bs-toggle="tab" 
+                                data-bs-target="#projects-panel" type="button">
+                            <i class="bi bi-folder"></i> Projects
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="videos-tab" data-bs-toggle="tab" 
+                                data-bs-target="#videos-panel" type="button">
+                            <i class="bi bi-camera-video"></i> Videos
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="recordings-tab" data-bs-toggle="tab" 
+                                data-bs-target="#recordings-panel" type="button">
+                            <i class="bi bi-record-circle"></i> Recordings
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="telegram-tab" data-bs-toggle="tab" 
+                                data-bs-target="#telegram-panel" type="button">
+                            <i class="bi bi-telegram"></i> Telegram
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="health-tab" data-bs-toggle="tab" 
+                                data-bs-target="#health-panel" type="button">
+                            <i class="bi bi-heart-pulse"></i> Health
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab Panels -->
+                <div class="tab-content" id="apiTabContent">
+                    <!-- Authentication Panel -->
+                    <div class="tab-pane fade show active" id="auth-panel" role="tabpanel">
+                        <div class="endpoint-card">
+                            <h6><span class="method-badge method-post">POST</span> /api/auth/register</h6>
+                            <p class="small text-muted">Register a new user</p>
+                            <div class="mb-2">
+                                <button class="btn btn-sm btn-outline-primary sample-data-btn" 
+                                        onclick="fillSampleData('register')">Sample Data</button>
+                            </div>
+                            <textarea class="form-control" id="registerData" rows="6">{
+  "username": "testuser",
+  "email": "test@example.com",
+  "password": "password123"
+}</textarea>
+                            <button class="btn btn-primary mt-2" onclick="testEndpoint('POST', '/api/auth/register', 'registerData')">
+                                <i class="bi bi-send"></i> Test Register
+                            </button>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <h6><span class="method-badge method-post">POST</span> /api/auth/login</h6>
+                            <p class="small text-muted">Login user and get JWT token</p>
+                            <div class="mb-2">
+                                <button class="btn btn-sm btn-outline-primary sample-data-btn" 
+                                        onclick="fillSampleData('login')">Sample Data</button>
+                            </div>
+                            <textarea class="form-control" id="loginData" rows="4">{
+  "email": "test@example.com",
+  "password": "password123"
+}</textarea>
+                            <button class="btn btn-primary mt-2" onclick="testEndpoint('POST', '/api/auth/login', 'loginData', true)">
+                                <i class="bi bi-send"></i> Test Login
+                            </button>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <h6><span class="method-badge method-get">GET</span> /api/auth/me</h6>
+                            <p class="small text-muted">Get current user information</p>
+                            <button class="btn btn-primary" onclick="testEndpoint('GET', '/api/auth/me', null, true)">
+                                <i class="bi bi-send"></i> Test Get Me
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Users Panel -->
+                    <div class="tab-pane fade" id="users-panel" role="tabpanel">
+                        <div class="endpoint-card">
+                            <h6><span class="method-badge method-get">GET</span> /api/v1/users</h6>
+                            <p class="small text-muted">Get all users</p>
+                            <button class="btn btn-primary" onclick="testEndpoint('GET', '/api/v1/users')">
+                                <i class="bi bi-send"></i> Test Get Users
+                            </button>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <h6><span class="method-badge method-get">GET</span> /api/v1/users/{id}</h6>
+                            <p class="small text-muted">Get user by ID</p>
+                            <input type="number" class="form-control mb-2" id="userId" placeholder="User ID" value="1">
+                            <button class="btn btn-primary" onclick="testEndpoint('GET', '/api/v1/users/' + document.getElementById('userId').value)">
+                                <i class="bi bi-send"></i> Test Get User
+                            </button>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <h6><span class="method-badge method-post">POST</span> /api/v1/users</h6>
+                            <p class="small text-muted">Create new user</p>
+                            <div class="mb-2">
+                                <button class="btn btn-sm btn-outline-primary sample-data-btn" 
+                                        onclick="fillSampleData('createUser')">Sample Data</button>
+                            </div>
+                            <textarea class="form-control" id="createUserData" rows="6">{
+  "username": "newuser",
+  "email": "newuser@example.com",
+  "password": "password123"
+}</textarea>
+                            <button class="btn btn-primary mt-2" onclick="testEndpoint('POST', '/api/v1/users', 'createUserData')">
+                                <i class="bi bi-send"></i> Test Create User
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Projects Panel -->
+                    <div class="tab-pane fade" id="projects-panel" role="tabpanel">
+                        <div class="endpoint-card">
+                            <h6><span class="method-badge method-get">GET</span> /api/v2/projects</h6>
+                            <p class="small text-muted">Get all projects</p>
+                            <button class="btn btn-primary" onclick="testEndpoint('GET', '/api/v2/projects')">
+                                <i class="bi bi-send"></i> Test Get Projects
+                            </button>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <h6><span class="method-badge method-post">POST</span> /api/v2/projects</h6>
+                            <p class="small text-muted">Create new project</p>
+                            <div class="mb-2">
+                                <button class="btn btn-sm btn-outline-primary sample-data-btn" 
+                                        onclick="fillSampleData('createProject')">Sample Data</button>
+                            </div>
+                            <textarea class="form-control" id="createProjectData" rows="8">{
+  "name": "Test Surveillance Project",
+  "description": "A test project for surveillance",
+  "user_id": 1,
+  "is_public": false,
+  "category": "security",
+  "tags": ["surveillance", "test"]
+}</textarea>
+                            <button class="btn btn-primary mt-2" onclick="testEndpoint('POST', '/api/v2/projects', 'createProjectData')">
+                                <i class="bi bi-send"></i> Test Create Project
+                            </button>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <h6><span class="method-badge method-get">GET</span> /api/v2/projects/{id}</h6>
+                            <p class="small text-muted">Get project by ID</p>
+                            <input type="number" class="form-control mb-2" id="projectId" placeholder="Project ID" value="1">
+                            <button class="btn btn-primary" onclick="testEndpoint('GET', '/api/v2/projects/' + document.getElementById('projectId').value)">
+                                <i class="bi bi-send"></i> Test Get Project
+                            </button>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <h6><span class="method-badge method-put">PUT</span> /api/v2/projects/{id}</h6>
+                            <p class="small text-muted">Update project</p>
+                            <input type="number" class="form-control mb-2" id="updateProjectId" placeholder="Project ID" value="1">
+                            <textarea class="form-control mb-2" id="updateProjectData" rows="4">{
+  "name": "Updated Project Name",
+  "description": "Updated description"
+}</textarea>
+                            <button class="btn btn-warning" onclick="testEndpoint('PUT', '/api/v2/projects/' + document.getElementById('updateProjectId').value, 'updateProjectData')">
+                                <i class="bi bi-send"></i> Test Update Project
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Videos Panel -->
+                    <div class="tab-pane fade" id="videos-panel" role="tabpanel">
+                        <div class="endpoint-card">
+                            <h6><span class="method-badge method-get">GET</span> /api/v2/videos</h6>
+                            <p class="small text-muted">Get all videos with optional filtering</p>
+                            <input type="text" class="form-control mb-2" id="videoQuery" placeholder="Query parameters (e.g., ?page=1&per_page=10)">
+                            <button class="btn btn-primary" onclick="testEndpoint('GET', '/api/v2/videos' + (document.getElementById('videoQuery').value ? '?' + document.getElementById('videoQuery').value : ''))">
+                                <i class="bi bi-send"></i> Test Get Videos
+                            </button>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <h6><span class="method-badge method-get">GET</span> /api/v2/videos/{id}</h6>
+                            <p class="small text-muted">Get video by ID</p>
+                            <input type="number" class="form-control mb-2" id="videoId" placeholder="Video ID" value="1">
+                            <button class="btn btn-primary" onclick="testEndpoint('GET', '/api/v2/videos/' + document.getElementById('videoId').value)">
+                                <i class="bi bi-send"></i> Test Get Video
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Recordings Panel -->
+                    <div class="tab-pane fade" id="recordings-panel" role="tabpanel">
+                        <div class="endpoint-card">
+                            <h6><span class="method-badge method-get">GET</span> /api/v2/recordings</h6>
+                            <p class="small text-muted">Get all recordings</p>
+                            <button class="btn btn-primary" onclick="testEndpoint('GET', '/api/v2/recordings')">
+                                <i class="bi bi-send"></i> Test Get Recordings
+                            </button>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <h6><span class="method-badge method-post">POST</span> /api/v2/recordings/start</h6>
+                            <p class="small text-muted">Start a new recording</p>
+                            <div class="mb-2">
+                                <button class="btn btn-sm btn-outline-primary sample-data-btn" 
+                                        onclick="fillSampleData('startRecording')">Sample Data</button>
+                            </div>
+                            <textarea class="form-control" id="startRecordingData" rows="8">{
+  "mode": "webcam",
+  "source": "0",
+  "fps": 30,
+  "max_duration_seconds": 3600,
+  "user_id": 1,
+  "project_id": 1
+}</textarea>
+                            <button class="btn btn-primary mt-2" onclick="testEndpoint('POST', '/api/v2/recordings/start', 'startRecordingData')">
+                                <i class="bi bi-send"></i> Test Start Recording
+                            </button>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <h6><span class="method-badge method-get">GET</span> /api/v2/recordings/{id}</h6>
+                            <p class="small text-muted">Get recording by ID</p>
+                            <input type="number" class="form-control mb-2" id="recordingId" placeholder="Recording ID" value="1">
+                            <button class="btn btn-primary" onclick="testEndpoint('GET', '/api/v2/recordings/' + document.getElementById('recordingId').value)">
+                                <i class="bi bi-send"></i> Test Get Recording
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Telegram Panel -->
+                    <div class="tab-pane fade" id="telegram-panel" role="tabpanel">
+                        <div class="endpoint-card">
+                            <h6><span class="method-badge method-post">POST</span> /api/telegram/ingest</h6>
+                            <p class="small text-muted">Send message to Telegram</p>
+                            <div class="mb-2">
+                                <button class="btn btn-sm btn-outline-primary sample-data-btn" 
+                                        onclick="fillSampleData('telegramText')">Text Message</button>
+                                <button class="btn btn-sm btn-outline-primary sample-data-btn" 
+                                        onclick="fillSampleData('telegramImage')">Image Message</button>
+                            </div>
+                            <textarea class="form-control" id="telegramData" rows="6">{
+  "type": "text",
+  "content": "🚨 INTRUSION ALERT 🚨\nLocation: Building A\nTime: 2024-01-15 14:30:25",
+  "channel_id": "-1001234567890"
+}</textarea>
+                            <button class="btn btn-primary mt-2" onclick="testEndpoint('POST', '/api/telegram/ingest', 'telegramData')">
+                                <i class="bi bi-send"></i> Test Send Telegram Message
+                            </button>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <h6><span class="method-badge method-post">POST</span> /webhook/telegram/{secret}</h6>
+                            <p class="small text-muted">Telegram webhook callback</p>
+                            <input type="text" class="form-control mb-2" id="webhookSecret" placeholder="Webhook Secret" value="test-secret">
+                            <div class="mb-2">
+                                <button class="btn btn-sm btn-outline-primary sample-data-btn" 
+                                        onclick="fillSampleData('webhook')">Sample Data</button>
+                            </div>
+                            <textarea class="form-control" id="webhookData" rows="8">{
+  "callback_query": {
+    "id": "callback123",
+    "data": "ack:message-id-here",
+    "from": {
+      "id": 12345,
+      "first_name": "Test",
+      "username": "testuser"
+    },
+    "date": 1640995200
+  }
+}</textarea>
+                            <button class="btn btn-primary mt-2" onclick="testEndpoint('POST', '/webhook/telegram/' + document.getElementById('webhookSecret').value, 'webhookData')">
+                                <i class="bi bi-send"></i> Test Webhook
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Health Panel -->
+                    <div class="tab-pane fade" id="health-panel" role="tabpanel">
+                        <div class="endpoint-card">
+                            <h6><span class="method-badge method-get">GET</span> /health</h6>
+                            <p class="small text-muted">Health check endpoint</p>
+                            <button class="btn btn-primary" onclick="testEndpoint('GET', '/health')">
+                                <i class="bi bi-send"></i> Test Health Check
+                            </button>
+                        </div>
+
+                        <div class="endpoint-card">
+                            <h6><span class="method-badge method-get">GET</span> /</h6>
+                            <p class="small text-muted">Index endpoint</p>
+                            <button class="btn btn-primary" onclick="testEndpoint('GET', '/')">
+                                <i class="bi bi-send"></i> Test Index
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Response Area -->
+                <div class="response-area" id="responseArea">
+                    <h6><i class="bi bi-code-square"></i> Response</h6>
+                    <div id="responseContent">
+                        <p class="text-muted small">No requests made yet. Test an endpoint to see the response here.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Sample data templates
+        const sampleData = {
+            register: {
+                username: "testuser",
+                email: "test@example.com",
+                password: "password123"
+            },
+            login: {
+                email: "test@example.com",
+                password: "password123"
+            },
+            createUser: {
+                username: "newuser",
+                email: "newuser@example.com",
+                password: "password123"
+            },
+            createProject: {
+                name: "Test Surveillance Project",
+                description: "A test project for surveillance",
+                user_id: 1,
+                is_public: false,
+                category: "security",
+                tags: ["surveillance", "test"]
+            },
+            startRecording: {
+                mode: "webcam",
+                source: "0",
+                fps: 30,
+                max_duration_seconds: 3600,
+                user_id: 1,
+                project_id: 1
+            },
+            telegramText: {
+                type: "text",
+                content: "🚨 INTRUSION ALERT 🚨\nLocation: Building A - Main Entrance\nTime: " + new Date().toLocaleString() + "\nConfidence: 95%",
+                channel_id: "-1001234567890"
+            },
+            telegramImage: {
+                type: "image",
+                content: "https://example.com/surveillance/alert_" + Date.now() + ".jpg",
+                channel_id: "-1001234567890"
+            },
+            webhook: {
+                callback_query: {
+                    id: "callback_" + Date.now(),
+                    data: "ack:message-id-here",
+                    from: {
+                        id: 12345,
+                        first_name: "Test",
+                        username: "testuser"
+                    },
+                    date: Math.floor(Date.now() / 1000)
+                }
+            }
+        };
+
+        // Fill sample data
+        function fillSampleData(type) {
+            const data = sampleData[type];
+            if (!data) return;
+
+            let textareaId = '';
+            switch(type) {
+                case 'register': textareaId = 'registerData'; break;
+                case 'login': textareaId = 'loginData'; break;
+                case 'createUser': textareaId = 'createUserData'; break;
+                case 'createProject': textareaId = 'createProjectData'; break;
+                case 'startRecording': textareaId = 'startRecordingData'; break;
+                case 'telegramText':
+                case 'telegramImage': textareaId = 'telegramData'; break;
+                case 'webhook': textareaId = 'webhookData'; break;
+            }
+
+            if (textareaId) {
+                document.getElementById(textareaId).value = JSON.stringify(data, null, 2);
+            }
+        }
+
+        // Test endpoint
+        async function testEndpoint(method, endpoint, dataElementId = null, useAuth = false) {
+            const baseUrl = document.getElementById('apiBaseUrl').value;
+            const url = baseUrl + endpoint;
+            const responseArea = document.getElementById('responseContent');
+            
+            try {
+                responseArea.innerHTML = '<div class="text-center"><div class="spinner-border text-primary" role="status"></div><br>Loading...</div>';
+                
+                const options = {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                };
+
+                // Add auth token if needed
+                if (useAuth) {
+                    const token = document.getElementById('authToken').value;
+                    if (token) {
+                        options.headers['Authorization'] = `Bearer ${token}`;
+                    }
+                }
+
+                // Add request body if provided
+                if (dataElementId && document.getElementById(dataElementId)) {
+                    const dataText = document.getElementById(dataElementId).value;
+                    try {
+                        options.body = dataText;
+                    } catch (e) {
+                        responseArea.innerHTML = `<div class="alert alert-danger">Invalid JSON: ${e.message}</div>`;
+                        return;
+                    }
+                }
+
+                const response = await fetch(url, options);
+                const responseData = await response.text();
+                
+                let jsonData;
+                try {
+                    jsonData = JSON.parse(responseData);
+                } catch (e) {
+                    jsonData = responseData;
+                }
+
+                const isSuccess = response.status >= 200 && response.status < 300;
+                const responseClass = isSuccess ? 'response-success' : 'response-error';
+                
+                let html = `
+                    <div class="${responseClass} p-3">
+                        <h6><i class="bi bi-${isSuccess ? 'check-circle' : 'x-circle'}"></i> 
+                            ${method} ${endpoint}</h6>
+                        <p class="mb-1"><strong>Status:</strong> 
+                            <span class="badge bg-${isSuccess ? 'success' : 'danger'}">${response.status} ${response.statusText}</span>
+                        </p>
+                        <p class="mb-2"><strong>Response:</strong></p>
+                        <div class="json-preview">${typeof jsonData === 'string' ? jsonData : JSON.stringify(jsonData, null, 2)}</div>
+                    </div>
+                `;
+
+                // If login was successful, save token
+                if (endpoint === '/api/auth/login' && isSuccess && jsonData.access_token) {
+                    document.getElementById('authToken').value = jsonData.access_token;
+                    html += '<div class="alert alert-success mt-2">✓ Auth token saved automatically!</div>';
+                }
+
+                responseArea.innerHTML = html;
+                
+            } catch (error) {
+                responseArea.innerHTML = `
+                    <div class="response-error p-3">
+                        <h6><i class="bi bi-exclamation-triangle"></i> Connection Error</h6>
+                        <p class="mb-0">Could not connect to the API: ${error.message}</p>
+                        <p class="small mt-2">Make sure the server is running at: ${baseUrl}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Auto-save token on login
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize with default sample data
+            fillSampleData('register');
+        });
+    </script>
+</body>
+</html>
