@@ -16,13 +16,13 @@ def login():
             
             if not email or not password:
                 flash('Please provide email and password', 'error')
-                return render_template('auth/login.html')
+                return render_template('login.html')
             
             # Verify credentials
             user_data = verify_password(email, password)
             if not user_data:
                 flash('Invalid email or password', 'error')
-                return render_template('auth/login.html')
+                return render_template('login.html')
             
             # Set session
             session['user_id'] = user_data['id']
@@ -35,13 +35,14 @@ def login():
             
         except Exception as e:
             flash(f'Login failed: {str(e)}', 'error')
-            return render_template('auth/login.html')
+            return render_template('login.html')
     
-    return render_template('auth/login.html')
+    return render_template('login.html')
 
 
-@web_auth_bp.route('/register', methods=['GET', 'POST'])  
-def register():
+@web_auth_bp.route('/signup', methods=['GET', 'POST'])
+@web_auth_bp.route('/register', methods=['GET', 'POST'])
+def signup():
     """Registration page and handler"""
     if 'user_id' in session:
         return redirect(url_for('main.dashboard'))
@@ -56,11 +57,11 @@ def register():
             # Validate inputs
             if not all([email, password, username]):
                 flash('All fields are required', 'error')
-                return render_template('auth/register.html')
+                return render_template('signup.html')
             
             if password != confirm_password:
                 flash('Passwords do not match', 'error')
-                return render_template('auth/register.html')
+                return render_template('signup.html')
             
             # Create user
             user_data = create_user(
@@ -76,12 +77,12 @@ def register():
             
         except ValueError as e:
             flash(str(e), 'error')
-            return render_template('auth/register.html')
+            return render_template('signup.html')
         except Exception as e:
             flash(f'Registration failed: {str(e)}', 'error')
-            return render_template('auth/register.html')
+            return render_template('signup.html')
     
-    return render_template('auth/register.html')
+    return render_template('signup.html')
 
 
 @web_auth_bp.route('/logout')

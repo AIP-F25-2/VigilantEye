@@ -262,33 +262,3 @@ body {
 .password-good .progress-bar { background: linear-gradient(90deg, #10b981, #059669); width: 75%; }
 .password-strong .progress-bar { background: linear-gradient(90deg, #22c55e, #16a34a); width: 100%; }
 
-/* Stats Cards - Additional styles for dashboard */
-.stat-card {
-    background: white;
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.stat-card .stat-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.5rem;
-}
-
-.stat-card .stat-value {
-    font-size: 2rem;
-    font-weight: 700;
-    margin: 0.5rem 0;
-}
-
-.stat-card .stat-label {
-    color: #6b7280;
-    font-size: 0.875rem;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}

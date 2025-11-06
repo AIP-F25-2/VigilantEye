@@ -46,7 +46,7 @@ def create_app():
     
     # Register main blueprints
     app.register_blueprint(main_bp)
-    app.register_blueprint(web_auth_bp)  # Web authentication routes (/, /login, /register, /logout)
+    app.register_blueprint(web_auth_bp)  # Web authentication routes (/login, /signup, /logout)
     app.register_blueprint(api_bp, url_prefix='/api/v1')
     app.register_blueprint(auth_bp, url_prefix='/api/auth')  # API authentication routes
     

@@ -5,13 +5,26 @@ Integrates face detection, demographics analysis, and ambiguity detection
 
 import os
 import sys
-import cv2
-import numpy as np
-import face_recognition
-from PIL import Image, ImageEnhance
-from sklearn.metrics.pairwise import cosine_similarity
 from datetime import datetime
 import logging
+
+# Try to import optional dependencies
+try:
+    import cv2
+    import numpy as np
+    import face_recognition
+    from PIL import Image, ImageEnhance
+    from sklearn.metrics.pairwise import cosine_similarity
+    CV2_AVAILABLE = True
+except ImportError as e:
+    logging.warning(f"FaceAI dependencies not available: {e}")
+    CV2_AVAILABLE = False
+    cv2 = None
+    np = None
+    face_recognition = None
+    Image = None
+    ImageEnhance = None
+    cosine_similarity = None
 
 # Add FaceAi path to sys.path
 faceai_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'FaceAi', 'VigilantEye-18_FaceAi_Riya')
@@ -20,9 +33,14 @@ if faceai_path not in sys.path:
 
 # Import FaceAi modules
 try:
-    from Age_Gender_Detection import DemographicsAnalyzer
-    from ImprovedFaceDetector import ImprovedFaceDetector
-    from Ambiguity import SimpleAmbiguityChecker
+    if CV2_AVAILABLE:
+        from Age_Gender_Detection import DemographicsAnalyzer
+        from ImprovedFaceDetector import ImprovedFaceDetector
+        from Ambiguity import SimpleAmbiguityChecker
+    else:
+        DemographicsAnalyzer = None
+        ImprovedFaceDetector = None
+        SimpleAmbiguityChecker = None
 except ImportError as e:
     logging.warning(f"FaceAi modules not available: {e}")
     DemographicsAnalyzer = None
@@ -47,6 +65,11 @@ class FaceAiService:
     def _initialize_components(self):
         """Initialize FaceAi components"""
         try:
+            if not CV2_AVAILABLE:
+                logger.warning("FaceAI dependencies not available. FaceAI features will be disabled.")
+                self.initialized = False
+                return
+            
             if ImprovedFaceDetector:
                 self.face_detector = ImprovedFaceDetector(similarity_threshold=0.35)
                 logger.info("Face detector initialized")

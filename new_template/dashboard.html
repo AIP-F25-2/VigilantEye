@@ -6,7 +6,7 @@
 <div class="row gy-4">
   <div class="col-12">
     <div class="jumbotron text-white p-5 rounded mb-2">
-      <h1 class="display-6 mb-1">Welcome, {{ session.username }} 👋</h1>
+      <h1 class="display-6 mb-1">Welcome, {{ username }} 👋</h1>
       <p class="mb-0">Monitor your live feeds and manage automations from here.</p>
     </div>
   </div>
@@ -205,7 +205,7 @@
                 <h6 class="mb-2 text-primary">Face Recognition & Analysis</h6>
                 <p class="text-muted small mb-3">Advanced face detection, recognition, and demographics analysis powered by AI.</p>
                 <div class="d-flex gap-2">
-                  <a href="{{ url_for('main.face_ai_dashboard') }}" class="btn btn-primary btn-sm">
+                  <a href="{{ url_for('face_ai_dashboard') }}" class="btn btn-primary btn-sm">
                     <i class="bi bi-camera-video me-1"></i> Face AI Dashboard
                   </a>
                   <span class="badge bg-success align-self-center">Available</span>
@@ -305,7 +305,7 @@
                 <h6 class="mb-2" style="color: #14b8a6;">All Features</h6>
                 <p class="text-muted small mb-3">View all available features and capabilities of VigilantEye.</p>
                 <div class="d-flex gap-2">
-                  <a href="{{ url_for('main.features') }}" class="btn btn-sm" style="background-color: #14b8a6; color: white; border: none;">
+                  <a href="{{ url_for('features') }}" class="btn btn-sm" style="background-color: #14b8a6; color: white; border: none;">
                     <i class="bi bi-grid me-1"></i> View All Features
                   </a>
                   <span class="badge bg-success align-self-center">Available</span>
@@ -343,7 +343,8 @@
 
 <div class="row mt-3">
   <div class="col-12 text-center">
-    <a href="{{ url_for('web_auth.logout') }}" class="btn btn-outline-secondary">Logout</a>
+    <a href="{{ url_for('logout') }}" class="btn btn-outline-secondary">Logout</a>
   </div>
 </div>
 {% endblock %}
+

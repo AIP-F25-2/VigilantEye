@@ -8,7 +8,7 @@ def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'user_id' not in session:
-            return redirect(url_for('auth.login'))
+            return redirect(url_for('web_auth.login'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -23,7 +23,7 @@ def index():
 @login_required
 def dashboard():
     """Dashboard page"""
-    return render_template('dashboard.html')
+    return render_template('dashboard.html', username=session.get('username', 'User'))
 
 @main_bp.route('/profile')
 @login_required
@@ -33,9 +33,14 @@ def profile():
 
 @main_bp.route('/faceai')
 @login_required
-def faceai_dashboard():
+def face_ai_dashboard():
     """FaceAi dashboard page"""
     return render_template('faceai_dashboard.html')
+
+@main_bp.route('/features')
+def features():
+    """Features page"""
+    return render_template('features.html')
 
 @main_bp.route('/health')
 def health():
