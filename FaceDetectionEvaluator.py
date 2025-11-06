@@ -21,7 +21,7 @@ class FaceDetectionEvaluator:
 
                 image = cv2.imread(img_path)
                 if image is None:
-                    print(f"⚠️ Skipping {filename} — could not read image.")
+                    print(f" Skipping {filename} — could not read image.")
                     continue
 
                 face_locations, face_names = self.detector.detect_faces(image)

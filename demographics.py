@@ -65,7 +65,7 @@ class DemographicsAnalyzer:
                 # Draw box
                 cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
                 # Put label BELOW the face
-                cv2.putText(frame, label, (x1, y2 + 25), cv2.FONT_HERSHEY_SIMPLEX, 
+                cv2.putText(frame, label, (x1, y2 + 50), cv2.FONT_HERSHEY_SIMPLEX, 
                             0.8, (0, 255, 255), 2, cv2.LINE_AA)
 
         # Show final image with predictions
