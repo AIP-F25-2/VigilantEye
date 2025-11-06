@@ -61,3 +61,6 @@ htmlcov/
 
 # Migrations backup
 *.pyc
+
+# Documentation files
+*.md
