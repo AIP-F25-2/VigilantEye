@@ -6,8 +6,6 @@ from typing import Dict, List, Optional
 
 import librosa
 import numpy as np
-import whisper
-from panns_inference import AudioTagging
 
 from src.config.ai_config import AIConfig
 from src.utils.logger import get_logger
@@ -15,15 +13,59 @@ from src.utils.logger import get_logger
 logger = get_logger(__name__)
 ai_config = AIConfig()
 
+# Try to import whisper (openai-whisper package)
+try:
+    import whisper
+    WHISPER_LIB = "openai-whisper"
+except ImportError:
+    # Fallback to faster-whisper
+    try:
+        from faster_whisper import WhisperModel
+        whisper = None
+        WHISPER_LIB = "faster-whisper"
+    except ImportError:
+        whisper = None
+        WHISPER_LIB = None
+        logger.warning("Neither openai-whisper nor faster-whisper is available")
+
+# Try to import panns_inference (optional, requires data files)
+# Note: On Windows, wget is not available, so data files must be downloaded manually
+# Run: python scripts/setup_panns_data.py to download required data files
+try:
+    from panns_inference import AudioTagging
+    PANNS_AVAILABLE = True
+except (ImportError, FileNotFoundError, Exception) as e:
+    AudioTagging = None
+    PANNS_AVAILABLE = False
+    # Only log warning if it's not a FileNotFoundError (expected on first run)
+    error_msg = str(e)
+    if "class_labels_indices.csv" in error_msg or "wget" in error_msg.lower():
+        logger.info(f"panns_inference data files not found. Audio classification will be disabled. "
+                   f"Run 'python scripts/setup_panns_data.py' to enable audio classification. "
+                   f"Error: {e}")
+    else:
+        logger.warning(f"panns_inference not available: {e}. Audio classification will be disabled.")
+
 
 class AudioClassifier:
     """Classify sounds in audio using PANNs."""
 
     def __init__(self):
         """Initialize audio classifier."""
-        self.model = AudioTagging(checkpoint_path=None, device=ai_config.ai_device)
-        self.threshold = ai_config.audio_classification_threshold
-        logger.info("Audio classifier initialized")
+        if not PANNS_AVAILABLE or AudioTagging is None:
+            self.model = None
+            self.threshold = ai_config.audio_classification_threshold
+            logger.warning("Audio classifier disabled - panns_inference not available")
+            return
+        
+        try:
+            self.model = AudioTagging(checkpoint_path=None, device=ai_config.ai_device)
+            self.threshold = ai_config.audio_classification_threshold
+            logger.info("Audio classifier initialized")
+        except (FileNotFoundError, Exception) as e:
+            self.model = None
+            self.threshold = ai_config.audio_classification_threshold
+            logger.warning(f"Audio classifier disabled - panns_inference initialization failed: {e}")
 
     def classify_audio(self, audio_path: str) -> Dict:
         """
@@ -36,6 +78,17 @@ class AudioClassifier:
             Dictionary with classification results
         """
         logger.info(f"Classifying audio: {audio_path}")
+        
+        # Check if model is available
+        if self.model is None:
+            logger.warning("Audio classifier not available - panns_inference not properly initialized")
+            return {
+                'all_sounds': [],
+                'dominant_sounds': [],
+                'total_detected': 0,
+                'error': 'Audio classifier not available - panns_inference requires data files',
+                'disabled': True
+            }
         
         try:
             # Load audio
@@ -92,11 +145,23 @@ class SpeechToText:
 
     def __init__(self):
         """Initialize speech-to-text model."""
-        self.model = whisper.load_model(
-            ai_config.whisper_model,
-            device=ai_config.whisper_device
-        )
-        logger.info(f"Whisper model loaded: {ai_config.whisper_model}")
+        if WHISPER_LIB == "openai-whisper" and whisper:
+            self.model = whisper.load_model(
+                ai_config.whisper_model,
+                device=ai_config.whisper_device
+            )
+            self.use_faster_whisper = False
+        elif WHISPER_LIB == "faster-whisper":
+            from faster_whisper import WhisperModel
+            self.model = WhisperModel(
+                ai_config.whisper_model,
+                device=ai_config.whisper_device
+            )
+            self.use_faster_whisper = True
+        else:
+            raise ImportError("No Whisper library available. Install openai-whisper or faster-whisper")
+        
+        logger.info(f"Whisper model loaded: {ai_config.whisper_model} ({WHISPER_LIB})")
 
     def transcribe(self, audio_path: str) -> Dict:
         """
@@ -111,26 +176,34 @@ class SpeechToText:
         logger.info(f"Transcribing audio: {audio_path}")
         
         try:
-            # Transcribe
-            result = self.model.transcribe(
-                audio_path,
-                language=None,  # Auto-detect
-                task="transcribe"
-            )
-            
-            transcription = result['text'].strip()
-            language = result.get('language', 'unknown')
-            
-            # Calculate confidence (rough estimate from segments)
-            segments = result.get('segments', [])
-            if segments:
-                avg_confidence = np.mean([
-                    seg.get('no_speech_prob', 0) 
-                    for seg in segments
-                ])
-                confidence = 1.0 - avg_confidence
+            if self.use_faster_whisper:
+                # faster-whisper API
+                segments, info = self.model.transcribe(
+                    audio_path,
+                    language=None,
+                    task="transcribe"
+                )
+                transcription = " ".join([seg.text for seg in segments])
+                language = info.language
+                confidence = 1.0 - (info.no_speech_prob if hasattr(info, 'no_speech_prob') else 0.0)
             else:
-                confidence = 0.0 if not transcription else 0.5
+                # openai-whisper API
+                result = self.model.transcribe(
+                    audio_path,
+                    language=None,
+                    task="transcribe"
+                )
+                transcription = result['text'].strip()
+                language = result.get('language', 'unknown')
+                segments = result.get('segments', [])
+                if segments:
+                    avg_confidence = np.mean([
+                        seg.get('no_speech_prob', 0) 
+                        for seg in segments
+                    ])
+                    confidence = 1.0 - avg_confidence
+                else:
+                    confidence = 0.0 if not transcription else 0.5
             
             result_dict = {
                 'transcription': transcription,

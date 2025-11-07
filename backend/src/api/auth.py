@@ -83,6 +83,7 @@ async def login(
     `Authorization: Bearer <access_token>`
     """
     try:
+        logger.info(f"Login attempt received for email: {request.email}")
         user, tokens = await auth_service.login(request)
         logger.info(f"User logged in successfully: {user.email}")
         return tokens

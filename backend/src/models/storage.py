@@ -83,7 +83,7 @@ class StorageFile(Base):
     )
 
     # Metadata
-    metadata: Mapped[Optional[str]] = mapped_column(
+    file_metadata: Mapped[Optional[str]] = mapped_column(
         Text,
         nullable=True,
         comment="JSON metadata about the file"

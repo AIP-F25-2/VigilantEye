@@ -44,17 +44,17 @@
         "description": "Size of the VM"
       }
     },
-    "postgresAdminLogin": {
+    "mysqlAdminLogin": {
       "type": "string",
       "defaultValue": "vigilanteye",
       "metadata": {
-        "description": "PostgreSQL admin login"
+        "description": "MySQL admin login"
       }
     },
-    "postgresAdminPassword": {
+    "mysqlAdminPassword": {
       "type": "securestring",
       "metadata": {
-        "description": "PostgreSQL admin password"
+        "description": "MySQL admin password"
       }
     }
   },
@@ -66,7 +66,7 @@
     "nsgName": "[concat(parameters('appName'), '-nsg')]",
     "nicName": "[concat(parameters('appName'), '-nic')]",
     "storageAccountName": "[concat(parameters('appName'), 'storage', uniqueString(resourceGroup().id))]",
-    "postgresServerName": "[concat(parameters('appName'), '-postgres')]",
+    "mysqlServerName": "[concat(parameters('appName'), '-mysql')]",
     "containerRegistryName": "[concat(parameters('appName'), 'acr')]"
   },
   "resources": [
@@ -84,18 +84,18 @@
       }
     },
     {
-      "type": "Microsoft.DBforPostgreSQL/flexibleServers",
-      "apiVersion": "2021-06-01",
-      "name": "[variables('postgresServerName')]",
+      "type": "Microsoft.DBforMySQL/flexibleServers",
+      "apiVersion": "2021-05-01",
+      "name": "[variables('mysqlServerName')]",
       "location": "[parameters('location')]",
       "sku": {
         "name": "Standard_B2s",
         "tier": "Burstable"
       },
       "properties": {
-        "administratorLogin": "[parameters('postgresAdminLogin')]",
-        "administratorLoginPassword": "[parameters('postgresAdminPassword')]",
-        "version": "15",
+        "administratorLogin": "[parameters('mysqlAdminLogin')]",
+        "administratorLoginPassword": "[parameters('mysqlAdminPassword')]",
+        "version": "8.0.21",
         "storage": {
           "storageSizeGB": 32
         },
@@ -279,9 +279,9 @@
       "type": "string",
       "value": "[reference(resourceId('Microsoft.Network/publicIPAddresses', variables('publicIPName'))).dnsSettings.fqdn]"
     },
-    "postgresServerName": {
+    "mysqlServerName": {
       "type": "string",
-      "value": "[variables('postgresServerName')]"
+      "value": "[variables('mysqlServerName')]"
     },
     "containerRegistryName": {
       "type": "string",

@@ -1,0 +1,12 @@
+{
+  "video_id": 5,
+  "has_audio": true,
+  "audio_directory": "storage\\videos\\5\\audio",
+  "audio_filename": "audio.wav",
+  "audio_path": "storage\\videos\\5\\audio\\audio.wav",
+  "duration_sec": 10.54,
+  "sample_rate": 44100,
+  "channels": 2,
+  "file_size_bytes": 1859330,
+  "format": "wav"
+}

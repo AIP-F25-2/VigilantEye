@@ -69,5 +69,6 @@ class AIConfig(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
-        extra="ignore"
+        extra="ignore",
+        protected_namespaces=('settings_',)  # Only protect settings_ namespace, not model_
     )

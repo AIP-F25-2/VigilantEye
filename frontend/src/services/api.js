@@ -18,6 +18,15 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
+    // Debug: Log request details for auth endpoints
+    if (config.url?.includes('/auth/login') || config.url?.includes('/auth/signup')) {
+      console.log('Request config:', {
+        url: config.url,
+        method: config.method,
+        headers: config.headers,
+        data: config.data,
+      })
+    }
     return config
   },
   (error) => {
@@ -64,17 +73,29 @@ api.interceptors.response.use(
 // Auth API
 export const authAPI = {
   signUp: async (data) => {
+    // Debug: Log the request data
+    console.log('SignUp request data:', data)
+    console.log('SignUp request URL:', `${API_URL}/auth/signup`)
+    
     const response = await api.post('/auth/signup', data)
     return response.data
   },
 
   login: async (data) => {
+    // Debug: Log the request data
+    console.log('Login request data:', data)
+    console.log('Login request URL:', `${API_URL}/auth/login`)
+    
     const response = await api.post('/auth/login', data)
     return response.data
   },
 
-  getCurrentUser: async () => {
-    const response = await api.get('/auth/me')
+  getCurrentUser: async (accessToken = null) => {
+    // If token is provided, use it directly; otherwise rely on interceptor
+    const config = accessToken 
+      ? { headers: { Authorization: `Bearer ${accessToken}` } }
+      : {}
+    const response = await api.get('/auth/me', config)
     return response.data
   },
 
@@ -90,7 +111,7 @@ export const authAPI = {
 export const videoAPI = {
   uploadVideo: async (file, onProgress) => {
     const formData = new FormData()
-    formData.append('video', file)
+    formData.append('file', file)
 
     const response = await api.post('/video/upload', formData, {
       headers: {
@@ -113,8 +134,34 @@ export const videoAPI = {
     return response.data
   },
 
+  getVideo: async (videoId) => {
+    const response = await api.get(`/video/${videoId}`)
+    return response.data
+  },
+
+  analyzeVideo: async (videoId) => {
+    const response = await api.post(`/video/process/${videoId}`)
+    return response.data
+  },
+
+  deleteVideo: async (videoId) => {
+    const response = await api.delete(`/video/${videoId}`)
+    return response.data
+  },
+
+  downloadVideo: async (videoId) => {
+    const response = await api.get(`/video/${videoId}/download`, {
+      responseType: 'blob'
+    })
+    return response.data
+  },
+
   startStream: async (data) => {
-    const response = await api.post('/video/stream/start', data)
+    // Wrap data in metadata object as expected by backend
+    const requestData = {
+      metadata: data
+    }
+    const response = await api.post('/video/stream/start', requestData)
     return response.data
   },
 

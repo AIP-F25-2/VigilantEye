@@ -5,7 +5,7 @@ WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    postgresql-client \
+    default-mysql-client \
     redis-tools \
     && rm -rf /var/lib/apt/lists/*
 

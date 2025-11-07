@@ -137,13 +137,18 @@ async def get_database_metrics(db: AsyncSession) -> Dict:
         await db.commit()
         db_response_time = (time.time() - start_time) * 1000
         
-        # Get database size (PostgreSQL specific)
+        # Get database size (MySQL specific)
         try:
             size_result = await db.execute(text("""
-                SELECT pg_size_pretty(pg_database_size(current_database())) as size
+                SELECT 
+                    ROUND(SUM(data_length + index_length) / 1024 / 1024, 2) AS size_mb
+                FROM information_schema.TABLES 
+                WHERE table_schema = DATABASE()
             """))
-            db_size = size_result.scalar()
-        except:
+            db_size_value = size_result.scalar()
+            db_size = f"{db_size_value} MB" if db_size_value else "Unknown"
+        except Exception as e:
+            logger.warning(f"Could not get database size: {e}")
             db_size = "Unknown"
         
         return {

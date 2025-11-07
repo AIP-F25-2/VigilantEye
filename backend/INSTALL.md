@@ -44,6 +44,18 @@ python -m pip install --upgrade pip
 ```
 
 ### Step 5: Install Dependencies
+
+**Option 1: Install all dependencies (Recommended)**
+```bash
+pip install -r requirements.txt
+```
+
+**Option 2: Install with development tools**
+```bash
+pip install -r requirements-dev.txt
+```
+
+**Option 3: Use modular requirements (Alternative)**
 ```bash
 pip install -r requirements/development.txt
 ```
@@ -112,7 +124,9 @@ venv\Scripts\activate   # Windows
 source venv/bin/activate  # Linux/Mac
 
 # Then install dependencies:
-pip install -r requirements/development.txt
+pip install -r requirements.txt
+# or for development:
+pip install -r requirements-dev.txt
 ```
 
 ### Issue: Wrong virtual environment
@@ -165,7 +179,9 @@ source venv/bin/activate  # Linux/Mac
 python -m pip install --upgrade pip
 
 # 6. Install dependencies
-pip install -r requirements/development.txt
+pip install -r requirements.txt
+# or for development:
+pip install -r requirements-dev.txt
 
 # 7. Verify
 pip list

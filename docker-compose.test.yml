@@ -2,17 +2,20 @@ version: '3.8'
 
 services:
   # Test Database
-  test-postgres:
-    image: postgres:15
-    container_name: vigilanteye-test-db
+  test-mysql:
+    image: mysql:8.0
+    container_name: vigilanteye-test-mysql
     environment:
-      POSTGRES_DB: test_vigilanteye
-      POSTGRES_USER: test_user
-      POSTGRES_PASSWORD: test_password
+      MYSQL_ROOT_PASSWORD: test_password
+      MYSQL_DATABASE: test_vigilanteye
+      MYSQL_USER: test_user
+      MYSQL_PASSWORD: test_password
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
     ports:
-      - "5433:5432"
+      - "3307:3306"
     volumes:
-      - test_postgres_data:/var/lib/postgresql/data
+      - test_mysql_data:/var/lib/mysql
     networks:
       - test-network
 
@@ -23,12 +26,12 @@ services:
       dockerfile: Dockerfile.test
     container_name: vigilanteye-backend-tests
     environment:
-      DATABASE_URL: postgresql://test_user:test_password@test-postgres:5432/test_vigilanteye
+      DATABASE_URL: mysql+pymysql://test_user:test_password@test-mysql:3306/test_vigilanteye
       CACHE_DIR: /app/storage/local_cache
       JWT_SECRET_KEY: test-secret-key
       TESTING: true
     depends_on:
-      - test-postgres
+      - test-mysql
     volumes:
       - ./backend:/app
       - backend_test_results:/app/test-results
@@ -56,11 +59,11 @@ services:
       dockerfile: Dockerfile.integration
     container_name: vigilanteye-integration-tests
     environment:
-      DATABASE_URL: postgresql://test_user:test_password@test-postgres:5432/test_vigilanteye
+      DATABASE_URL: mysql+pymysql://test_user:test_password@test-mysql:3306/test_vigilanteye
       CACHE_DIR: /app/storage/local_cache
       JWT_SECRET_KEY: test-secret-key
     depends_on:
-      - test-postgres
+      - test-mysql
     volumes:
       - ./:/app
       - integration_test_results:/app/test-results
@@ -75,11 +78,11 @@ services:
       dockerfile: Dockerfile.test
     container_name: vigilanteye-performance-tests
     environment:
-      DATABASE_URL: postgresql://test_user:test_password@test-postgres:5432/test_vigilanteye
+      DATABASE_URL: mysql+pymysql://test_user:test_password@test-mysql:3306/test_vigilanteye
       CACHE_DIR: /app/storage/local_cache
       JWT_SECRET_KEY: test-secret-key
     depends_on:
-      - test-postgres
+      - test-mysql
     volumes:
       - ./backend:/app
       - performance_test_results:/app/test-results
@@ -88,7 +91,7 @@ services:
     command: locust -f tests/performance/locustfile.py --headless -u 100 -r 10 -t 60s --html performance-report.html
 
 volumes:
-  test_postgres_data:
+  test_mysql_data:
   backend_test_results:
   frontend_test_results:
   integration_test_results:

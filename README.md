@@ -40,7 +40,7 @@ VigilantEye is a comprehensive AI-powered security surveillance system that prov
          │                       │                       │
          ▼                       ▼                       ▼
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Nginx         │    │   PostgreSQL    │    │   Model Cache    │
+│   Nginx         │    │   MySQL         │    │   Model Cache    │
 │   (Reverse      │    │   Database      │    │   (Pickle)       │
 │    Proxy)       │    │                 │    │                 │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
@@ -50,6 +50,337 @@ VigilantEye is a comprehensive AI-powered security surveillance system that prov
                        │   Local Cache   │
                        │   & Sessions    │
                        └─────────────────┘
+```
+
+## 🗄️ Database Setup
+
+### MySQL Database Configuration
+
+VigilantEye uses MySQL as its primary database. Here are the setup steps:
+
+#### Option 1: Using Docker (Recommended)
+
+The database is automatically set up when using Docker Compose:
+
+```bash
+# Start all services including MySQL
+docker-compose up -d
+
+# Wait for MySQL to be ready (30 seconds)
+sleep 30
+
+# Setup database tables and default admin user
+docker-compose exec backend python scripts/setup_database.py
+```
+
+#### Option 2: Manual MySQL Setup
+
+If you prefer to use a local MySQL installation:
+
+1. **Install MySQL 8.0+**
+   ```bash
+   # Ubuntu/Debian
+   sudo apt update
+   sudo apt install mysql-server mysql-client
+
+   # macOS (using Homebrew)
+   brew install mysql
+
+   # Windows
+   # Download from: https://dev.mysql.com/downloads/mysql/
+   ```
+
+2. **Start MySQL Service**
+   ```bash
+   # Ubuntu/Debian
+   sudo systemctl start mysql
+   sudo systemctl enable mysql
+
+   # macOS
+   brew services start mysql
+
+   # Windows
+   # Start MySQL service from Services or MySQL Workbench
+   ```
+
+3. **Create Database and User**
+   ```sql
+   -- Connect to MySQL as root
+   mysql -u root -p
+
+   -- Create database
+   CREATE DATABASE vigilanteye CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+   -- Create user
+   CREATE USER 'vigilanteye'@'localhost' IDENTIFIED BY 'vigilanteye123';
+
+   -- Grant privileges
+   GRANT ALL PRIVILEGES ON vigilanteye.* TO 'vigilanteye'@'localhost';
+   FLUSH PRIVILEGES;
+
+   -- Exit MySQL
+   EXIT;
+   ```
+
+4. **Configure Environment**
+   ```bash
+   # Create .env file
+   cp backend/env.example .env
+
+   # Edit .env file
+   DATABASE_URL=mysql+pymysql://vigilanteye:vigilanteye123@localhost:3306/vigilanteye
+   ```
+
+5. **Initialize Database Schema**
+   ```bash
+   cd backend
+   python scripts/setup_database.py
+   ```
+
+#### Option 3: Using Docker MySQL Only
+
+If you want to use Docker for MySQL but run the backend locally:
+
+1. **Start MySQL Container**
+   ```bash
+   docker run -d \
+     --name vigilanteye-mysql \
+     -e MYSQL_ROOT_PASSWORD=vigilanteye123 \
+     -e MYSQL_DATABASE=vigilanteye \
+     -e MYSQL_USER=vigilanteye \
+     -e MYSQL_PASSWORD=vigilanteye123 \
+     -p 3306:3306 \
+     mysql:8.0
+   ```
+
+2. **Wait for MySQL to be ready**
+   ```bash
+   # Check if MySQL is ready
+   docker exec vigilanteye-mysql mysqladmin ping -h localhost -u vigilanteye -pvigilanteye123
+   ```
+
+3. **Configure and Initialize**
+   ```bash
+   # Set environment variable
+   export DATABASE_URL=mysql+pymysql://vigilanteye:vigilanteye123@localhost:3306/vigilanteye
+
+   # Initialize database
+   cd backend
+   python scripts/setup_database.py
+   ```
+
+### Database Verification
+
+After setup, verify your database is working:
+
+```bash
+# Test connection
+mysql -u vigilanteye -pvigilanteye123 -h localhost vigilanteye
+
+# Check tables
+SHOW TABLES;
+
+# Check default admin user
+SELECT username, email, role FROM users WHERE role = 'admin';
+```
+
+### Database Management Commands
+
+```bash
+# Access database (Docker)
+docker-compose exec mysql mysql -u vigilanteye -pvigilanteye123 vigilanteye
+
+# Access database (Local)
+mysql -u vigilanteye -pvigilanteye123 -h localhost vigilanteye
+
+# Run migrations (create tables)
+cd backend
+python scripts/migrate.py create
+
+# Backup database
+mysqldump -u vigilanteye -pvigilanteye123 vigilanteye > backup.sql
+
+# Restore database
+mysql -u vigilanteye -pvigilanteye123 vigilanteye < backup.sql
+
+# Reset database (Docker)
+docker-compose exec mysql mysql -u vigilanteye -pvigilanteye123 vigilanteye -e "DROP DATABASE vigilanteye; CREATE DATABASE vigilanteye CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+
+# Reset database (Local)
+mysql -u root -p -e "DROP DATABASE vigilanteye; CREATE DATABASE vigilanteye CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+```
+
+### Troubleshooting Database Issues
+
+#### Connection Refused
+```bash
+# Check if MySQL is running
+sudo systemctl status mysql  # Linux
+brew services list | grep mysql  # macOS
+
+# Check port
+netstat -tlnp | grep 3306
+```
+
+#### Authentication Failed
+```bash
+# Reset MySQL root password
+sudo mysql
+ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY 'newpassword';
+FLUSH PRIVILEGES;
+```
+
+#### Permission Denied
+```bash
+# Grant proper permissions
+mysql -u root -p
+GRANT ALL PRIVILEGES ON vigilanteye.* TO 'vigilanteye'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+#### Character Set Issues
+```bash
+# Check current character set
+mysql -u vigilanteye -pvigilanteye123 vigilanteye -e "SHOW VARIABLES LIKE 'character_set%';"
+
+# Fix character set
+mysql -u root -p -e "ALTER DATABASE vigilanteye CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+```
+
+### Database Schema Information
+
+The database includes the following main tables:
+- `users` - User accounts and authentication
+- `videos` - Video metadata and processing status
+- `tickets` - Security incident tickets
+- `evidence` - Evidence files and metadata
+- `person_embeddings` - AI-generated person embeddings
+- `clothing_analysis` - Clothing recognition results
+- `threat_assessments` - AI threat analysis results
+
+### Database Migrations
+
+VigilantEye uses a migration system to manage database schema changes. Currently, the project uses a script-based approach for development, with Alembic support available for production use.
+
+#### Current Migration System
+
+**Development Approach (Current):**
+The project includes a migration script (`backend/scripts/migrate.py`) that uses SQLAlchemy's metadata to create/update database tables.
+
+**Available Commands:**
+```bash
+cd backend
+
+# Create all database tables
+python scripts/migrate.py create
+
+# Drop all database tables (⚠️ WARNING: This deletes all data!)
+python scripts/migrate.py drop
+
+# Reset database (drop and recreate)
+python scripts/migrate.py reset
+```
+
+**Using Migrations:**
+```bash
+# After setting up your database and .env file
+cd backend
+
+# Activate virtual environment
+venv\Scripts\activate  # Windows
+# or
+source venv/bin/activate  # Linux/Mac
+
+# Create all tables
+python scripts/migrate.py create
+
+# Verify tables were created
+mysql -u vigilanteye -pvigilanteye123 vigilanteye -e "SHOW TABLES;"
+```
+
+**Expected Tables (14 total):**
+- Core: `users`, `videos`, `storage_files`
+- AI Analysis: `audio_analysis`, `face_detections`, `image_analysis`, `threat_assessments`, `face_vectors`
+- Person Tracking: `person_embeddings`, `person_appearances`, `person_matches`
+- Ticket Management: `tickets`, `ticket_evidence`, `ticket_activity`
+
+#### Alembic Support (Production Recommended)
+
+For production environments, Alembic migration support is available. The `DatabaseMigrator` class in `backend/src/utils/database_manager.py` provides Alembic integration.
+
+**Note:** Alembic is not fully configured by default. To set up Alembic migrations:
+
+1. **Initialize Alembic** (one-time setup):
+   ```bash
+   cd backend
+   alembic init alembic
+   ```
+
+2. **Configure Alembic**:
+   - Edit `alembic.ini` with your database URL
+   - Update `alembic/env.py` to import all models and use your settings
+
+3. **Create and Apply Migrations**:
+   ```bash
+   # Create new migration
+   alembic revision --autogenerate -m "Description of changes"
+   
+   # Apply migrations
+   alembic upgrade head
+   
+   # Check current version
+   alembic current
+   
+   # View migration history
+   alembic history
+   ```
+
+For detailed migration setup instructions, see:
+- `backend/DATABASE_SETUP_GUIDE.md` - Comprehensive migration guide
+- `backend/DATABASE_MIGRATION_STATUS.md` - Current migration status
+
+#### Migration Best Practices
+
+- **Development**: Use `migrate.py` for quick setup and testing
+- **Production**: Set up Alembic for version-controlled, reversible migrations
+- **Always backup** your database before running migrations in production
+- **Test migrations** on a development database first
+- **Review auto-generated migrations** before applying them
+
+### Performance Optimization
+
+For production environments, consider these MySQL optimizations:
+
+```sql
+-- Increase buffer pool size (adjust based on available RAM)
+SET GLOBAL innodb_buffer_pool_size = 1G;
+
+-- Enable query cache
+SET GLOBAL query_cache_size = 64M;
+SET GLOBAL query_cache_type = ON;
+
+-- Optimize for InnoDB
+SET GLOBAL innodb_flush_log_at_trx_commit = 2;
+SET GLOBAL innodb_log_file_size = 256M;
+```
+
+### Backup Strategy
+
+```bash
+# Daily automated backup script
+#!/bin/bash
+DATE=$(date +%Y%m%d_%H%M%S)
+BACKUP_DIR="/backups"
+DB_NAME="vigilanteye"
+
+# Create backup
+mysqldump -u vigilanteye -pvigilanteye123 $DB_NAME > $BACKUP_DIR/vigilanteye_$DATE.sql
+
+# Compress backup
+gzip $BACKUP_DIR/vigilanteye_$DATE.sql
+
+# Keep only last 7 days
+find $BACKUP_DIR -name "vigilanteye_*.sql.gz" -mtime +7 -delete
 ```
 
 ## 🚀 Quick Start
@@ -117,15 +448,233 @@ VigilantEye is a comprehensive AI-powered security surveillance system that prov
    npm run dev
    ```
 
+## 🛠️ Manual Start Guide
+
+### Starting Backend Server
+
+#### Option 1: Using Batch File (Windows - Recommended)
+```cmd
+cd backend
+start.bat              # Normal mode
+start.bat debug        # Debug mode (with verbose logging)
+start-debug.bat        # Debug mode (dedicated script)
+```
+
+#### Option 2: Manual Start (Windows)
+```cmd
+# Navigate to backend directory
+cd backend
+
+# Activate virtual environment
+venv\Scripts\activate
+
+# Install dependencies (if not already installed)
+pip install -r requirements.txt
+
+# Run database migrations (first time only)
+python scripts\migrate.py create
+
+# Start the server (normal mode)
+python run.py
+
+# Start in debug mode (with verbose logging)
+set APP_DEBUG=true
+set APP_ENV=development
+set LOG_LEVEL=DEBUG
+python run.py
+```
+
+#### Option 3: Manual Start (Linux/Mac)
+```bash
+# Navigate to backend directory
+cd backend
+
+# Activate virtual environment
+source venv/bin/activate
+
+# Install dependencies (if not already installed)
+pip install -r requirements.txt
+
+# Run database migrations (first time only)
+python scripts/migrate.py create
+
+# Start the server (normal mode)
+python run.py
+
+# Start in debug mode (with verbose logging)
+export APP_DEBUG=true
+export APP_ENV=development
+export LOG_LEVEL=DEBUG
+python run.py
+```
+
+**Backend will be available at:**
+- API: http://localhost:8000
+- API Documentation: http://localhost:8000/api/docs
+- Health Check: http://localhost:8000/api/health
+
+**Debug Mode Features:**
+- ✅ Verbose logging (DEBUG level)
+- ✅ SQL query logging (SQLAlchemy echo)
+- ✅ Auto-reload on code changes
+- ✅ Detailed error messages
+- ✅ API documentation enabled
+
+### Starting Frontend Server
+
+#### Option 1: Using Batch File (Windows - Recommended)
+```cmd
+cd frontend
+start.bat
+```
+
+#### Option 2: Manual Start (Windows)
+```cmd
+# Navigate to frontend directory
+cd frontend
+
+# Install dependencies (if not already installed)
+npm install
+
+# Start development server
+npm run dev
+```
+
+#### Option 3: Manual Start (Linux/Mac)
+```bash
+# Navigate to frontend directory
+cd frontend
+
+# Install dependencies (if not already installed)
+npm install
+
+# Start development server
+npm run dev
+```
+
+**Frontend will be available at:**
+- Application: http://localhost:5173 (Vite default port)
+
+### Starting Both Servers (Windows)
+
+#### Using START_ALL.bat (Easiest)
+```cmd
+# From project root - Normal mode
+START_ALL.bat
+
+# From project root - Debug mode
+START_ALL.bat debug
+```
+
+This will:
+- Check for virtual environment and dependencies
+- Start backend in a new window (with debug mode if requested)
+- Start frontend in a new window
+- Display URLs for both servers
+
+**To stop servers:** Use `STOP_ALL.bat` or close the server windows manually.
+
+#### Manual Start (Two Terminals)
+
+**Terminal 1 - Backend:**
+```cmd
+cd backend
+venv\Scripts\activate
+python run.py
+```
+
+**Terminal 2 - Frontend:**
+```cmd
+cd frontend
+npm run dev
+```
+
+### Starting Both Servers (Linux/Mac)
+
+**Terminal 1 - Backend:**
+```bash
+cd backend
+source venv/bin/activate
+python run.py
+```
+
+**Terminal 2 - Frontend:**
+```bash
+cd frontend
+npm run dev
+```
+
+### Prerequisites Check
+
+Before starting, ensure:
+
+1. **Backend Prerequisites:**
+   - ✅ Python 3.11+ installed
+   - ✅ Virtual environment created (`python -m venv venv`)
+   - ✅ Dependencies installed (`pip install -r requirements.txt`)
+   - ✅ MySQL database running
+   - ✅ Database tables created (`python scripts/migrate.py create`)
+   - ✅ `.env` file configured
+
+2. **Frontend Prerequisites:**
+   - ✅ Node.js 18+ installed
+   - ✅ Dependencies installed (`npm install`)
+
+### Troubleshooting Manual Start
+
+#### Backend Issues
+
+**ModuleNotFoundError:**
+```cmd
+# Make sure virtual environment is activated
+venv\Scripts\activate
+
+# Reinstall dependencies
+pip install -r requirements.txt
+```
+
+**Database Connection Error:**
+```cmd
+# Check MySQL is running
+# Verify .env file has correct database credentials
+# Run migrations again
+python scripts\migrate.py create
+```
+
+**Port Already in Use:**
+```cmd
+# Change port in .env file
+APP_PORT=8001
+
+# Or kill the process using port 8000
+# Windows: netstat -ano | findstr :8000
+# Then: taskkill /PID <PID> /F
+```
+
+#### Frontend Issues
+
+**Port Already in Use:**
+```bash
+# Vite will automatically use next available port
+# Or specify port in vite.config.js
+```
+
+**Module Not Found:**
+```bash
+# Reinstall dependencies
+rm -rf node_modules package-lock.json
+npm install
+```
+
 ## 🔧 Configuration
 
 ### Environment Variables
 
 ```env
 # Database Configuration
-POSTGRES_DB=vigilanteye
-POSTGRES_USER=vigilanteye
-POSTGRES_PASSWORD=vigilanteye123
+MYSQL_DATABASE=vigilanteye
+MYSQL_USER=vigilanteye
+MYSQL_PASSWORD=vigilanteye123
 
 # Local Cache Configuration
 CACHE_DIR=storage/local_cache
@@ -146,6 +695,64 @@ TELEGRAM_CHAT_ID=your-telegram-chat-id
 AI_DEVICE=cpu
 MODEL_CACHE_ENABLED=true
 ```
+
+### Python Dependencies
+
+VigilantEye uses a comprehensive set of Python dependencies for AI/ML, video processing, database management, and web services.
+
+#### Installing Dependencies
+
+**Production Installation:**
+```bash
+cd backend
+pip install -r requirements.txt
+```
+
+**Development Installation (includes testing and code quality tools):**
+```bash
+cd backend
+pip install -r requirements-dev.txt
+```
+
+**Alternative: Using the modular requirements directory:**
+```bash
+cd backend
+
+# Base dependencies only
+pip install -r requirements/base.txt
+
+# Base + Development tools
+pip install -r requirements/development.txt
+
+# Base + AI services
+pip install -r requirements/base.txt -r requirements/ai_services.txt
+
+# Base + Video processing
+pip install -r requirements/base.txt -r requirements/video_processing.txt
+
+# Base + Telegram integration
+pip install -r requirements/base.txt -r requirements/telegram.txt
+```
+
+#### Dependency Categories
+
+The project includes dependencies for:
+
+- **Web Framework**: FastAPI, Uvicorn, Pydantic
+- **Database**: SQLAlchemy, Alembic, PyMySQL, aiomysql
+- **Authentication**: python-jose, passlib, bcrypt
+- **Video Processing**: OpenCV, MoviePy, Pillow, NumPy
+- **AI/ML Frameworks**: PyTorch, TorchVision, TorchAudio
+- **Computer Vision**: Ultralytics (YOLO), FaceNet, DeepFace
+- **Audio Processing**: librosa, Whisper, faster-whisper
+- **OCR**: EasyOCR, PyTesseract
+- **NLP/LLM**: Transformers, OpenAI, Anthropic, LangChain
+- **Vector Databases**: ChromaDB, FAISS
+- **Cloud Storage**: boto3 (AWS S3)
+- **Telegram**: python-telegram-bot
+- **Utilities**: requests, httpx, python-dotenv, psutil
+
+For a complete list of all dependencies with versions, see `backend/requirements.txt`.
 
 ## 🌐 Azure Cloud Deployment
 
@@ -300,7 +907,32 @@ vigilanteye/
 
 ### Useful Commands
 
-   ```bash
+```bash
+# Quick Start (Windows)
+START_ALL.bat                           # Start both backend and frontend
+START_ALL.bat debug                     # Start both in debug mode
+STOP_ALL.bat                            # Stop both backend and frontend
+
+# Backend Commands
+cd backend
+start.bat                               # Start backend (Windows)
+start.bat debug                         # Start backend in debug mode
+start-debug.bat                         # Start backend in debug mode (dedicated)
+.\venv\Scripts\activate                 # Activate virtual environment
+python run.py                           # Start backend server
+python scripts\migrate.py create        # Create database tables
+python scripts\migrate.py reset         # Reset database (⚠️ deletes data)
+
+# Debug Mode (Windows)
+set APP_DEBUG=true && set LOG_LEVEL=DEBUG && python run.py
+
+# Frontend Commands
+cd frontend
+start.bat                               # Start frontend (Windows)
+npm install                             # Install dependencies
+npm run dev                             # Start development server
+npm run build                           # Build for production
+
 # Development
 docker-compose up -d                    # Start all services
 docker-compose logs -f                  # View logs
@@ -308,8 +940,10 @@ docker-compose restart backend          # Restart backend
 docker-compose exec backend bash        # Access backend container
 
 # Database
-docker-compose exec postgres psql -U vigilanteye -d vigilanteye
+docker-compose exec mysql mysql -u vigilanteye -pvigilanteye123 vigilanteye
 docker-compose exec backend python scripts/setup_database.py
+docker-compose exec backend python scripts/migrate.py create    # Run migrations
+docker-compose exec backend python scripts/migrate.py reset     # Reset database (⚠️ deletes data)
 
 # Cache Management
 docker-compose exec backend python -c "from src.services.local_cache import get_cache; print(get_cache().get_stats())"

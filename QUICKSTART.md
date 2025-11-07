@@ -9,6 +9,66 @@ Get VigilantEye running in 5 minutes!
 - **Python 3.11+** (for backend development)
 - **Git** (for version control)
 
+## 🗄️ Database Setup
+
+### Quick Database Setup
+
+VigilantEye uses MySQL. Here are the fastest ways to get it running:
+
+#### Option 1: Docker (Easiest)
+```bash
+# Everything is automatic with Docker
+docker-compose up -d
+sleep 30  # Wait for MySQL to start
+docker-compose exec backend python scripts/setup_database.py
+```
+
+#### Option 2: Local MySQL
+```bash
+# Install MySQL (Ubuntu/Debian)
+sudo apt install mysql-server mysql-client
+
+# Start MySQL
+sudo systemctl start mysql
+
+# Create database and user
+mysql -u root -p
+CREATE DATABASE vigilanteye CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'vigilanteye'@'localhost' IDENTIFIED BY 'vigilanteye123';
+GRANT ALL PRIVILEGES ON vigilanteye.* TO 'vigilanteye'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+
+# Setup schema
+cd backend
+python scripts/setup_database.py
+```
+
+#### Option 3: Docker MySQL Only
+```bash
+# Run MySQL in Docker
+docker run -d --name vigilanteye-mysql \
+  -e MYSQL_ROOT_PASSWORD=vigilanteye123 \
+  -e MYSQL_DATABASE=vigilanteye \
+  -e MYSQL_USER=vigilanteye \
+  -e MYSQL_PASSWORD=vigilanteye123 \
+  -p 3306:3306 mysql:8.0
+
+# Wait and setup
+sleep 30
+export DATABASE_URL=mysql+pymysql://vigilanteye:vigilanteye123@localhost:3306/vigilanteye
+cd backend && python scripts/setup_database.py
+```
+
+### Verify Database
+```bash
+# Test connection
+mysql -u vigilanteye -pvigilanteye123 -h localhost vigilanteye
+
+# Check if admin user exists
+SELECT username, role FROM users WHERE role = 'admin';
+```
+
 ## ⚡ Quick Start Options
 
 ### Option 1: Docker (Recommended - 2 minutes)
@@ -105,9 +165,9 @@ Create `.env` file in the root directory:
 
 ```env
 # Database Configuration
-POSTGRES_DB=vigilanteye
-POSTGRES_USER=vigilanteye
-POSTGRES_PASSWORD=vigilanteye123
+MYSQL_DATABASE=vigilanteye
+MYSQL_USER=vigilanteye
+MYSQL_PASSWORD=vigilanteye123
 
 # Local Cache Configuration
 CACHE_DIR=storage/local_cache
@@ -220,7 +280,7 @@ docker-compose build --no-cache
 docker-compose exec backend bash
 
 # Access database
-docker-compose exec postgres psql -U vigilanteye -d vigilanteye
+docker-compose exec mysql mysql -u vigilanteye -pvigilanteye123 vigilanteye
 ```
 
 ### Development Commands
@@ -252,11 +312,11 @@ APP_PORT=8001
 
 #### "Database connection failed"
 ```bash
-# Check if PostgreSQL is running
-docker-compose exec postgres pg_isready -U vigilanteye -d vigilanteye
+# Check if MySQL is running
+docker-compose exec mysql mysqladmin ping -h localhost -u vigilanteye -pvigilanteye123
 
 # Reset database
-docker-compose exec postgres psql -U vigilanteye -d vigilanteye -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+docker-compose exec mysql mysql -u vigilanteye -pvigilanteye123 vigilanteye -e "DROP DATABASE vigilanteye; CREATE DATABASE vigilanteye;"
 docker-compose exec backend python scripts/setup_database.py
 ```
 
@@ -284,7 +344,7 @@ curl http://localhost:8000/api/health
 curl http://localhost:3000/health
 
 # Database health
-docker-compose exec postgres pg_isready -U vigilanteye -d vigilanteye
+docker-compose exec mysql mysqladmin ping -h localhost -u vigilanteye -pvigilanteye123
 
 # Cache health
 docker-compose exec backend python -c "from src.services.local_cache import get_cache; print('Cache OK' if get_cache().get_stats() else 'Cache Error')"

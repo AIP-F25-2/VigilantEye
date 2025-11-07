@@ -66,10 +66,17 @@ const SignUp = () => {
         full_name: formData.full_name || undefined,
       })
 
-      // Get user info
-      const userResponse = await authAPI.getCurrentUser()
+      // Store tokens first so getCurrentUser can use them
+      setAuth(
+        null, // User will be set after fetching
+        response.access_token,
+        response.refresh_token
+      )
 
-      // Store auth data
+      // Get user info (pass token directly to ensure it's used)
+      const userResponse = await authAPI.getCurrentUser(response.access_token)
+
+      // Update auth data with user info
       setAuth(
         userResponse.user,
         response.access_token,
@@ -79,11 +86,35 @@ const SignUp = () => {
       // Navigate to dashboard
       navigate('/dashboard')
     } catch (err) {
-      setError(
-        err.response?.data?.detail ||
-        err.response?.data?.error ||
-        'Sign up failed. Please try again.'
-      )
+      // Handle different error formats
+      let errorMessage = 'Sign up failed. Please try again.'
+      
+      if (err.response?.data) {
+        const data = err.response.data
+        
+        // FastAPI validation errors (422) - detail is an array
+        if (Array.isArray(data.detail)) {
+          errorMessage = data.detail
+            .map((err) => `${err.loc?.join('.')}: ${err.msg}`)
+            .join(', ')
+        }
+        // Standard error format
+        else if (data.detail) {
+          errorMessage = data.detail
+        }
+        // Error message
+        else if (data.error) {
+          errorMessage = data.error
+        }
+        // Message field
+        else if (data.message) {
+          errorMessage = data.message
+        }
+      } else if (err.message) {
+        errorMessage = err.message
+      }
+      
+      setError(errorMessage)
     } finally {
       setLoading(false)
     }

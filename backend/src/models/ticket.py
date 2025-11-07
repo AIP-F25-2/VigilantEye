@@ -295,7 +295,7 @@ class TicketActivity(Base):
         nullable=True
     )
     
-    metadata: Mapped[Optional[str]] = mapped_column(
+    action_metadata: Mapped[Optional[str]] = mapped_column(
         Text,
         nullable=True,
         comment="JSON metadata for action"

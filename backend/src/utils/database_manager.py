@@ -138,10 +138,10 @@ class DatabaseBackupManager:
         
         try:
             # Extract database connection details
-            if self.database_url.startswith('postgresql://'):
-                self._create_postgres_backup(backup_path)
-            elif self.database_url.startswith('mysql://'):
+            if self.database_url.startswith('mysql://') or self.database_url.startswith('mysql+pymysql://') or self.database_url.startswith('mysql+aiomysql://'):
                 self._create_mysql_backup(backup_path)
+            elif self.database_url.startswith('postgresql://'):
+                self._create_postgres_backup(backup_path)
             else:
                 raise ValueError(f"Unsupported database type: {self.database_url}")
             
@@ -192,9 +192,17 @@ class DatabaseBackupManager:
     
     def _create_mysql_backup(self, backup_path: Path):
         """Create MySQL backup using mysqldump."""
-        # Parse connection string
-        url_parts = self.database_url.replace('mysql://', '').split('/')
-        db_name = url_parts[1]
+        # Parse connection string - handle mysql://, mysql+pymysql://, mysql+aiomysql://
+        db_url = self.database_url
+        
+        # Remove driver prefix
+        if 'mysql+pymysql://' in db_url:
+            db_url = db_url.replace('mysql+pymysql://', 'mysql://')
+        elif 'mysql+aiomysql://' in db_url:
+            db_url = db_url.replace('mysql+aiomysql://', 'mysql://')
+        
+        url_parts = db_url.replace('mysql://', '').split('/')
+        db_name = url_parts[1] if len(url_parts) > 1 else ''
         auth_parts = url_parts[0].split('@')
         user_pass = auth_parts[0].split(':')
         host_port = auth_parts[1].split(':')
@@ -210,15 +218,21 @@ class DatabaseBackupManager:
             '-h', host,
             '-P', port,
             '-u', username,
-            f'-p{password}',
             '--single-transaction',
             '--routines',
             '--triggers',
+            '--complete-insert',
+            '--extended-insert',
             db_name
         ]
         
-        with open(backup_path, 'w') as f:
-            result = subprocess.run(cmd, stdout=f, stderr=subprocess.PIPE)
+        # Set password via environment variable for security
+        env = os.environ.copy()
+        if password:
+            env['MYSQL_PWD'] = password
+        
+        with open(backup_path, 'w', encoding='utf-8') as f:
+            result = subprocess.run(cmd, stdout=f, stderr=subprocess.PIPE, env=env)
             
         if result.returncode != 0:
             raise Exception(f"mysqldump failed: {result.stderr.decode()}")
@@ -232,10 +246,10 @@ class DatabaseBackupManager:
             return False
         
         try:
-            if self.database_url.startswith('postgresql://'):
-                self._restore_postgres_backup(backup_file)
-            elif self.database_url.startswith('mysql://'):
+            if self.database_url.startswith('mysql://') or self.database_url.startswith('mysql+pymysql://') or self.database_url.startswith('mysql+aiomysql://'):
                 self._restore_mysql_backup(backup_file)
+            elif self.database_url.startswith('postgresql://'):
+                self._restore_postgres_backup(backup_file)
             else:
                 raise ValueError(f"Unsupported database type: {self.database_url}")
             
@@ -282,9 +296,17 @@ class DatabaseBackupManager:
     
     def _restore_mysql_backup(self, backup_file: Path):
         """Restore MySQL backup using mysql."""
-        # Parse connection string
-        url_parts = self.database_url.replace('mysql://', '').split('/')
-        db_name = url_parts[1]
+        # Parse connection string - handle mysql://, mysql+pymysql://, mysql+aiomysql://
+        db_url = self.database_url
+        
+        # Remove driver prefix
+        if 'mysql+pymysql://' in db_url:
+            db_url = db_url.replace('mysql+pymysql://', 'mysql://')
+        elif 'mysql+aiomysql://' in db_url:
+            db_url = db_url.replace('mysql+aiomysql://', 'mysql://')
+        
+        url_parts = db_url.replace('mysql://', '').split('/')
+        db_name = url_parts[1] if len(url_parts) > 1 else ''
         auth_parts = url_parts[0].split('@')
         user_pass = auth_parts[0].split(':')
         host_port = auth_parts[1].split(':')
@@ -300,12 +322,16 @@ class DatabaseBackupManager:
             '-h', host,
             '-P', port,
             '-u', username,
-            f'-p{password}',
             db_name
         ]
         
-        with open(backup_file, 'r') as f:
-            result = subprocess.run(cmd, stdin=f, stderr=subprocess.PIPE)
+        # Set password via environment variable for security
+        env = os.environ.copy()
+        if password:
+            env['MYSQL_PWD'] = password
+        
+        with open(backup_file, 'r', encoding='utf-8') as f:
+            result = subprocess.run(cmd, stdin=f, stderr=subprocess.PIPE, env=env)
             
         if result.returncode != 0:
             raise Exception(f"mysql restore failed: {result.stderr.decode()}")
@@ -358,19 +384,19 @@ class DatabaseHealthChecker:
         """Check database performance metrics."""
         try:
             with self.engine.connect() as conn:
-                # Get basic performance metrics
+                # Get basic performance metrics for MySQL
                 result = conn.execute(text("""
                     SELECT 
                         COUNT(*) as total_connections,
-                        AVG(EXTRACT(EPOCH FROM (now() - query_start))) as avg_query_time
-                    FROM pg_stat_activity 
-                    WHERE state = 'active'
+                        AVG(TIMESTAMPDIFF(MICROSECOND, TIME, NOW())) / 1000000 as avg_query_time
+                    FROM information_schema.PROCESSLIST 
+                    WHERE COMMAND != 'Sleep' AND STATE != ''
                 """))
                 
                 row = result.fetchone()
                 return {
-                    'total_connections': row[0],
-                    'avg_query_time': float(row[1]) if row[1] else 0
+                    'total_connections': row[0] if row else 0,
+                    'avg_query_time': float(row[1]) if row and row[1] else 0
                 }
         except Exception as e:
             logger.error(f"Performance check failed: {e}")
@@ -380,19 +406,19 @@ class DatabaseHealthChecker:
         """Check table sizes."""
         try:
             with self.engine.connect() as conn:
+                # Get table sizes from MySQL
                 result = conn.execute(text("""
                     SELECT 
-                        schemaname,
-                        tablename,
-                        pg_size_pretty(pg_total_relation_size(schemaname||'.'||tablename)) as size
-                    FROM pg_tables 
-                    WHERE schemaname = 'public'
-                    ORDER BY pg_total_relation_size(schemaname||'.'||tablename) DESC
+                        table_name,
+                        ROUND(((data_length + index_length) / 1024 / 1024), 2) AS size_mb
+                    FROM information_schema.TABLES 
+                    WHERE table_schema = DATABASE()
+                    ORDER BY (data_length + index_length) DESC
                 """))
                 
                 table_sizes = {}
                 for row in result:
-                    table_sizes[row[1]] = row[2]
+                    table_sizes[row[0]] = f"{row[1]} MB"
                 
                 return table_sizes
         except Exception as e:

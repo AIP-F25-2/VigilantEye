@@ -6,7 +6,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import List
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile, status
 from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,6 +19,7 @@ from src.dto.video import (
     VideoStreamStartRequest,
 )
 from src.services.video import VideoService
+from src.services.video_processor import VideoProcessingService
 from src.utils.logger import get_logger
 
 from .dependencies import CurrentUser
@@ -37,6 +38,7 @@ settings = get_settings()
 )
 async def upload_video(
     file: UploadFile = File(...),
+    background_tasks: BackgroundTasks = None,
     current_user: CurrentUser = None,
     db: AsyncSession = Depends(get_db),
 ):
@@ -44,6 +46,7 @@ async def upload_video(
     Upload video file endpoint.
     
     Accepts video files and stores them for processing.
+    Automatically triggers video processing (frame extraction and audio separation).
     Returns video metadata and storage information.
     """
     # Validate file type
@@ -75,6 +78,17 @@ async def upload_video(
         
         logger.info(f"Video uploaded successfully: {video.id} by user {current_user.id}")
         
+        # Note: Video processing is now manual via the Analyze button
+        # Auto-processing can be enabled by uncommenting the code below
+        # if background_tasks:
+        #     processor = VideoProcessingService(db)
+        #     background_tasks.add_task(
+        #         processor.process_video_async,
+        #         video=video,
+        #         interval_ms=None
+        #     )
+        #     logger.info(f"Video processing started in background for video {video.id}")
+        
         return VideoUploadResponse(
             id=video.id,
             filename=video.filename,
@@ -82,7 +96,7 @@ async def upload_video(
             file_size=video.file_size,
             duration=video.duration,
             status=video.status,
-            message="Video uploaded successfully"
+            message="Video uploaded successfully. Click 'Analyze' to process the video."
         )
     
     except Exception as e:

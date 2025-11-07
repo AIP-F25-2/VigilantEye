@@ -24,24 +24,52 @@ settings = get_settings()
 async def create_database():
     """Create database if it doesn't exist."""
     try:
-        # Connect to postgres database to create our database
-        postgres_url = settings.database_url.replace('/vigilanteye', '/postgres')
-        engine = create_async_engine(postgres_url)
+        # Connect to MySQL server without specifying database
+        # Extract connection details from database URL
+        db_url = settings.database_url
         
-        async with engine.begin() as conn:
+        # Parse MySQL URL: mysql+pymysql://user:pass@host:port/dbname
+        # Remove database name to connect to MySQL server
+        # For async URL, replace mysql+aiomysql with mysql+pymysql for sync operations
+        if 'mysql+aiomysql' in db_url:
+            sync_url = db_url.replace('mysql+aiomysql', 'mysql+pymysql')
+        else:
+            sync_url = db_url
+        
+        # Remove database name from URL
+        if '/vigilanteye' in sync_url:
+            mysql_url = sync_url.replace('/vigilanteye', '')
+        elif '/vigilent_eye' in sync_url:
+            mysql_url = sync_url.replace('/vigilent_eye', '')
+        else:
+            # Extract database name from URL
+            db_name = settings.db_name
+            mysql_url = sync_url.replace(f'/{db_name}', '')
+        
+        # Use sync engine for database creation
+        from sqlalchemy import create_engine
+        engine = create_engine(mysql_url)
+        
+        with engine.begin() as conn:
             # Check if database exists
-            result = await conn.execute(text("""
-                SELECT 1 FROM pg_database WHERE datname = 'vigilanteye'
+            result = conn.execute(text(f"""
+                SELECT SCHEMA_NAME 
+                FROM INFORMATION_SCHEMA.SCHEMATA 
+                WHERE SCHEMA_NAME = '{settings.db_name}'
             """))
             
             if not result.fetchone():
-                # Create database
-                await conn.execute(text("CREATE DATABASE vigilanteye"))
-                logger.info("Database 'vigilanteye' created successfully")
+                # Create database with UTF8MB4 charset
+                conn.execute(text(f"""
+                    CREATE DATABASE `{settings.db_name}` 
+                    CHARACTER SET utf8mb4 
+                    COLLATE utf8mb4_unicode_ci
+                """))
+                logger.info(f"Database '{settings.db_name}' created successfully")
             else:
-                logger.info("Database 'vigilanteye' already exists")
+                logger.info(f"Database '{settings.db_name}' already exists")
         
-        await engine.dispose()
+        engine.dispose()
         
     except Exception as e:
         logger.error(f"Failed to create database: {e}")
@@ -74,7 +102,7 @@ async def create_default_admin():
         async with async_session() as session:
             # Check if admin user exists
             result = await session.execute(text("""
-                SELECT id FROM users WHERE username = 'admin'
+                SELECT id FROM users WHERE username = 'admin' LIMIT 1
             """))
             
             if not result.fetchone():

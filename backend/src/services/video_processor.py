@@ -1,5 +1,4 @@
 """Video processing service for frame extraction and audio separation."""
-"""Video processing service for frame extraction and audio separation."""
 import json
 import os
 from datetime import datetime
@@ -10,7 +9,6 @@ import cv2
 import numpy as np
 from moviepy.editor import VideoFileClip
 from PIL import Image
-from pydantic_settings import BaseSettings, SettingsConfigDict
 from src.config import get_settings
 from src.models.storage import FileType
 from src.models.video import Video, VideoStatus
@@ -21,26 +19,31 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = get_logger(__name__)
 settings = get_settings()
-    """Application settings loaded from environment variables."""
-    app_port: int = Field(default=8000, alias="APP_PORT")
+
+
 class VideoProcessingService:
     """Service for processing videos: extract frames and audio."""
-    db_password: str = Field(default="root", alias="DB_PASSWORD")
+    
     def __init__(self, session: Optional[AsyncSession] = None):
         """Initialize video processing service."""
         self.session = session
         if session:
             self.video_repository = VideoRepository(session)
         
+        # Use absolute path relative to backend directory
+        backend_dir = Path(__file__).parent.parent.parent
+        
         # Create storage directories
-        self.frames_path = Path(settings.frames_storage_path)
-        self.audio_path = Path(settings.audio_storage_path)
+        self.frames_path = backend_dir / "storage" / "frames"
+        self.audio_path = backend_dir / "storage" / "audio"
+        self.video_storage_path = backend_dir / "storage" / "videos"
         self.frames_path.mkdir(parents=True, exist_ok=True)
         self.audio_path.mkdir(parents=True, exist_ok=True)
+        self.video_storage_path.mkdir(parents=True, exist_ok=True)
         
         # Frame extraction interval in milliseconds
         self.frame_interval_ms = settings.frame_extraction_interval_ms
-    redis_db: int = Field(default=0, alias="REDIS_DB")
+
     def _generate_processing_id(self, video_id: int, user_id: int) -> str:
         """
         Generate unique processing ID based on video, user, and timestamp.
@@ -57,11 +60,11 @@ class VideoProcessingService:
         """
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]
         return f"v{video_id}_u{user_id}_{timestamp}"
-    jwt_refresh_token_expire_days: int = Field(default=7, alias="JWT_REFRESH_TOKEN_EXPIRE_DAYS")
+
     def extract_frames(
         self,
         video_path: str,
-        processing_id: str,
+        video_id: int,
         interval_ms: Optional[int] = None,
     ) -> Dict:
         """
@@ -69,7 +72,7 @@ class VideoProcessingService:
         
         Args:
             video_path: Path to video file
-            processing_id: Unique processing identifier
+            video_id: Video ID (used for storage directory)
             interval_ms: Interval in milliseconds (uses config default if None)
             
         Returns:
@@ -77,32 +80,33 @@ class VideoProcessingService:
         """
         if interval_ms is None:
             interval_ms = self.frame_interval_ms
-    bcrypt_rounds: int = Field(default=12, alias="BCRYPT_ROUNDS")
+        
         logger.info(f"Starting frame extraction: {video_path} with {interval_ms}ms interval")
-    cors_origins: str = Field(default="http://localhost:3000", alias="CORS_ORIGINS")
-        # Create directory for this video's frames
-        frames_dir = self.frames_path / processing_id
+        
+        # Create directory for this video's frames: storage/videos/{video_id}/frames/
+        video_dir = self.video_storage_path / str(video_id)
+        frames_dir = video_dir / "frames"
         frames_dir.mkdir(parents=True, exist_ok=True)
-    log_file: str = Field(default="logs/app.log", alias="LOG_FILE")
+        
         # Open video
         cap = cv2.VideoCapture(video_path)
         
         if not cap.isOpened():
             logger.error(f"Failed to open video: {video_path}")
             raise ValueError("Could not open video file")
-    audio_storage_path: str = Field(default="storage/audio", alias="AUDIO_STORAGE_PATH")
+        
         # Get video properties
         fps = cap.get(cv2.CAP_PROP_FPS)
         total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
         duration_sec = total_frames / fps if fps > 0 else 0
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    )
+        
         logger.info(
             f"Video properties - FPS: {fps}, Total frames: {total_frames}, "
             f"Duration: {duration_sec:.2f}s, Resolution: {width}x{height}"
         )
-        return v.lower()
+        
         # Calculate frame interval
         interval_sec = interval_ms / 1000.0
         frame_step = int(fps * interval_sec)
@@ -110,7 +114,7 @@ class VideoProcessingService:
         if frame_step < 1:
             frame_step = 1
             logger.warning(f"Frame interval too small, extracting every frame")
-        return v_upper
+        
         extracted_frames = []
         frame_count = 0
         extracted_count = 0
@@ -147,7 +151,7 @@ class VideoProcessingService:
         cap.release()
 
         result = {
-            "processing_id": processing_id,
+            "video_id": video_id,
             "frames_directory": str(frames_dir),
             "total_frames_extracted": extracted_count,
             "extraction_interval_ms": interval_ms,
@@ -167,29 +171,35 @@ class VideoProcessingService:
 
         logger.info(
             f"Frame extraction completed: {extracted_count} frames extracted "
-            f"from {total_frames} total frames"
-            f"@{self.db_host}:{self.db_port}/{self.db_name}"
+            f"from {total_frames} total frames for video {video_id}"
         )
+        
+        return result
+
+    def extract_audio(
+        self,
+        video_path: str,
+        video_id: int,
     ) -> Dict:
         """
         Extract audio from video file.
         
         Args:
             video_path: Path to video file
-            processing_id: Unique processing identifier
+            video_id: Video ID (used for storage directory)
             
         Returns:
             Dictionary with extraction results
         """
         logger.info(f"Starting audio extraction: {video_path}")
 
-        # Create directory for this video's audio
-        audio_dir = self.audio_path / processing_id
+        # Create directory for this video's audio: storage/videos/{video_id}/audio/
+        video_dir = self.video_storage_path / str(video_id)
+        audio_dir = video_dir / "audio"
         audio_dir.mkdir(parents=True, exist_ok=True)
 
         # Generate audio filename
-        # Format: audio_{processing_id}.wav
-        audio_filename = f"audio_{processing_id}.wav"
+        audio_filename = f"audio.wav"
         audio_file_path = audio_dir / audio_filename
 
         try:
@@ -198,16 +208,10 @@ class VideoProcessingService:
 
             # Check if video has audio
             if video_clip.audio is None:
-            f"@{self.db_host}:{self.db_port}/{self.db_name}"
-        )
-
-    @property
-    def redis_url(self) -> str:
-        """Construct Redis URL."""
                 logger.warning(f"Video has no audio track: {video_path}")
                 video_clip.close()
                 return {
-                    "processing_id": processing_id,
+                    "video_id": video_id,
                     "has_audio": False,
                     "message": "Video contains no audio track"
                 }
@@ -231,7 +235,7 @@ class VideoProcessingService:
             file_size = audio_file_path.stat().st_size
 
             result = {
-                "processing_id": processing_id,
+                "video_id": video_id,
                 "has_audio": True,
                 "audio_directory": str(audio_dir),
                 "audio_filename": audio_filename,
@@ -281,9 +285,9 @@ class VideoProcessingService:
         processing_id = self._generate_processing_id(video_id, user_id)
         
         logger.info(
-            f"Starting video processing - ID: {processing_id}, "
-            f"Video: {video_path}"
-        return f"redis://{self.redis_host}:{self.redis_port}/{self.redis_db}"
+            f"Starting video processing - Video ID: {video_id}, "
+            f"Path: {video_path}"
+        )
 
         start_time = datetime.now()
 
@@ -292,7 +296,7 @@ class VideoProcessingService:
             logger.info("Step 1/2: Extracting frames...")
             frames_result = self.extract_frames(
                 video_path=video_path,
-                processing_id=processing_id,
+                video_id=video_id,
                 interval_ms=interval_ms
             )
 
@@ -300,12 +304,12 @@ class VideoProcessingService:
             logger.info("Step 2/2: Extracting audio...")
             audio_result = self.extract_audio(
                 video_path=video_path,
-                processing_id=processing_id
+                video_id=video_id
             )
 
             # Calculate processing time
             processing_time = (datetime.now() - start_time).total_seconds()
-    return Settings()
+            
             result = {
                 "processing_id": processing_id,
                 "video_id": video_id,
@@ -318,22 +322,20 @@ class VideoProcessingService:
                 "timestamp": datetime.now().isoformat()
             }
 
-            # Save complete processing metadata
-            processing_dir = Path(settings.video_storage_path).parent / "processing" / processing_id
-            processing_dir.mkdir(parents=True, exist_ok=True)
-            
-            metadata_path = processing_dir / "processing_metadata.json"
+            # Save complete processing metadata in video directory
+            video_dir = self.video_storage_path / str(video_id)
+            metadata_path = video_dir / "processing_metadata.json"
             with open(metadata_path, 'w') as f:
                 json.dump(result, f, indent=2)
 
             logger.info(
                 f"Video processing completed successfully - "
-                f"Processing ID: {processing_id}, "
+                f"Video ID: {video_id}, "
                 f"Time: {processing_time:.2f}s, "
                 f"Frames: {frames_result['total_frames_extracted']}, "
                 f"Audio: {audio_result.get('has_audio', False)}"
             )
-        title="VigilantEYE API",
+            
             return result
 
         except Exception as e:
@@ -349,7 +351,7 @@ class VideoProcessingService:
             }
             
             return error_result
-FRAME_EXTRACTION_INTERVAL_MS=30
+
     async def process_video_async(
         self,
         video: Video,

@@ -8,7 +8,6 @@ from typing import Dict, List, Optional
 import cv2
 import numpy as np
 import torch
-from deepface import DeepFace
 from facenet_pytorch import MTCNN, InceptionResnetV1
 
 from src.config.ai_config import AIConfig
@@ -17,6 +16,15 @@ from src.utils.logger import get_logger
 
 logger = get_logger(__name__)
 ai_config = AIConfig()
+
+# Try to import deepface (optional, for face attribute analysis)
+try:
+    from deepface import DeepFace
+    DEEPFACE_AVAILABLE = True
+except (ImportError, Exception) as e:
+    DeepFace = None
+    DEEPFACE_AVAILABLE = False
+    logger.warning(f"deepface not available: {e}. Face attribute analysis (age, gender, emotion) will be disabled.")
 
 
 class FaceRecognitionService:
@@ -134,6 +142,21 @@ class FaceRecognitionService:
         Returns:
             Dictionary with face attributes
         """
+        # Check if deepface is available
+        if not DEEPFACE_AVAILABLE or DeepFace is None:
+            logger.warning("Face attribute analysis disabled - deepface not available")
+            return {
+                'estimated_age': None,
+                'age_range': None,
+                'gender': None,
+                'gender_confidence': 0.0,
+                'emotion': 'neutral',
+                'emotion_confidence': 0.0,
+                'ethnicity': None,
+                'disabled': True,
+                'error': 'deepface not available'
+            }
+        
         try:
             # Crop face region
             image = cv2.imread(image_path)
@@ -151,8 +174,11 @@ class FaceRecognitionService:
             
             face_crop = image[y:y+h, x:x+w]
             
-            # Save temp crop
-            temp_path = f"/tmp/face_crop_{uuid.uuid4()}.jpg"
+            # Save temp crop (use tempfile for Windows compatibility)
+            import tempfile
+            import os
+            temp_dir = tempfile.gettempdir()
+            temp_path = os.path.join(temp_dir, f"face_crop_{uuid.uuid4()}.jpg")
             cv2.imwrite(temp_path, face_crop)
             
             # Analyze with DeepFace
@@ -197,6 +223,7 @@ class FaceRecognitionService:
                 'emotion': 'neutral',
                 'emotion_confidence': 0.0,
                 'ethnicity': None,
+                'error': str(e)
             }
 
     def _get_age_range(self, age: int) -> str:

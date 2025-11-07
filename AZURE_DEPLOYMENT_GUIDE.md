@@ -60,17 +60,17 @@ az deployment group create \
   --template-file azure/arm-template.json \
   --parameters appName=vigilanteye environment=production \
   --parameters adminUsername=vigilanteye adminPassword='VigilantEye123!' \
-  --parameters postgresAdminPassword='VigilantEye123!'
+  --parameters mysqlAdminPassword='VigilantEye123!'
 ```
 
 #### 3. Get Deployment Outputs
 ```bash
 # Get resource names
-POSTGRES_SERVER=$(az deployment group show --resource-group vigilanteye-rg --name arm-template --query properties.outputs.postgresServerName.value -o tsv)
+MYSQL_SERVER=$(az deployment group show --resource-group vigilanteye-rg --name arm-template --query properties.outputs.mysqlServerName.value -o tsv)
 ACR_NAME=$(az deployment group show --resource-group vigilanteye-rg --name arm-template --query properties.outputs.containerRegistryName.value -o tsv)
 STORAGE_ACCOUNT=$(az deployment group show --resource-group vigilanteye-rg --name arm-template --query properties.outputs.storageAccountName.value -o tsv)
 
-echo "PostgreSQL Server: $POSTGRES_SERVER"
+echo "MySQL Server: $MYSQL_SERVER"
 echo "Container Registry: $ACR_NAME"
 echo "Storage Account: $STORAGE_ACCOUNT"
 ```
@@ -109,7 +109,7 @@ az container create \
   --memory 4 \
   --ports 8000 \
   --environment-variables \
-    DATABASE_URL="postgresql://vigilanteye:VigilantEye123!@$POSTGRES_SERVER.postgres.database.azure.com:5432/vigilanteye" \
+    DATABASE_URL="mysql+pymysql://vigilanteye:VigilantEye123!@$MYSQL_SERVER.mysql.database.azure.com:3306/vigilanteye" \
     CACHE_DIR="/app/storage/local_cache" \
     CACHE_MAX_MEMORY_ITEMS="1000" \
     CACHE_DEFAULT_TTL="3600" \
@@ -176,7 +176,7 @@ kubectl create namespace vigilanteye
 
 # Create secrets
 kubectl create secret generic vigilanteye-secrets \
-  --from-literal=database-url="postgresql://vigilanteye:VigilantEye123!@$POSTGRES_SERVER.postgres.database.azure.com:5432/vigilanteye" \
+  --from-literal=database-url="mysql+pymysql://vigilanteye:VigilantEye123!@$MYSQL_SERVER.mysql.database.azure.com:3306/vigilanteye" \
   --from-literal=cache-dir="/app/storage/local_cache" \
   --from-literal=secret-key="VigilantEyeSecretKey123!" \
   --from-literal=jwt-secret-key="VigilantEyeJWTSecret123!" \
@@ -211,7 +211,7 @@ kubectl port-forward -n vigilanteye service/vigilanteye-frontend 3000:80
 
 ```env
 # Database
-DATABASE_URL=postgresql://vigilanteye:VigilantEye123!@your-postgres-server.postgres.database.azure.com:5432/vigilanteye
+DATABASE_URL=mysql+pymysql://vigilanteye:VigilantEye123!@your-mysql-server.mysql.database.azure.com:3306/vigilanteye
 
 # Local Cache
 CACHE_DIR=/app/storage/local_cache
@@ -325,10 +325,10 @@ az container show --resource-group vigilanteye-rg --name vigilanteye-backend --q
 #### Database Connection Issues
 ```bash
 # Test database connectivity
-az postgres server show --resource-group vigilanteye-rg --name $POSTGRES_SERVER
+az mysql flexible-server show --resource-group vigilanteye-rg --name $MYSQL_SERVER
 
 # Check firewall rules
-az postgres server firewall-rule list --resource-group vigilanteye-rg --server-name $POSTGRES_SERVER
+az mysql flexible-server firewall-rule list --resource-group vigilanteye-rg --name $MYSQL_SERVER
 ```
 
 #### Image Pull Issues
@@ -449,9 +449,9 @@ jobs:
 ### Backup Strategy
 ```bash
 # Database backup
-az postgres server-backup create \
+az mysql flexible-server backup create \
   --resource-group vigilanteye-rg \
-  --server-name $POSTGRES_SERVER \
+  --name $MYSQL_SERVER \
   --backup-name daily-backup-$(date +%Y%m%d)
 
 # Storage backup

@@ -32,9 +32,9 @@ if not exist .env (
     echo 📝 Creating .env file...
     (
         echo # Database Configuration
-        echo POSTGRES_DB=vigilanteye
-        echo POSTGRES_USER=vigilanteye
-        echo POSTGRES_PASSWORD=vigilanteye123
+        echo MYSQL_DATABASE=vigilanteye
+        echo MYSQL_USER=vigilanteye
+        echo MYSQL_PASSWORD=vigilanteye123
         echo.
         echo # Local Cache Configuration
         echo CACHE_DIR=storage/local_cache
@@ -126,7 +126,7 @@ if %errorlevel% equ 0 (
 )
 
 REM Check database connection
-docker-compose exec -T postgres pg_isready -U vigilanteye -d vigilanteye >nul 2>&1
+docker-compose exec -T mysql mysqladmin ping -h localhost -u vigilanteye -pvigilanteye123 >nul 2>&1
 if %errorlevel% equ 0 (
     echo ✅ Database is ready
 ) else (
@@ -174,7 +174,7 @@ echo   View logs: docker-compose logs -f
 echo   Stop services: docker-compose down
 echo   Restart services: docker-compose restart
 echo   Rebuild images: docker-compose build --no-cache
-echo   Access database: docker-compose exec postgres psql -U vigilanteye -d vigilanteye
+echo   Access database: docker-compose exec mysql mysql -u vigilanteye -pvigilanteye123 vigilanteye
 echo   View cache stats: docker-compose exec backend python -c "from src.services.local_cache import get_cache; print(get_cache().get_stats())"
 echo.
 

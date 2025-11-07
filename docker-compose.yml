@@ -1,22 +1,24 @@
 version: '3.8'
 
 services:
-  # PostgreSQL Database
-  postgres:
-    image: postgres:15-alpine
-    container_name: vigilanteye-postgres
+  # MySQL Database
+  mysql:
+    image: mysql:8.0
+    container_name: vigilanteye-mysql
     environment:
-      POSTGRES_DB: vigilanteye
-      POSTGRES_USER: vigilanteye
-      POSTGRES_PASSWORD: vigilanteye123
-      POSTGRES_INITDB_ARGS: "--encoding=UTF-8 --lc-collate=C --lc-ctype=C"
+      MYSQL_ROOT_PASSWORD: vigilanteye123
+      MYSQL_DATABASE: vigilanteye
+      MYSQL_USER: vigilanteye
+      MYSQL_PASSWORD: vigilanteye123
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - mysql_data:/var/lib/mysql
       - ./backend/scripts/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
     ports:
-      - "5432:5432"
+      - "3306:3306"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U vigilanteye -d vigilanteye"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "vigilanteye", "-pvigilanteye123"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -31,7 +33,7 @@ services:
     container_name: vigilanteye-backend
     environment:
       # Database
-      DATABASE_URL: postgresql://vigilanteye:vigilanteye123@postgres:5432/vigilanteye
+      DATABASE_URL: mysql+pymysql://vigilanteye:vigilanteye123@mysql:3306/vigilanteye
       
       # Application
       APP_NAME: VigilantEye
@@ -71,7 +73,7 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      postgres:
+      mysql:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
@@ -110,7 +112,7 @@ services:
     restart: unless-stopped
 
 volumes:
-  postgres_data:
+  mysql_data:
     driver: local
   backend_storage:
     driver: local

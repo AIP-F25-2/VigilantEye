@@ -31,9 +31,9 @@ if [ ! -f .env ]; then
     echo -e "${YELLOW}📝 Creating .env file...${NC}"
     cat > .env << EOF
 # Database Configuration
-POSTGRES_DB=vigilanteye
-POSTGRES_USER=vigilanteye
-POSTGRES_PASSWORD=vigilanteye123
+MYSQL_DATABASE=vigilanteye
+MYSQL_USER=vigilanteye
+MYSQL_PASSWORD=vigilanteye123
 
 # Local Cache Configuration
 CACHE_DIR=storage/local_cache
@@ -99,7 +99,7 @@ else
 fi
 
 # Check database connection
-if docker-compose exec -T postgres pg_isready -U vigilanteye -d vigilanteye > /dev/null 2>&1; then
+if docker-compose exec -T mysql mysqladmin ping -h localhost -u vigilanteye -pvigilanteye123 > /dev/null 2>&1; then
     echo -e "${GREEN}✅ Database is ready${NC}"
 else
     echo -e "${RED}❌ Database connection failed${NC}"
@@ -130,7 +130,7 @@ echo -e "${BLUE}  View logs: docker-compose logs -f${NC}"
 echo -e "${BLUE}  Stop services: docker-compose down${NC}"
 echo -e "${BLUE}  Restart services: docker-compose restart${NC}"
 echo -e "${BLUE}  Rebuild images: docker-compose build --no-cache${NC}"
-echo -e "${BLUE}  Access database: docker-compose exec postgres psql -U vigilanteye -d vigilanteye${NC}"
+echo -e "${BLUE}  Access database: docker-compose exec mysql mysql -u vigilanteye -pvigilanteye123 vigilanteye${NC}"
 echo -e "${BLUE}  View cache stats: docker-compose exec backend python -c \"from src.services.local_cache import get_cache; print(get_cache().get_stats())\"${NC}"
 
 echo -e "${GREEN}✨ Happy coding!${NC}"

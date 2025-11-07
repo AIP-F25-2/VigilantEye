@@ -26,7 +26,9 @@ class VideoService:
         """Initialize service with database session."""
         self.session = session
         self.video_repository = VideoRepository(session)
-        self.storage_path = Path("storage/videos")
+        # Use absolute path relative to backend directory
+        backend_dir = Path(__file__).parent.parent.parent
+        self.storage_path = backend_dir / "storage" / "videos"
         self.storage_path.mkdir(parents=True, exist_ok=True)
 
     async def upload_video(
@@ -50,31 +52,35 @@ class VideoService:
         file_extension = Path(file.filename).suffix
         unique_filename = f"{uuid.uuid4()}{file_extension}"
         
-        # Create user directory
-        user_dir = self.storage_path / str(user_id)
-        user_dir.mkdir(parents=True, exist_ok=True)
+        # Create video record first to get video_id
+        video = await self.video_repository.create(
+            user_id=user_id,
+            filename=unique_filename,
+            original_filename=file.filename,
+            file_path="",  # Will be updated after we know the video_id
+            file_size=len(content),
+            mime_type=file.content_type,
+        )
         
-        # Full file path
-        file_path = user_dir / unique_filename
+        await self.session.flush()  # Flush to get video.id
+        await self.session.refresh(video)  # Refresh to get the ID
+        
+        # Create video-specific directory: storage/{video_id}/
+        video_dir = self.storage_path / str(video.id)
+        video_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Full file path: storage/{video_id}/{filename}
+        file_path = video_dir / unique_filename
         
         # Save file
         with open(file_path, 'wb') as f:
             f.write(content)
         
-        # Create video record
-        video = await self.video_repository.create(
-            user_id=user_id,
-            filename=unique_filename,
-            original_filename=file.filename,
-            file_path=str(file_path),
-            file_size=len(content),
-            mime_type=file.content_type,
-        )
-        
+        # Update video record with correct file path
+        video.file_path = str(file_path)
         await self.session.commit()
         
-        # TODO: Extract video metadata (duration, resolution, etc.)
-        # This can be done asynchronously in a background task
+        logger.info(f"Video uploaded: ID={video.id}, Path={file_path}")
         
         return video
 
@@ -287,11 +293,24 @@ class VideoService:
                 detail="Not authorized to delete this video"
             )
         
-        # Delete file from disk
+        # Delete video file
         file_path = Path(video.file_path)
         if file_path.exists():
             file_path.unlink()
+            logger.info(f"Deleted video file: {file_path}")
+        
+        # Delete analysis outputs (frames and audio folders)
+        video_dir = self.storage_path / str(video_id)
+        if video_dir.exists():
+            import shutil
+            try:
+                shutil.rmtree(video_dir)
+                logger.info(f"Deleted video directory and analysis outputs: {video_dir}")
+            except Exception as e:
+                logger.error(f"Failed to delete video directory {video_dir}: {e}")
         
         # Delete database record
         await self.video_repository.delete(video_id)
         await self.session.commit()
+        
+        logger.info(f"Video {video_id} and all associated files deleted successfully")

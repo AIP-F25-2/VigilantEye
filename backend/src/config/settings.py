@@ -1,7 +1,7 @@
 """Application settings and configuration."""
 
 from functools import lru_cache
-from typing import List
+from typing import List, Dict, Any
 
 from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     db_driver: str = Field(default="mysql", alias="DB_DRIVER")
     db_host: str = Field(default="localhost", alias="DB_HOST")
     db_port: int = Field(default=3306, alias="DB_PORT")
-    db_name: str = Field(default="vigilent_ai", alias="DB_NAME")
+    db_name: str = Field(default="vigilent_eye", alias="DB_NAME")
     db_user: str = Field(default="root", alias="DB_USER")
     db_password: str = Field(default="root", alias="DB_PASSWORD")
 

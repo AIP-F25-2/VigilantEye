@@ -53,13 +53,13 @@ az deployment group create \
 # Get deployment outputs
 echo -e "${YELLOW}📋 Getting deployment outputs...${NC}"
 VM_PUBLIC_IP=$(az deployment group show --resource-group $RESOURCE_GROUP --name arm-template --query properties.outputs.vmPublicIP.value -o tsv)
-POSTGRES_SERVER=$(az deployment group show --resource-group $RESOURCE_GROUP --name arm-template --query properties.outputs.postgresServerName.value -o tsv)
+POSTGRES_SERVER=$(az deployment group show --resource-group $RESOURCE_GROUP --name arm-template --query properties.outputs.mysqlServerName.value -o tsv)
 ACR_NAME=$(az deployment group show --resource-group $RESOURCE_GROUP --name arm-template --query properties.outputs.containerRegistryName.value -o tsv)
 STORAGE_ACCOUNT=$(az deployment group show --resource-group $RESOURCE_GROUP --name arm-template --query properties.outputs.storageAccountName.value -o tsv)
 
 echo -e "${GREEN}✅ Azure resources created successfully!${NC}"
 echo -e "${BLUE}VM Public IP: $VM_PUBLIC_IP${NC}"
-echo -e "${BLUE}PostgreSQL Server: $POSTGRES_SERVER${NC}"
+echo -e "${BLUE}MySQL Server: $POSTGRES_SERVER${NC}"
 echo -e "${BLUE}Container Registry: $ACR_NAME${NC}"
 echo -e "${BLUE}Storage Account: $STORAGE_ACCOUNT${NC}"
 
@@ -92,7 +92,7 @@ echo -e "${YELLOW}🚀 Deploying to Azure Container Instances...${NC}"
 
 # Create environment file for deployment
 cat > .env.azure << EOF
-DATABASE_URL=postgresql://vigilanteye:VigilantEye123!@$POSTGRES_SERVER.postgres.database.azure.com:5432/vigilanteye
+DATABASE_URL=mysql+pymysql://vigilanteye:VigilantEye123!@$POSTGRES_SERVER.mysql.database.azure.com:3306/vigilanteye
 CACHE_DIR=/app/storage/local_cache
 CACHE_MAX_MEMORY_ITEMS=1000
 CACHE_DEFAULT_TTL=3600

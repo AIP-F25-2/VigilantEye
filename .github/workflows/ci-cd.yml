@@ -67,18 +67,18 @@ jobs:
   backend-tests:
     runs-on: ubuntu-latest
     services:
-      postgres:
-        image: postgres:15
+      mysql:
+        image: mysql:8.0
         env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: test_vigilanteye
+          MYSQL_ROOT_PASSWORD: postgres
+          MYSQL_DATABASE: test_vigilanteye
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "mysqladmin ping -h localhost -u root -ppostgres"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
         ports:
-          - 5432:5432
+          - 3306:3306
     
     steps:
       - uses: actions/checkout@v4
@@ -96,7 +96,7 @@ jobs:
       
       - name: Run tests
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_vigilanteye
+          DATABASE_URL: mysql+pymysql://root:postgres@localhost:3306/test_vigilanteye
           CACHE_DIR: ./storage/local_cache
           JWT_SECRET_KEY: test-secret-key
         run: |
