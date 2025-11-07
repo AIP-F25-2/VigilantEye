@@ -1,0 +1,90 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: vigilenteye_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: vigilenteye
+      MYSQL_USER: vigilenteye_user
+      MYSQL_PASSWORD: vigilenteye_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./backend/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 20s
+      retries: 10
+    networks:
+      - vigilenteye_network
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: vigilenteye_backend
+    command: python run.py
+    ports:
+      - "5000:5000"
+    environment:
+      FLASK_APP: run.py
+      FLASK_ENV: development
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_USER: vigilenteye_user
+      MYSQL_PASSWORD: vigilenteye_pass
+      MYSQL_DB: vigilenteye
+      COSMOS_DB_ENDPOINT: ${COSMOS_DB_ENDPOINT}
+      COSMOS_DB_KEY: ${COSMOS_DB_KEY}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET}
+      TELEGRAM_ESCALATION_CHANNEL: ${TELEGRAM_ESCALATION_CHANNEL}
+      TELEGRAM_SECONDARY_CHANNEL: ${TELEGRAM_SECONDARY_CHANNEL}
+      STORAGE_PATH: /app/storage
+      MODEL_CACHE_PATH: /app/models
+      CORS_ORIGINS: http://localhost:3000,http://frontend:3000
+    volumes:
+      - ./backend:/app
+      - ./storage:/app/storage
+      - ./models:/app/models
+      - ./backend/logs:/app/logs
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - vigilenteye_network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: vigilenteye_frontend
+    command: npm start
+    ports:
+      - "3000:3000"
+    environment:
+      REACT_APP_API_URL: http://localhost:5000
+      REACT_APP_WS_URL: ws://localhost:5000
+      CHOKIDAR_USEPOLLING: "true"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - vigilenteye_network
+    restart: unless-stopped
+
+volumes:
+  mysql_data: {}
+
+networks:
+  vigilenteye_network:
+    driver: bridge
+

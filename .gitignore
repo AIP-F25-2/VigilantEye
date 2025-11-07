@@ -1,0 +1,94 @@
+# Environment Variables
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+PIPFILE.lock
+
+# Virtual Environments
+venv/
+ENV/
+env/
+.venv
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+logs/
+*.log
+
+# Storage (uploaded files)
+storage/videos/*
+storage/evidence/*
+!storage/videos/.gitkeep
+!storage/evidence/.gitkeep
+
+# AI Models (large files)
+models/*
+!models/.gitkeep
+!models/README.md
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Node.js (Frontend)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp
+.pnp.js
+
+# React Build
+frontend/build/
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
+
+# Testing
+.coverage
+.pytest_cache/
+coverage/
+*.cover
+.hypothesis/
+
+# Docker
+*.pid
+*.seed
+*.pid.lock
+
+# OS
+Thumbs.db
+
