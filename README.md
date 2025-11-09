@@ -1,69 +1,185 @@
-# VigilentEye - AI-Based Multi-Camera Surveillance System
+# VigilantEye - AI-Powered Surveillance System
 
-VigilentEye is an AI-driven surveillance platform that unifies multi-camera video ingestion, real-time threat detection, incident ticketing, and comprehensive reporting. The system orchestrates open-source AI models to detect suspicious activity, notify staff via Telegram, and guide operators through escalation workflows.
+An intelligent multi-camera surveillance system with AI-powered threat detection, automated alerting, and comprehensive reporting.
 
-## Features
-- Multi-camera video upload, live streaming, and archival
-- AI-powered detection with face recognition, object tracking, audio classification, and LLM-based contextual analysis
-- Real-time Telegram alerts with acknowledgment and escalation handling
-- Automated ticket lifecycle management with SLA-based rules
-- PDF report generation for incident summaries and audit trails
-- Role-based access control for staff and administrators
+## 🎯 Features
 
-## Technology Stack
-- **Backend:** Flask, SQLAlchemy, PyTorch, Transformers, OpenCV, Whisper, YOLOv8
-- **Frontend:** React, Tailwind CSS, Socket.IO
-- **Databases:** MySQL, Azure Cosmos DB (vector embeddings)
-- **Infrastructure:** Docker, Docker Compose
+### AI Capabilities
+- **Face & Person Detection** - Identify and track individuals with ReID
+- **Scene Understanding** - Detailed environmental context analysis
+- **Object Detection** - Detect suspicious items and weapons
+- **Speech-to-Text** - Transcribe audio from surveillance footage
+- **Audio Classification** - Detect gunshots, screams, alarms, etc.
+- **LLM Analysis** - Intelligent threat assessment using local LLM
 
-## Prerequisites
-- Docker and Docker Compose installed
-- Azure Cosmos DB account credentials for vector storage
-- Telegram bot token for notifications (placeholder provided)
+### Software Modules
+- **Authentication & Access Control** - JWT-based auth with staff/admin roles
+- **Video Processing** - Upload videos or stream from live cameras
+- **Storage Management** - Hierarchical storage with TTL-based cleanup
+- **Ticket Management** - Incident tracking with auto-escalation
+- **Telegram Integration** - Real-time alerts to first responders
+- **Report Generation** - Comprehensive PDF reports with evidence
 
-## Quick Start
-1. Clone the repository.
-2. Copy `.env.example` to `.env` and provide your environment-specific values.
-3. Run `docker-compose up --build` to build images and start all services.
-4. Access the frontend at `http://localhost:3000`.
-5. Access the backend API at `http://localhost:5000`.
+### User Interface
+- **Login/SignUp** - Secure authentication
+- **Home** - Video upload and live camera streaming
+- **Video Directory** - Manage and analyze stored videos
+- **Tickets** - View and manage security incidents
+- **Analytics** - System health and performance metrics
 
-## Project Structure
+## 🏗️ Architecture
+
 ```
-backend/        # Flask REST API, AI modules, database models, services
-frontend/       # React single-page application
-storage/        # Mounted volumes for videos and evidence artifacts
-models/         # Cached open-source AI model weights
-docker-compose.yml
-README.md
+VigilantEye/
+├── backend/          # Flask API + AI Services
+├── frontend/         # React + TypeScript UI
+├── docker-compose.yml
+└── .github/workflows/ # CI/CD pipelines
 ```
 
-## Development
-- Backend runs in debug mode with hot reload when executed via Docker Compose.
-- Frontend uses the React development server with HMR enabled.
-- Backend logs are persisted under `backend/logs/` for review.
+## 🚀 Quick Start
 
-## AI Models
-All AI models are open-source and cached locally on first use:
-- Phi-3-Mini (LLM for situational reasoning)
-- YOLOv8x (object and person detection)
-- Whisper Base (speech-to-text)
-- BLIP-2 (image captioning)
-- RetinaFace (face detection)
-- YAMNet (audio classification)
+### Prerequisites
+- Python 3.11+
+- Node.js 18+
+- Docker & Docker Compose
+- Git
 
-Model files are stored under `models/` and reused across restarts.
+### 1. Clone Repository
 
-## Testing
-- Backend: `pytest` (with `pytest-cov` and `pytest-flask` support)
-- Frontend: `npm test` (Jest + React Testing Library)
+```bash
+git clone <repository-url>
+cd VigilantEye
+```
 
-## Deployment
-- Refer to `DEPLOYMENT.md` (to be created) for production setup guidance including gunicorn, nginx, and multi-stage Docker builds.
+### 2. Start Infrastructure Services
 
-## License
-This project is released under the MIT License.
+```bash
+docker-compose up -d
+```
 
-## Contributors
-- VigilentEye Core Team
+This starts MySQL, Redis, and ChromaDB.
+
+### 3. Setup Backend
+
+```bash
+cd backend
+
+# Create virtual environment
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+
+# Install dependencies
+pip install -r requirements/base.txt
+pip install -r requirements/ai_services.txt
+# For development tooling
+pip install -r requirements/development.txt
+
+# Configure environment
+cp .env.example .env
+# Edit .env with your settings
+
+# Run migrations
+flask db upgrade
+
+# Start Flask API
+flask --app src.app:create_app run --host=0.0.0.0 --port=5000
+# or
+python -m flask --app src.app:create_app run --host=0.0.0.0 --port=5000
+```
+
+### 4. Setup Frontend
+
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Configure environment
+cp .env.example .env
+
+# Start development server
+npm run dev
+```
+
+### 5. Start Celery Workers (separate terminals)
+
+```bash
+cd backend
+source venv/bin/activate
+
+# Worker
+celery -A src.celery_app:create_celery_app worker --loglevel=info
+
+# Beat (enable ENABLE_BEAT=true only after required tasks exist)
+# celery -A src.celery_app:create_celery_app beat --loglevel=info
+```
+
+### 6. Access Application
+
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:5000/api
+- **Health Check**: http://localhost:5000/health
+
+## 📦 Technology Stack
+
+### Backend
+- Flask 3.0 - Web framework
+- Celery - Async task processing
+- SQLAlchemy - ORM
+- MySQL 8.0 - Primary database
+- Redis - Cache & message broker
+- ChromaDB - Vector database
+- YOLOv8, Whisper, CLIP - AI models
+- Ollama - Local LLM inference
+
+### Frontend
+- React 18 - UI library
+- TypeScript - Type safety
+- Vite - Build tool
+- Tailwind CSS - Styling
+- TanStack Query - Data fetching
+- Zustand - State management
+
+## 🧪 Testing
+
+### Backend Tests
+```bash
+cd backend
+pytest tests/ --cov=src --cov-report=html
+```
+
+### Frontend Tests
+```bash
+cd frontend
+npm run test:coverage
+```
+
+## 📚 Documentation
+
+- [Backend README](./backend/README.md)
+- [Frontend README](./frontend/README.md)
+- API Documentation: Coming soon
+- Architecture Guide: Coming soon
+
+## 🔒 Security
+
+- JWT authentication with refresh tokens
+- bcrypt password hashing
+- Rate limiting on auth endpoints
+- CORS configuration
+- Input validation and sanitization
+
+## 📝 License
+
+MIT License
+
+## 🤝 Contributing
+
+Contributions welcome! Please read the contributing guidelines first.
+
+## 📧 Contact
+
+For questions or support, please open an issue.
 

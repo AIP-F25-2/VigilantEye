@@ -1,8 +1,3 @@
-# Environment Variables
-.env
-.env.local
-.env.*.local
-
 # Python
 __pycache__/
 *.py[cod]
@@ -21,20 +16,23 @@ parts/
 sdist/
 var/
 wheels/
-pip-wheel-metadata/
-share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-PIPFILE.lock
 
-# Virtual Environments
+# Virtual Environment
 venv/
-ENV/
 env/
-.venv
+ENV/
+env.bak/
+venv.bak/
 
-# IDEs
+# Environment Variables
+.env
+.env.local
+.env.*.local
+
+# IDE
 .vscode/
 .idea/
 *.swp
@@ -42,53 +40,31 @@ env/
 *~
 .DS_Store
 
+# Node
+node_modules/
+dist/
+*.local
+
 # Logs
 logs/
 *.log
 
-# Storage (uploaded files)
-storage/videos/*
-storage/evidence/*
-!storage/videos/.gitkeep
-!storage/evidence/.gitkeep
-
-# AI Models (large files)
-models/*
-!models/.gitkeep
-!models/README.md
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+coverage/
+.nyc_output
 
 # Database
 *.db
 *.sqlite
 *.sqlite3
 
-# Node.js (Frontend)
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnp
-.pnp.js
-
-# React Build
-frontend/build/
-frontend/.env.local
-frontend/.env.development.local
-frontend/.env.test.local
-frontend/.env.production.local
-
-# Testing
-.coverage
-.pytest_cache/
-coverage/
-*.cover
-.hypothesis/
-
 # Docker
-*.pid
-*.seed
-*.pid.lock
+.dockerignore
 
 # OS
 Thumbs.db
+.DS_Store
 

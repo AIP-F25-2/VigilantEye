@@ -1,0 +1,93 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+PIPFILE.lock
+
+# Virtual Environment
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment Variables
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+.hypothesis/
+test-results.xml
+
+# Logs
+logs/
+*.log
+
+# Storage (local files)
+storage/videos/*
+storage/frames/*
+storage/audio/*
+!storage/videos/.gitkeep
+!storage/frames/.gitkeep
+!storage/audio/.gitkeep
+# Keep evidence and reports in git (empty folders)
+storage/evidence/*
+storage/reports/*
+!storage/evidence/.gitkeep
+!storage/reports/.gitkeep
+
+# AI Models Cache
+models_cache/*
+!models_cache/.gitkeep
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Security Reports
+bandit-report.json
+safety-report.json
+
+# Performance Reports
+performance-report.html
+
