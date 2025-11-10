@@ -80,7 +80,7 @@ cp .env.example .env
 # Edit .env with your settings
 
 # Run migrations
-flask db upgrade
+alembic upgrade head
 
 # Start Flask API
 flask --app src.app:create_app run --host=0.0.0.0 --port=5000

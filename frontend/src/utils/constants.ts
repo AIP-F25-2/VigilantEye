@@ -44,7 +44,7 @@ export const ANALYSIS_RESULT = {
 } as const
 
 export const MAX_VIDEO_SIZE_MB = 500
-export const SUPPORTED_VIDEO_FORMATS = [
+export const SUPPORTED_VIDEO_MIME_TYPES = [
   'video/mp4',
   'video/avi',
   'video/mov',

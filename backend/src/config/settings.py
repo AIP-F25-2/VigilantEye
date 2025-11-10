@@ -2,6 +2,7 @@ import logging
 import os
 from pathlib import Path
 from typing import Dict, Type
+from urllib.parse import quote_plus
 
 from src.config.constants import SUPPORTED_VIDEO_FORMATS as DEFAULT_SUPPORTED_VIDEO_FORMATS
 
@@ -72,6 +73,16 @@ class BaseConfig:
         DEFAULT_SUPPORTED_VIDEO_FORMATS,
     )
 
+    # Storage Quota
+    USER_QUOTA_MAX_GB = int(os.getenv("USER_QUOTA_MAX_GB", "10"))
+    SYSTEM_QUOTA_WARNING_PERCENTAGE = int(
+        os.getenv("SYSTEM_QUOTA_WARNING_PERCENTAGE", "80")
+    )
+
+    # Cleanup Configuration
+    CLEANUP_BATCH_SIZE = int(os.getenv("CLEANUP_BATCH_SIZE", "1000"))
+    CLEANUP_ENABLED = _get_bool(os.getenv("CLEANUP_ENABLED"), default=True)
+
     # Video Processing
     FRAME_EXTRACTION_INTERVAL = float(
         os.getenv("FRAME_EXTRACTION_INTERVAL", "1.0")
@@ -110,6 +121,9 @@ class BaseConfig:
     )
     BCRYPT_LOG_ROUNDS = int(os.getenv("BCRYPT_LOG_ROUNDS", "12"))
     RATE_LIMIT_LOGIN = os.getenv("RATE_LIMIT_LOGIN", "5 per 15 minutes")
+    ENFORCE_ACCESS_TOKEN_ALLOWLIST = _get_bool(
+        os.getenv("ENFORCE_ACCESS_TOKEN_ALLOWLIST"), default=False
+    )
 
     # CORS
     CORS_ORIGINS = _get_list(
@@ -149,12 +163,9 @@ class BaseConfig:
 
     @property
     def SQLALCHEMY_DATABASE_URI(self) -> str:
-        password = self.MYSQL_PASSWORD
-        auth_part = (
-            f"{self.MYSQL_USER}:{password}@"
-            if password
-            else f"{self.MYSQL_USER}@"
-        )
+        user = quote_plus(self.MYSQL_USER)
+        password = quote_plus(self.MYSQL_PASSWORD) if self.MYSQL_PASSWORD else None
+        auth_part = f"{user}:{password}@" if password is not None else f"{user}@"
         return (
             f"mysql+pymysql://{auth_part}{self.MYSQL_HOST}:{self.MYSQL_PORT}/"
             f"{self.MYSQL_DATABASE}"
@@ -197,6 +208,10 @@ class BaseConfig:
 
         models_cache = Path(self.MODELS_CACHE_PATH)
         models_cache.mkdir(parents=True, exist_ok=True)
+
+    @property
+    def USER_QUOTA_MAX_BYTES(self) -> int:
+        return self.USER_QUOTA_MAX_GB * 1024 * 1024 * 1024
 
 
 class DevelopmentConfig(BaseConfig):

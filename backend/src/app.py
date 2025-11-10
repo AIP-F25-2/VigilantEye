@@ -1,4 +1,5 @@
 import logging
+import os
 import time
 import uuid
 from typing import Any
@@ -20,22 +21,26 @@ limiter = Limiter(key_func=get_remote_address, default_limits=[])
 
 logger = logging.getLogger("src.app")
 
-
 def create_app(config_name: str | None = None) -> Flask:
     """Application factory for the VigilantEye backend."""
 
     app = Flask(__name__)
     config = get_config(config_name)
     app.config.from_object(config)
+    override_db_uri = os.getenv("ALEMBIC_SQLALCHEMY_URL")
+    if override_db_uri:
+        app.config["SQLALCHEMY_DATABASE_URI"] = override_db_uri
 
     setup_logging(config)
     _initialize_extensions(app, config)
     _register_error_handlers(app)
     _register_middlewares(app, config)
 
-    # Blueprint registrations will be handled in subsequent phases
-    # from src.api.auth import auth_bp
-    # app.register_blueprint(auth_bp, url_prefix="/api/auth")
+    from src.api.auth import auth_bp
+    from src.api.storage import storage_bp
+
+    app.register_blueprint(auth_bp, url_prefix="/api/auth")
+    app.register_blueprint(storage_bp, url_prefix="/api/storage")
 
     @app.route("/health", methods=["GET"])
     def health_check() -> Any:
@@ -47,11 +52,8 @@ def create_app(config_name: str | None = None) -> Flask:
 def _initialize_extensions(app: Flask, config: Any) -> None:
     db.init_app(app)
     jwt.init_app(app)
-    cors.init_app(app, origins=config.CORS_ORIGINS)
+    cors.init_app(app, resources={r"/api/*": {"origins": config.CORS_ORIGINS}})
     limiter.init_app(app)
-    limiter.limit(config.RATE_LIMIT_LOGIN, methods=["POST"])(
-        lambda: None
-    )  # Placeholder for login endpoint
 
 
 def _register_error_handlers(app: Flask) -> None:
@@ -76,6 +78,18 @@ def _register_error_handlers(app: Flask) -> None:
     def handle_not_found(error: Exception) -> Any:
         logger.info("Resource not found", extra={"context": {"error": str(error)}})
         return jsonify({"error": "Resource not found"}), 404
+
+    @app.errorhandler(429)
+    def handle_rate_limit(error: Exception) -> Any:
+        logger.warning("Rate limit exceeded", extra={"context": {"error": str(error)}})
+        response = jsonify({"error": "Too many requests"})
+        retry_after = getattr(error, "retry_after", None)
+        if retry_after is not None:
+            try:
+                response.headers["Retry-After"] = str(int(retry_after))
+            except (TypeError, ValueError):
+                response.headers["Retry-After"] = str(retry_after)
+        return response, 429
 
     @app.errorhandler(500)
     def handle_internal_error(error: Exception) -> Any:
