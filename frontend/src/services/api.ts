@@ -38,15 +38,25 @@ api.interceptors.response.use(
 
       try {
         const refreshToken = localStorage.getItem('refresh_token')
-        const response = await axios.post<{ access_token: string }>(
+        const response = await axios.post<{ access_token: string; refresh_token?: string }>(
           `${API_BASE_URL}/auth/refresh`,
           {
             refresh_token: refreshToken,
           }
         )
 
-        const { access_token: accessToken } = response.data
+        const { access_token: accessToken, refresh_token: newRefreshToken } = response.data
         localStorage.setItem('access_token', accessToken)
+        
+        // Persist refresh token if rotation is provided
+        if (newRefreshToken) {
+          localStorage.setItem('refresh_token', newRefreshToken)
+        }
+
+        // Dispatch event to notify token refresh for auto-logout recalculation
+        window.dispatchEvent(new CustomEvent('auth:tokenRefreshed', { 
+          detail: { access_token: accessToken } 
+        }))
 
         originalRequest.headers = {
           ...originalRequest.headers,

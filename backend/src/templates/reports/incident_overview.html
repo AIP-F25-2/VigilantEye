@@ -1,0 +1,62 @@
+<h2>Incident Overview</h2>
+
+<table border="1" cellpadding="5">
+    <tr>
+        <td><b>Ticket ID</b></td>
+        <td>{{ ticket.id }}</td>
+    </tr>
+    <tr>
+        <td><b>Title</b></td>
+        <td>{{ ticket.title }}</td>
+    </tr>
+    <tr>
+        <td><b>Status</b></td>
+        <td>{{ ticket.status.upper() }}</td>
+    </tr>
+    <tr>
+        <td><b>Priority</b></td>
+        <td>{{ ticket.priority.upper() }}</td>
+    </tr>
+    <tr>
+        <td><b>Threat Level</b></td>
+        <td>{{ ticket.threat_level.upper() }}</td>
+    </tr>
+    <tr>
+        <td><b>Created At</b></td>
+        <td>{{ ticket.created_at }}</td>
+    </tr>
+    {% if ticket.acknowledged_at %}
+    <tr>
+        <td><b>Acknowledged At</b></td>
+        <td>{{ ticket.acknowledged_at }}</td>
+    </tr>
+    {% endif %}
+    {% if ticket.closed_at %}
+    <tr>
+        <td><b>Closed At</b></td>
+        <td>{{ ticket.closed_at }}</td>
+    </tr>
+    {% endif %}
+    {% if ticket.video %}
+    <tr>
+        <td><b>Video ID</b></td>
+        <td>{{ ticket.video.id }}</td>
+    </tr>
+    {% endif %}
+    {% if ticket.assigned_user %}
+    <tr>
+        <td><b>Assigned To</b></td>
+        <td>{{ ticket.assigned_user.username }} ({{ ticket.assigned_user.email }})</td>
+    </tr>
+    {% endif %}
+    <tr>
+        <td><b>SLA Breach</b></td>
+        <td>{{ "Yes" if ticket.sla_breach else "No" }}</td>
+    </tr>
+</table>
+
+{% if ticket.description %}
+<p><b>Description:</b></p>
+<p>{{ ticket.description }}</p>
+{% endif %}
+

@@ -1,0 +1,47 @@
+<h2>Evidence Gallery</h2>
+
+{% set frames = evidence|selectattr('type', 'equalto', 'frame')|list %}
+{% if frames %}
+<h3>Frame Evidence</h3>
+{% for frame in frames %}
+<p>
+    <b>Frame #{{ frame.frame_number if frame.frame_number else "N/A" }}</b><br>
+    <b>Timestamp:</b> {{ frame.timestamp }}<br>
+    {% if frame.description %}
+    <b>Description:</b> {{ frame.description }}<br>
+    {% endif %}
+    {% if frame.confidence_score %}
+    <b>Confidence:</b> {{ "%.2f"|format(frame.confidence_score * 100) }}%<br>
+    {% endif %}
+</p>
+{% endfor %}
+{% endif %}
+
+{% set audio_files = evidence|selectattr('type', 'equalto', 'audio')|list %}
+{% if audio_files %}
+<h3>Audio Evidence</h3>
+{% for audio in audio_files %}
+<p>
+    <b>Audio File</b><br>
+    <b>Timestamp:</b> {{ audio.timestamp }}<br>
+    {% if audio.description %}
+    <b>Description:</b> {{ audio.description }}<br>
+    {% endif %}
+</p>
+{% endfor %}
+{% endif %}
+
+{% set video_clips = evidence|selectattr('type', 'equalto', 'video')|list %}
+{% if video_clips %}
+<h3>Video Evidence</h3>
+{% for video in video_clips %}
+<p>
+    <b>Video Clip</b><br>
+    <b>Timestamp:</b> {{ video.timestamp }}<br>
+    {% if video.description %}
+    <b>Description:</b> {{ video.description }}<br>
+    {% endif %}
+</p>
+{% endfor %}
+{% endif %}
+

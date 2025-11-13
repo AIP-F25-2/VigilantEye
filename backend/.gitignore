@@ -62,9 +62,11 @@ logs/
 storage/videos/*
 storage/frames/*
 storage/audio/*
+storage/persons/*
 !storage/videos/.gitkeep
 !storage/frames/.gitkeep
 !storage/audio/.gitkeep
+!storage/persons/.gitkeep
 # Keep evidence and reports in git (empty folders)
 storage/evidence/*
 storage/reports/*

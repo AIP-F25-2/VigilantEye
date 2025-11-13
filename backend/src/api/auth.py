@@ -350,3 +350,16 @@ def me():
         return jsonify({"error": "Unauthorized"}), 401
     return jsonify({"user": _serialize_user(user)}), 200
 
+
+@auth_bp.route("/users", methods=["GET"])
+@admin_only
+def list_users():
+    """List all users (admin only)."""
+    try:
+        from src.models.user import User
+        
+        users = User.query.filter_by(is_deleted=False, is_active=True).all()
+        return jsonify({"users": [_serialize_user(user) for user in users]}), 200
+    except Exception as exc:
+        logger.exception("List users failed", extra={"context": {"error": str(exc)}})
+        return jsonify({"error": "Internal server error"}), 500

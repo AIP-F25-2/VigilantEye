@@ -528,7 +528,7 @@ class StorageService:
     # --------------------------------------------------------------------- #
     def _ensure_storage_directories(self) -> None:
         """Guarantee that expected storage directories exist."""
-        for subdir in ("videos", "frames", "audio", "evidence", "reports"):
+        for subdir in ("videos", "frames", "audio", "evidence", "reports", "persons"):
             path = self.storage_base_path / subdir
             path.mkdir(parents=True, exist_ok=True)
 

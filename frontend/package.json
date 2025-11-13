@@ -27,7 +27,8 @@
     "lucide-react": "^0.303.0",
     "react-hot-toast": "^2.4.1",
     "clsx": "^2.0.0",
-    "tailwind-merge": "^2.2.0"
+    "tailwind-merge": "^2.2.0",
+    "socket.io-client": "^4.6.1"
   },
   "devDependencies": {
     "@types/react": "^18.2.45",

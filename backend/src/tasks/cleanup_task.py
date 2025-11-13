@@ -2,16 +2,11 @@ from __future__ import annotations
 
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Dict, List, Optional
 
 import redis
-
-try:
-    import chromadb  # type: ignore
-except ImportError:  # pragma: no cover
-    chromadb = None  # type: ignore
 
 from celery.utils.log import get_task_logger
 from sqlalchemy.exc import SQLAlchemyError
@@ -24,6 +19,7 @@ from src.models.person import Person
 from src.models.ticket import Ticket
 from src.models.ticket_history import TicketHistory
 from src.models.video import Video
+from src.utils.chromadb_manager import ChromaDBManager
 
 config = get_config()
 celery_app = create_celery_app()
@@ -33,14 +29,6 @@ storage_logger = logging.getLogger(__name__)
 redis_client = redis.from_url(config.REDIS_URL)
 storage_base_path = Path(config.STORAGE_BASE_PATH).resolve()
 cleanup_batch_size = config.CLEANUP_BATCH_SIZE
-
-if chromadb:
-    try:
-        chroma_client = chromadb.HttpClient(host=config.CHROMADB_HOST, port=config.CHROMADB_PORT)  # type: ignore[attr-defined]
-    except Exception:  # pragma: no cover
-        chroma_client = None
-else:  # pragma: no cover
-    chroma_client = None
 
 
 @celery_app.task(name="src.tasks.cleanup_task.cleanup_expired_files")
@@ -54,6 +42,8 @@ def cleanup_expired_files() -> Dict[str, object]:
         "deleted_videos": 0,
         "deleted_persons": 0,
         "freed_bytes": 0,
+        "deleted_face_embeddings": 0,
+        "deleted_body_embeddings": 0,
         "errors": [],
     }
 
@@ -61,11 +51,25 @@ def cleanup_expired_files() -> Dict[str, object]:
         metrics.update(_cleanup_videos())
         metrics.update(_cleanup_persons(metrics))
 
+        chromadb_manager = ChromaDBManager(config=config)
+        chroma_metrics, chroma_error = chromadb_manager.cleanup_expired_embeddings()
+        if chroma_error:
+            logger.warning(
+                "ChromaDB cleanup failed",
+                extra={"context": {"error": str(chroma_error)}},
+            )
+            metrics["errors"].append(str(chroma_error))
+
+        metrics["deleted_face_embeddings"] = chroma_metrics.get("deleted_faces", 0)
+        metrics["deleted_body_embeddings"] = chroma_metrics.get("deleted_bodies", 0)
+
         _create_audit_log(
             action="cleanup_executed",
             details={
                 "deleted_videos": metrics["deleted_videos"],
                 "deleted_persons": metrics["deleted_persons"],
+                "deleted_face_embeddings": metrics["deleted_face_embeddings"],
+                "deleted_body_embeddings": metrics["deleted_body_embeddings"],
                 "freed_bytes": metrics["freed_bytes"],
                 "errors": metrics["errors"],
             },
@@ -77,6 +81,8 @@ def cleanup_expired_files() -> Dict[str, object]:
                 "context": {
                     "deleted_videos": metrics["deleted_videos"],
                     "deleted_persons": metrics["deleted_persons"],
+                    "deleted_face_embeddings": metrics["deleted_face_embeddings"],
+                    "deleted_body_embeddings": metrics["deleted_body_embeddings"],
                     "freed_bytes": metrics["freed_bytes"],
                     "errors": metrics["errors"],
                 }
@@ -149,6 +155,8 @@ def _cleanup_persons(metrics: Dict[str, object]) -> Dict[str, object]:
     errors: List[str] = metrics.get("errors", [])  # type: ignore[assignment]
     commit_counter = 0
 
+    chromadb_manager = ChromaDBManager(config=config)
+
     while True:
         expired_persons = (
             Person.query.filter(
@@ -169,11 +177,15 @@ def _cleanup_persons(metrics: Dict[str, object]) -> Dict[str, object]:
             commit_counter += 1
             deleted_persons += 1
 
-            if chroma_client:
-                try:
-                    chroma_client.delete(ids=[person.id])  # type: ignore[union-attr]
-                except Exception as exc:  # pragma: no cover
-                    errors.append(f"Failed to delete embeddings for person {person.id}: {exc}")
+            success, chroma_error = chromadb_manager.delete_person_embeddings(person.person_tracking_id)
+            if chroma_error:
+                errors.append(
+                    f"Failed to delete embeddings for person {person.person_tracking_id}: {chroma_error}"
+                )
+            elif not success:
+                errors.append(
+                    f"Embeddings deletion status unknown for person {person.person_tracking_id}"
+                )
 
             if commit_counter % 100 == 0:
                 _batch_commit(db.session)
@@ -243,6 +255,92 @@ def auto_close_tickets() -> Dict[str, object]:
         logger.exception("Auto-close tickets task failed", extra={"context": {"error": str(exc)}})
 
     return {"closed_tickets": closed_tickets, "errors": errors}
+
+
+@celery_app.task(name="src.tasks.cleanup_task.check_ticket_escalations")
+def check_ticket_escalations() -> Dict[str, object]:
+    """Check for tickets needing escalation and escalate them."""
+    if not config.CLEANUP_ENABLED:
+        logger.info("Auto-escalation skipped (cleanup disabled)")
+        return {"escalated_tickets": 0, "errors": []}
+
+    escalated_tickets = 0
+    errors: List[str] = []
+    commit_counter = 0
+
+    try:
+        # Calculate escalation threshold
+        escalation_threshold = datetime.utcnow() - timedelta(
+            minutes=config.TICKET_ESCALATION_TIMEOUT_MINUTES
+        )
+
+        # Query tickets needing escalation
+        from src.config.constants import TicketStatus
+
+        while True:
+            tickets = (
+                Ticket.query.filter(
+                    Ticket.status == TicketStatus.OPEN,
+                    Ticket.acknowledged_at.is_(None),
+                    Ticket.created_at < escalation_threshold,
+                    Ticket.escalated.is_(False),
+                )
+                .order_by(Ticket.created_at)
+                .limit(cleanup_batch_size)
+                .all()
+            )
+
+            if not tickets:
+                break
+
+            for ticket in tickets:
+                # Call ticket.check_sla_breach() to set sla_breach flag
+                ticket.check_sla_breach()
+
+                # Call ticket.escalate() to increment escalation_count and set escalation_sent_at
+                ticket.escalate()
+
+                # Create TicketHistory entry
+                history = TicketHistory(
+                    ticket_id=ticket.id,
+                    event="auto_escalated",
+                    details="Not acknowledged within 15 minutes",
+                )
+                db.session.add(history)
+
+                # Send escalation alert via messenger service (stub for now)
+                try:
+                    # MessengerService will be implemented in Phase 10
+                    # For now, just log
+                    logger.info(
+                        f"Escalation alert for ticket {ticket.id} (MessengerService not yet implemented)"
+                    )
+                except Exception as exc:
+                    errors.append(f"Failed to send escalation for ticket {ticket.id}: {exc}")
+
+                commit_counter += 1
+                escalated_tickets += 1
+
+                # Commit in batches of 100
+                if commit_counter % 100 == 0:
+                    _batch_commit(db.session)
+
+            _batch_commit(db.session)
+
+        _create_audit_log(
+            action="tickets_auto_escalated",
+            details={"count": escalated_tickets, "errors": errors},
+        )
+
+        logger.info(
+            "Auto-escalation completed",
+            extra={"context": {"escalated_tickets": escalated_tickets, "errors": errors}},
+        )
+    except Exception as exc:  # pragma: no cover
+        errors.append(str(exc))
+        logger.exception("Auto-escalation task failed", extra={"context": {"error": str(exc)}})
+
+    return {"escalated_tickets": escalated_tickets, "errors": errors}
 
 
 @celery_app.task(name="src.tasks.cleanup_task.sync_quota_to_database")

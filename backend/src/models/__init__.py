@@ -1,3 +1,4 @@
+from src.models.ai_performance_metrics import AIPerformanceMetrics
 from src.models.associations import ticket_persons
 from src.models.audit_log import AuditLog
 from src.models.base import BaseModel, TTLMixin
@@ -23,6 +24,7 @@ __all__ = [
     "TicketHistory",
     "Session",
     "AuditLog",
+    "AIPerformanceMetrics",
     "ticket_persons",
 ]
 

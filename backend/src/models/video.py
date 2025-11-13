@@ -73,8 +73,20 @@ class Video(TTLMixin, BaseModel):
     def set_video_ttl(self) -> None:
         self.set_ttl(VIDEO_TTL_HOURS)
 
+    def mark_processing(self) -> None:
+        self.status = (
+            VideoStatus.PROCESSING.value
+            if hasattr(VideoStatus.PROCESSING, "value")
+            else str(VideoStatus.PROCESSING)
+        )
+
     def mark_ready(self) -> None:
         self.status = VideoStatus.READY.value if hasattr(VideoStatus.READY, "value") else str(VideoStatus.READY)
+
+    def mark_error(self, message: str | None = None) -> None:
+        self.status = VideoStatus.ERROR.value if hasattr(VideoStatus.ERROR, "value") else str(VideoStatus.ERROR)
+        if message:
+            self.analysis_result = message[:255]
 
     def mark_analyzing(self) -> None:
         self.status = (

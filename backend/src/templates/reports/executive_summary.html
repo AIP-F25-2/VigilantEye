@@ -1,0 +1,51 @@
+<h2>Executive Summary</h2>
+
+<p><b>Threat Assessment:</b></p>
+<ul>
+    <li><b>Threat Level:</b> {{ executive_summary.threat_level.upper() }}</li>
+    <li><b>Priority:</b> {{ executive_summary.priority.upper() }}</li>
+    <li><b>Status:</b> {{ executive_summary.status.upper() }}</li>
+</ul>
+
+<p><b>Key Statistics:</b></p>
+<table border="1" cellpadding="5">
+    <tr>
+        <td><b>Evidence Count</b></td>
+        <td>{{ executive_summary.evidence_count }}</td>
+    </tr>
+    <tr>
+        <td><b>Person Count</b></td>
+        <td>{{ executive_summary.person_count }}</td>
+    </tr>
+    {% if executive_summary.response_time_seconds %}
+    <tr>
+        <td><b>Response Time</b></td>
+        <td>{{ "%.1f"|format(executive_summary.response_time_seconds / 60) }} minutes</td>
+    </tr>
+    {% endif %}
+    {% if executive_summary.resolution_time_seconds %}
+    <tr>
+        <td><b>Resolution Time</b></td>
+        <td>{{ "%.1f"|format(executive_summary.resolution_time_seconds / 60) }} minutes</td>
+    </tr>
+    {% endif %}
+    <tr>
+        <td><b>SLA Breach</b></td>
+        <td>{{ "Yes" if executive_summary.sla_breach else "No" }}</td>
+    </tr>
+</table>
+
+{% if executive_summary.llm_reasoning_summary %}
+<p><b>Summary:</b></p>
+<p>{{ executive_summary.llm_reasoning_summary }}</p>
+{% endif %}
+
+{% if executive_summary.key_factors %}
+<p><b>Key Factors:</b></p>
+<ul>
+    {% for factor in executive_summary.key_factors %}
+    <li>{{ factor }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+

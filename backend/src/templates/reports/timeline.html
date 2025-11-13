@@ -1,0 +1,18 @@
+<h2>Timeline</h2>
+
+{% for event in history|sort(attribute='occurred_at') %}
+<p>
+    <b>
+        {% if event.event == 'created' %}📝
+        {% elif event.event == 'acknowledged' %}✅
+        {% elif event.event == 'escalated' %}⚠️
+        {% elif event.event == 'closed' %}🔒
+        {% else %}•{% endif %}
+        {{ event.occurred_at }} - {{ event.event.upper() }}
+    </b>
+    {% if event.details %}
+    <br>&nbsp;&nbsp;&nbsp;&nbsp;{{ event.details|tojson|safe }}
+    {% endif %}
+</p>
+{% endfor %}
+

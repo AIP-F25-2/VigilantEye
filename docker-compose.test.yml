@@ -1,0 +1,104 @@
+version: '3.8'
+
+services:
+  mysql-test:
+    image: mysql:8.0
+    container_name: vigilanteye-mysql-test
+    environment:
+      MYSQL_ROOT_PASSWORD: test_password
+      MYSQL_DATABASE: test_vigilanteye
+      MYSQL_USER: test_user
+      MYSQL_PASSWORD: test_pass
+    ports:
+      - '3307:3306'
+    tmpfs:
+      - /var/lib/mysql
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-u', 'root', '-ptest_password']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - test-network
+
+  redis-test:
+    image: redis:7-alpine
+    container_name: vigilanteye-redis-test
+    ports:
+      - '6380:6379'
+    command: redis-server --save ""
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - test-network
+
+  chromadb-test:
+    image: chromadb/chroma:latest
+    container_name: vigilanteye-chromadb-test
+    ports:
+      - '8001:8000'
+    environment:
+      - IS_PERSISTENT=FALSE
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'python -c "import sys, urllib.request; urllib.request.urlopen(\'http://localhost:8000/api/v1/heartbeat\')"',
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - test-network
+
+  backend-test:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: vigilanteye-backend-test
+    depends_on:
+      mysql-test:
+        condition: service_healthy
+      redis-test:
+        condition: service_healthy
+      chromadb-test:
+        condition: service_healthy
+    environment:
+      - FLASK_ENV=testing
+      - TESTING=true
+      - DATABASE_URL=mysql+pymysql://test_user:test_pass@mysql-test:3306/test_vigilanteye
+      - REDIS_URL=redis://redis-test:6379/0
+      - CHROMADB_HOST=chromadb-test
+      - CHROMADB_PORT=8000
+      - SECRET_KEY=test-secret-key
+      - JWT_SECRET_KEY=test-jwt-secret-key
+      - ALEMBIC_SQLALCHEMY_URL=mysql+pymysql://test_user:test_pass@mysql-test:3306/test_vigilanteye
+    volumes:
+      - ./backend:/app
+      - test-results:/app/test-results
+    command: pytest tests/ --cov=src --cov-report=xml --cov-report=html --junitxml=test-results.xml
+    networks:
+      - test-network
+
+  frontend-test:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: vigilanteye-frontend-test
+    volumes:
+      - ./frontend:/app
+      - test-results:/app/coverage
+    command: npm run test:coverage
+    networks:
+      - test-network
+
+volumes:
+  test-results:
+    driver: local
+
+networks:
+  test-network:
+    driver: bridge

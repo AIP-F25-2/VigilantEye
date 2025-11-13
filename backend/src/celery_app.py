@@ -43,6 +43,10 @@ def create_celery_app(config_name: str | None = None) -> Celery:
                 "task": "src.tasks.cleanup_task.auto_close_tickets",
                 "schedule": 600.0,
             },
+            "check-ticket-escalations": {
+                "task": "src.tasks.cleanup_task.check_ticket_escalations",
+                "schedule": 300.0,  # Every 5 minutes
+            },
         }
     else:
         celery_app.conf.beat_schedule = {}

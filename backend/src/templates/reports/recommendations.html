@@ -1,0 +1,52 @@
+<h2>Recommendations</h2>
+
+{% if ai_analysis.llm_reasoning and ai_analysis.llm_reasoning.recommended_action %}
+<p><b>Recommended Action:</b></p>
+<p>{{ ai_analysis.llm_reasoning.recommended_action }}</p>
+{% endif %}
+
+<h3>Next Steps</h3>
+{% if ticket.threat_level == 'critical' %}
+<ul>
+    <li>Immediate security response required</li>
+    <li>Notify emergency services if necessary</li>
+    <li>Escalate to senior management</li>
+    <li>Document all actions taken</li>
+</ul>
+{% elif ticket.threat_level == 'high' %}
+<ul>
+    <li>Priority investigation required</li>
+    <li>Review all evidence thoroughly</li>
+    <li>Coordinate with security team</li>
+    <li>Update incident log</li>
+</ul>
+{% elif ticket.threat_level == 'medium' %}
+<ul>
+    <li>Standard investigation procedure</li>
+    <li>Review evidence and timeline</li>
+    <li>Monitor for similar incidents</li>
+    <li>Follow-up as needed</li>
+</ul>
+{% else %}
+<ul>
+    <li>Routine review</li>
+    <li>Document findings</li>
+    <li>Monitor for escalation</li>
+</ul>
+{% endif %}
+
+<h3>Follow-up Actions</h3>
+<ul>
+    <li>Review similar incidents in the system</li>
+    <li>Update security protocols if needed</li>
+    <li>Conduct training review if patterns identified</li>
+    <li>Schedule follow-up review meeting</li>
+</ul>
+
+<h3>Escalation Contacts</h3>
+<ul>
+    <li>Security Team: security@vigilanteye.local</li>
+    <li>Emergency: emergency@vigilanteye.local</li>
+    <li>Management: management@vigilanteye.local</li>
+</ul>
+

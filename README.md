@@ -122,6 +122,129 @@ celery -A src.celery_app:create_celery_app worker --loglevel=info
 - **Backend API**: http://localhost:5000/api
 - **Health Check**: http://localhost:5000/health
 
+## Testing
+
+### Backend Tests
+
+**Run all tests with coverage:**
+
+```bash
+cd backend
+pytest
+```
+
+**Run specific test types:**
+
+```bash
+# Unit tests only (fast)
+pytest -m unit
+
+# Integration tests only (slower)
+pytest -m integration
+
+# Specific test file
+pytest tests/unit/test_auth_service.py
+
+# With coverage report
+pytest --cov=src --cov-report=html
+open htmlcov/index.html
+```
+
+**Test Structure:**
+
+- `tests/unit/` - Unit tests for services and AI modules (18 files)
+- `tests/integration/` - Integration tests for API endpoints (8 files)
+- `tests/performance/` - Locust performance tests
+- `tests/api/` - Postman API collection
+
+**Coverage Target:** 80% minimum (enforced by pytest.ini)
+
+### Frontend Tests
+
+**Run all tests with coverage:**
+
+```bash
+cd frontend
+npm run test:coverage
+```
+
+**Run in watch mode:**
+
+```bash
+npm run test
+```
+
+**Test Structure:**
+
+- `src/__tests__/components/` - Component tests (24 files)
+- `src/__tests__/pages/` - Page tests (5 files)
+- `src/__tests__/hooks/` - Hook tests (5 files)
+- `src/__tests__/services/` - Service tests (5 files)
+
+**Coverage Target:** 80% minimum (enforced by vite.config.ts)
+
+### Integration Tests (Docker)
+
+**Run with Docker Compose:**
+
+```bash
+docker-compose -f docker-compose.test.yml up --abort-on-container-exit
+```
+
+**Cleanup:**
+
+```bash
+docker-compose -f docker-compose.test.yml down -v
+```
+
+### Performance Tests
+
+**Run Locust tests:**
+
+```bash
+cd backend
+
+# Start backend
+python -m flask run &
+
+# Run Locust (100 users, 60s)
+locust -f tests/performance/locustfile.py --headless -u 100 -r 10 -t 60s --html performance-report.html
+
+# View report
+open performance-report.html
+```
+
+### API Tests (Postman/Newman)
+
+**Run with Newman:**
+
+```bash
+cd backend/tests/api
+newman run postman_collection.json -e dev.postman_environment.json --reporters cli,html
+```
+
+### Code Quality (SonarQube)
+
+**Run SonarQube analysis:**
+
+```bash
+# Install sonar-scanner
+npm install -g sonar-scanner
+
+# Run analysis
+sonar-scanner
+
+# View results at https://sonarcloud.io
+```
+
+**Quality Gates:**
+
+- Coverage: ≥80%
+- Duplications: <3%
+- Maintainability: A rating
+- Reliability: A rating
+- Security: A rating
+
 ## 📦 Technology Stack
 
 ### Backend

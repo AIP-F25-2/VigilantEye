@@ -1,0 +1,63 @@
+<h2>Environmental Context</h2>
+
+{% if ai_analysis.scene %}
+<h3>Scene Details</h3>
+<table border="1" cellpadding="5">
+    {% if ai_analysis.scene.scene_type %}
+    <tr>
+        <td><b>Scene Type</b></td>
+        <td>{{ ai_analysis.scene.scene_type }}</td>
+    </tr>
+    {% endif %}
+    {% if ai_analysis.scene.lighting %}
+    <tr>
+        <td><b>Lighting</b></td>
+        <td>{{ ai_analysis.scene.lighting }}</td>
+    </tr>
+    {% endif %}
+    {% if ai_analysis.scene.weather %}
+    <tr>
+        <td><b>Weather</b></td>
+        <td>{{ ai_analysis.scene.weather }}</td>
+    </tr>
+    {% endif %}
+    {% if ai_analysis.scene.time_of_day %}
+    <tr>
+        <td><b>Time of Day</b></td>
+        <td>{{ ai_analysis.scene.time_of_day }}</td>
+    </tr>
+    {% endif %}
+    {% if ai_analysis.scene.crowd_density %}
+    <tr>
+        <td><b>Crowd Density</b></td>
+        <td>{{ ai_analysis.scene.crowd_density }}</td>
+    </tr>
+    {% endif %}
+    {% if ai_analysis.scene.visibility %}
+    <tr>
+        <td><b>Visibility</b></td>
+        <td>{{ ai_analysis.scene.visibility }}</td>
+    </tr>
+    {% endif %}
+</table>
+
+{% if ai_analysis.scene.description %}
+<p><b>Detailed Scene Description:</b></p>
+<p>{{ ai_analysis.scene.description }}</p>
+{% endif %}
+{% endif %}
+
+{% if ticket.video %}
+<h3>Location Information</h3>
+<table border="1" cellpadding="5">
+    <tr>
+        <td><b>Video ID</b></td>
+        <td>{{ ticket.video.id }}</td>
+    </tr>
+    <tr>
+        <td><b>Video Filename</b></td>
+        <td>{{ ticket.video.filename if ticket.video.filename else "N/A" }}</td>
+    </tr>
+</table>
+{% endif %}
+

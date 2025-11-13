@@ -1,0 +1,53 @@
+<h2>Persons of Interest</h2>
+
+{% for person in persons %}
+<h3>Person {{ loop.index }}</h3>
+<table border="1" cellpadding="5">
+    <tr>
+        <td><b>Tracking ID</b></td>
+        <td>{{ person.person_tracking_id if person.person_tracking_id else "N/A" }}</td>
+    </tr>
+    <tr>
+        <td><b>Age Estimate</b></td>
+        <td>{{ person.age_estimate if person.age_estimate else "N/A" }}</td>
+    </tr>
+    <tr>
+        <td><b>Gender</b></td>
+        <td>{{ person.gender if person.gender else "N/A" }}</td>
+    </tr>
+    <tr>
+        <td><b>Ethnicity</b></td>
+        <td>{{ person.ethnicity if person.ethnicity else "N/A" }}</td>
+    </tr>
+    <tr>
+        <td><b>Clothing Description</b></td>
+        <td>{{ person.clothing_description if person.clothing_description else "N/A" }}</td>
+    </tr>
+</table>
+
+{% if similar_persons %}
+{% for similar_group in similar_persons %}
+{% if similar_group.person.id == person.id and similar_group.similar_persons %}
+<h4>Similar Persons (within {{ similar_persons_time_window }} hours)</h4>
+<table border="1" cellpadding="5">
+    <tr>
+        <th>Tracking ID</th>
+        <th>Similarity Score</th>
+        <th>Age</th>
+        <th>Gender</th>
+    </tr>
+    {% for similar in similar_group.similar_persons[:5] %}
+    <tr>
+        <td>{{ similar.person.person_tracking_id if similar.person.person_tracking_id else "N/A" }}</td>
+        <td>{{ "%.2f"|format(similar.score * 100) if similar.score else "N/A" }}%</td>
+        <td>{{ similar.person.age_estimate if similar.person.age_estimate else "N/A" }}</td>
+        <td>{{ similar.person.gender if similar.person.gender else "N/A" }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% endfor %}
+

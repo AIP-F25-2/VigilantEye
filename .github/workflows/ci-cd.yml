@@ -200,13 +200,13 @@ jobs:
       - name: Start application
         run: |
           cd backend
-          python -m uvicorn src.main:app --host 0.0.0.0 --port 8000 &
+          python -m flask run --host 0.0.0.0 --port 5000 &
           sleep 10
       
       - name: Run performance tests
         run: |
           cd backend
-          locust -f tests/performance/locustfile.py --headless -u 100 -r 10 -t 60s --html performance-report.html
+          locust -f tests/performance/locustfile.py --headless -u 100 -r 10 -t 60s --html performance-report.html --host http://localhost:5000
       
       - name: Upload performance results
         uses: actions/upload-artifact@v3

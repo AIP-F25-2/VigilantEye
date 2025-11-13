@@ -1,0 +1,111 @@
+<h2>AI Analysis Results</h2>
+
+{% if ai_analysis.llm_reasoning %}
+<h3>LLM Threat Assessment</h3>
+{% if ai_analysis.llm_reasoning.reasoning %}
+<p><b>Reasoning:</b> {{ ai_analysis.llm_reasoning.reasoning }}</p>
+{% endif %}
+{% if ai_analysis.llm_reasoning.confidence %}
+<p><b>Confidence:</b> {{ "%.2f"|format(ai_analysis.llm_reasoning.confidence * 100) }}%</p>
+{% endif %}
+{% if ai_analysis.llm_reasoning.key_factors %}
+<p><b>Key Factors:</b></p>
+<ul>
+    {% for factor in ai_analysis.llm_reasoning.key_factors %}
+    <li>{{ factor }}</li>
+    {% endfor %}
+</ul>
+{% endif %}
+{% endif %}
+
+{% if ai_analysis.scene %}
+<h3>Scene Analysis</h3>
+<table border="1" cellpadding="5">
+    {% if ai_analysis.scene.scene_type %}
+    <tr>
+        <td><b>Scene Type</b></td>
+        <td>{{ ai_analysis.scene.scene_type }}</td>
+    </tr>
+    {% endif %}
+    {% if ai_analysis.scene.lighting %}
+    <tr>
+        <td><b>Lighting</b></td>
+        <td>{{ ai_analysis.scene.lighting }}</td>
+    </tr>
+    {% endif %}
+    {% if ai_analysis.scene.weather %}
+    <tr>
+        <td><b>Weather</b></td>
+        <td>{{ ai_analysis.scene.weather }}</td>
+    </tr>
+    {% endif %}
+    {% if ai_analysis.scene.crowd_density %}
+    <tr>
+        <td><b>Crowd Density</b></td>
+        <td>{{ ai_analysis.scene.crowd_density }}</td>
+    </tr>
+    {% endif %}
+    {% if ai_analysis.scene.description %}
+    <tr>
+        <td><b>Description</b></td>
+        <td>{{ ai_analysis.scene.description }}</td>
+    </tr>
+    {% endif %}
+</table>
+{% endif %}
+
+{% if ai_analysis.persons %}
+<h3>Person Detections</h3>
+<table border="1" cellpadding="5">
+    <tr>
+        <th>Age</th>
+        <th>Gender</th>
+        <th>Ethnicity</th>
+        <th>Confidence</th>
+    </tr>
+    {% for person in ai_analysis.persons[:10] %}
+    <tr>
+        <td>{{ person.age_estimate if person.age_estimate else "N/A" }}</td>
+        <td>{{ person.gender if person.gender else "N/A" }}</td>
+        <td>{{ person.ethnicity if person.ethnicity else "N/A" }}</td>
+        <td>{{ "%.2f"|format(person.confidence * 100) if person.confidence else "N/A" }}%</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endif %}
+
+{% if ai_analysis.objects %}
+<h3>Object Detections</h3>
+<table border="1" cellpadding="5">
+    <tr>
+        <th>Object</th>
+        <th>Confidence</th>
+        <th>Threat Level</th>
+    </tr>
+    {% for obj in ai_analysis.objects[:20] %}
+    <tr>
+        <td>{{ obj.class_name if obj.class_name else "Unknown" }}</td>
+        <td>{{ "%.2f"|format(obj.confidence * 100) if obj.confidence else "N/A" }}%</td>
+        <td>{{ obj.threat_level.upper() if obj.threat_level else "N/A" }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endif %}
+
+{% if ai_analysis.transcription %}
+<h3>Audio Transcription</h3>
+<p>{{ ai_analysis.transcription.text if ai_analysis.transcription.text else ai_analysis.transcription }}</p>
+{% if ai_analysis.transcription.confidence %}
+<p><b>Confidence:</b> {{ "%.2f"|format(ai_analysis.transcription.confidence * 100) }}%</p>
+{% endif %}
+{% endif %}
+
+{% if ai_analysis.audio_events %}
+<h3>Audio Events</h3>
+<ul>
+    {% for event in ai_analysis.audio_events[:10] %}
+    <li>{{ event.event_type if event.event_type else "Unknown" }} ({{ "%.2f"|format(event.confidence * 100) if event.confidence else "N/A" }}%)</li>
+    {% endfor %}
+</ul>
+{% endif %}
+

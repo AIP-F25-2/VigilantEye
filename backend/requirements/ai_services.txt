@@ -2,7 +2,6 @@
 opencv-python==4.8.1.78
 opencv-contrib-python==4.8.1.78
 ultralytics==8.0.220
-mtcnn==0.1.1
 facenet-pytorch==2.5.3
 torchreid==0.2.5
 
@@ -14,13 +13,25 @@ tensorflow==2.15.0
 # Scene Understanding
 transformers==4.36.0
 sentence-transformers==2.2.2
+# BLIP-2 model downloaded via transformers.Blip2ForConditionalGeneration.from_pretrained('Salesforce/blip2-opt-2.7b')
+# Model weights (~5GB) cached in models_cache/blip2/ on first use
+
+# Age/Gender/Ethnicity Detection
+# MiVOLO weights resolved via transformers AutoImageProcessor / AutoModelForImageClassification
+# Requires timm (Torch Image Models) as dependency
+timm==0.9.12
+deepface==0.0.93
 
 # Audio Processing
-openai-whisper==20231117
-librosa==0.10.1
-soundfile==0.12.1
-pydub==0.25.1
-tensorflow-hub==0.15.0
+openai-whisper==20231117  # Speech-to-Text: Whisper (base model ~140MB) downloaded via whisper.load_model()
+librosa==0.10.1  # Audio analysis and preprocessing
+soundfile==0.12.1  # Audio I/O
+pydub==0.25.1  # Audio manipulation
+tensorflow-hub==0.15.0  # Audio Classification: YAMNet (~5MB) loaded via tensorflow_hub.load('https://tfhub.dev/google/yamnet/1')
+# Optional: Advanced noise reduction (future enhancement)
+# noisereduce==2.0.1
+# Optional: Advanced speaker diarization (future enhancement)
+# pyannote.audio==3.1.1
 
 # Vector Database
 chromadb==0.4.18
@@ -29,6 +40,8 @@ faiss-cpu==1.7.4
 # LLM Integration
 ollama==0.1.6
 langchain==0.1.0
+# Pydantic (included via langchain) - Used for LLM output validation
+pydantic==2.5.0  # Explicit dependency for LLM output schema validation
 
 # Utilities
 numpy==1.26.2
