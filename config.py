@@ -12,7 +12,7 @@ class Config:
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY', 'jwt-secret-string')
     
     # Telegram Bot Configuration
-    TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '8345256867:AAFMasgNavOAstsxPdnOazZfHNRHoNJTbQ0')
+    TELEGRAM_BOT_TOKEN = os.environ.get('TELEGRAM_BOT_TOKEN', '8511679052:AAEYFqSKOy4BQ5ihqBwQr685BBY6MohBdOk')
     TELEGRAM_WEBHOOK_SECRET = os.environ.get('TELEGRAM_WEBHOOK_SECRET', 'supersecret')
     
     # Message Processing Configuration

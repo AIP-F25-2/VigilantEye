@@ -38,10 +38,16 @@ def telegram_webhook(secret):
                     # immediately also mark as closed (user requested: make acknowledged to close)
                     msg.status = MessageStatus.closed
                     msg.save()
-                # We should answer the callback query so UI shows acknowledged
+                # Answer the callback query so UI shows acknowledged
                 # reply via Telegram API: answerCallbackQuery
-                from app.services.telegram_client import _post
-                _post("answerCallbackQuery", {"callback_query_id": cb["id"], "text": "Acknowledged. Marked closed."})
+                try:
+                    from app.services.telegram_client import _post
+                    _post("answerCallbackQuery", {
+                        "callback_query_id": cb["id"], 
+                        "text": "Acknowledged. Marked closed."
+                    })
+                except Exception as e:
+                    logger.warning("Failed to answer callback query: %s", str(e))
             except Exception:
                 db.session.rollback()
                 logger.exception("Error handling ack callback")

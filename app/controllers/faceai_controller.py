@@ -131,9 +131,21 @@ def analyze_demographics():
         processing_time = calculate_processing_time(start_time)
         
         if result.get("error"):
+            # Check if it's a service unavailable error (demographics not available)
+            if "not available" in result.get("error", "").lower():
+                # Return error with additional info if available
+                error_data = {
+                    "message": result.get("error", "Demographics analyzer not available"),
+                    "available_features": result.get("available_features", {}),
+                    "suggestion": result.get("suggestion", "")
+                }
+                return error_response(
+                    error_data,
+                    status_code=HTTP_SERVICE_UNAVAILABLE
+                )
             return error_response(result.get("error"), status_code=HTTP_INTERNAL_ERROR)
         
-        # Save to database
+        # Save to database (only if analysis was successful)
         demographics_analysis = DemographicsAnalysis(
             face_detection_id=face_detection_id,
             source_type=source_type,
@@ -192,6 +204,18 @@ def check_ambiguity():
         processing_time = calculate_processing_time(start_time)
         
         if result.get("error"):
+            # Check if it's a service unavailable error (ambiguity checker not available)
+            if "not available" in result.get("error", "").lower():
+                # Return error with additional info if available
+                error_data = {
+                    "message": result.get("error", "Ambiguity checker not available"),
+                    "available_features": result.get("available_features", {}),
+                    "suggestion": result.get("suggestion", "")
+                }
+                return error_response(
+                    error_data,
+                    status_code=HTTP_SERVICE_UNAVAILABLE
+                )
             return error_response(result.get("error"), status_code=HTTP_INTERNAL_ERROR)
         
         # Save to database

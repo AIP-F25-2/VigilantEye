@@ -32,6 +32,7 @@ def schedule_post_actions(message_id: str, created_at: datetime):
                   id=f"close_{message_id}")
 
 def escalate_job(message_id: str):
+    """Escalate message to alternate channel if not acknowledged"""
     try:
         msg = OutboundMessage.query.get(message_id)
         if not msg:
@@ -61,11 +62,12 @@ def escalate_job(message_id: str):
         msg.telegram_message_id = r["result"]["message_id"]
         msg.save()
         logger.info("Escalated message %s to %s", message_id, alt_channel)
-    except Exception:
+    except Exception as e:
         db.session.rollback()
-        logger.exception("Error during escalate_job")
+        logger.exception("Error during escalate_job: %s", str(e))
 
 def close_job(message_id: str):
+    """Close message after timeout period"""
     try:
         msg = OutboundMessage.query.get(message_id)
         if not msg:
@@ -78,9 +80,9 @@ def close_job(message_id: str):
         msg.status = MessageStatus.closed
         msg.save()
         logger.info("Closed message %s", message_id)
-    except Exception:
+    except Exception as e:
         db.session.rollback()
-        logger.exception("Error during close_job")
+        logger.exception("Error during close_job: %s", str(e))
 
 def start_scheduler():
     if not sched.running:

@@ -16,7 +16,7 @@ from app.utils.file_utils import (
 )
 from app.utils.response_utils import (
     success_response, error_response, handle_exception,
-    HTTP_BAD_REQUEST, HTTP_INTERNAL_ERROR, HTTP_NOT_FOUND
+    HTTP_BAD_REQUEST, HTTP_INTERNAL_ERROR, HTTP_NOT_FOUND, HTTP_SERVICE_UNAVAILABLE
 )
 from app.utils.db_utils import save_model
 
@@ -37,6 +37,17 @@ def get_agent_status():
     """Get Face & Identity Agent status"""
     try:
         agent = get_face_identity_agent()
+        if not hasattr(agent, 'enabled') or not agent.enabled:
+            return success_response({
+                "agent_status": "disabled",
+                "message": "FaceAI dependencies (cv2) not available. CCTV features disabled.",
+                "tracking_summary": {
+                    "total_persons": 0,
+                    "watchlist_persons": 0,
+                    "cameras_active": 0,
+                    "recent_activity": []
+                }
+            })
         summary = agent.get_person_tracking_summary()
         
         return success_response({
@@ -52,6 +63,12 @@ def get_agent_status():
 def process_cctv_video():
     """Process CCTV video for face detection and identification"""
     try:
+        agent = get_face_identity_agent()
+        if not hasattr(agent, 'enabled') or not agent.enabled:
+            return error_response(
+                "CCTV processing disabled: FaceAI dependencies (cv2) not available. Please install opencv-python, face-recognition, and numpy.",
+                status_code=HTTP_SERVICE_UNAVAILABLE
+            )
         # Validate file upload
         file, error_msg = validate_file_upload(request.files, 'video')
         if error_msg:

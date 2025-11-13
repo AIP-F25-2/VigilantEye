@@ -324,11 +324,17 @@ function detectFaces() {
             `;
             loadDashboardData(); // Refresh dashboard
         } else {
-            resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+            // Handle error response - check if error is string or object
+            let errorMsg = data.error;
+            if (typeof errorMsg === 'object' && errorMsg !== null) {
+                errorMsg = errorMsg.message || errorMsg.error || JSON.stringify(errorMsg);
+            }
+            resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${errorMsg}</div>`;
         }
     })
     .catch(error => {
-        resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+        let errorMsg = error.message || 'An unexpected error occurred';
+        resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${errorMsg}</div>`;
     });
 }
 
@@ -377,11 +383,49 @@ function analyzeDemographics() {
             resultDiv.innerHTML = resultsHtml;
             loadDashboardData(); // Refresh dashboard
         } else {
-            resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+            // Handle error response - check if error is string or object
+            let errorMsg = data.error;
+            if (typeof errorMsg === 'object' && errorMsg !== null) {
+                // If error is an object, extract message
+                errorMsg = errorMsg.message || errorMsg.error || JSON.stringify(errorMsg);
+            }
+            
+            let errorHtml = `<div class="alert alert-danger">
+                <h6>Error</h6>
+                <p>${errorMsg}</p>`;
+            
+            // Add additional info if available
+            if (data.available_features) {
+                errorHtml += `<p class="mb-1 mt-2"><strong>Available Features:</strong></p><ul class="mb-2">`;
+                if (data.available_features.face_detection) {
+                    errorHtml += `<li>✅ Face Detection: Available</li>`;
+                } else {
+                    errorHtml += `<li>❌ Face Detection: Not Available</li>`;
+                }
+                if (data.available_features.demographics) {
+                    errorHtml += `<li>✅ Demographics: Available</li>`;
+                } else {
+                    errorHtml += `<li>❌ Demographics: Not Available</li>`;
+                }
+                if (data.available_features.ambiguity_check) {
+                    errorHtml += `<li>✅ Ambiguity Check: Available</li>`;
+                } else {
+                    errorHtml += `<li>❌ Ambiguity Check: Not Available</li>`;
+                }
+                errorHtml += `</ul>`;
+            }
+            
+            if (data.suggestion) {
+                errorHtml += `<p class="mb-0"><small><strong>💡 Note:</strong> ${data.suggestion}</small></p>`;
+            }
+            
+            errorHtml += `</div>`;
+            resultDiv.innerHTML = errorHtml;
         }
     })
     .catch(error => {
-        resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+        let errorMsg = error.message || 'An unexpected error occurred';
+        resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${errorMsg}</div>`;
     });
 }
 
@@ -432,11 +476,49 @@ function checkAmbiguity() {
             resultDiv.innerHTML = resultsHtml;
             loadDashboardData(); // Refresh dashboard
         } else {
-            resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+            // Handle error response - check if error is string or object
+            let errorMsg = data.error;
+            if (typeof errorMsg === 'object' && errorMsg !== null) {
+                // If error is an object, extract message
+                errorMsg = errorMsg.message || errorMsg.error || JSON.stringify(errorMsg);
+            }
+            
+            let errorHtml = `<div class="alert alert-danger">
+                <h6>Error</h6>
+                <p>${errorMsg}</p>`;
+            
+            // Add additional info if available
+            if (data.available_features) {
+                errorHtml += `<p class="mb-1 mt-2"><strong>Available Features:</strong></p><ul class="mb-2">`;
+                if (data.available_features.face_detection) {
+                    errorHtml += `<li>✅ Face Detection: Available</li>`;
+                } else {
+                    errorHtml += `<li>❌ Face Detection: Not Available</li>`;
+                }
+                if (data.available_features.demographics) {
+                    errorHtml += `<li>✅ Demographics: Available</li>`;
+                } else {
+                    errorHtml += `<li>❌ Demographics: Not Available</li>`;
+                }
+                if (data.available_features.ambiguity_check) {
+                    errorHtml += `<li>✅ Ambiguity Check: Available</li>`;
+                } else {
+                    errorHtml += `<li>❌ Ambiguity Check: Not Available</li>`;
+                }
+                errorHtml += `</ul>`;
+            }
+            
+            if (data.suggestion) {
+                errorHtml += `<p class="mb-0"><small><strong>💡 Note:</strong> ${data.suggestion}</small></p>`;
+            }
+            
+            errorHtml += `</div>`;
+            resultDiv.innerHTML = errorHtml;
         }
     })
     .catch(error => {
-        resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+        let errorMsg = error.message || 'An unexpected error occurred';
+        resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${errorMsg}</div>`;
     });
 }
 

@@ -41,21 +41,31 @@ def success_response(data: Optional[Dict[str, Any]] = None,
     return jsonify(response), status_code
 
 
-def error_response(error: str, 
+def error_response(error: Any, 
                   details: Optional[str] = None,
                   status_code: int = HTTP_INTERNAL_ERROR) -> tuple:
     """
     Create an error JSON response.
     
     Args:
-        error: Error message
+        error: Error message (string) or error object (dict)
         details: Optional error details
         status_code: HTTP status code
         
     Returns:
         Tuple of (jsonify response, status_code)
     """
-    response = {"error": error}
+    if isinstance(error, dict):
+        # If error is a dict, use it as the response
+        response = {"error": error.get("message", str(error))}
+        # Add any additional fields from the error dict
+        for key, value in error.items():
+            if key != "message":
+                response[key] = value
+    else:
+        # If error is a string, use it directly
+        response = {"error": str(error)}
+    
     if details:
         response["details"] = details
     return jsonify(response), status_code

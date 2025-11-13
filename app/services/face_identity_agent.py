@@ -4,9 +4,6 @@ Handles face detection, recognition, re-identification, and watchlist management
 """
 
 import os
-import cv2
-import numpy as np
-import face_recognition
 import json
 import time
 import logging
@@ -17,6 +14,20 @@ from enum import Enum
 import pickle
 import hashlib
 from pathlib import Path
+
+# Try to import FaceAI dependencies (optional)
+try:
+    import cv2
+    import numpy as np
+    import face_recognition
+    CV2_AVAILABLE = True
+except ImportError:
+    CV2_AVAILABLE = False
+    cv2 = None
+    np = None
+    face_recognition = None
+    logger = logging.getLogger(__name__)
+    logger.warning("FaceAI dependencies (cv2, numpy, face_recognition) not available. CCTV features will be disabled.")
 
 # Import existing FaceAi service
 from app.services.faceai_service import get_faceai_service
@@ -45,7 +56,7 @@ class PersonIdentity:
     person_id: str
     name: Optional[str] = None
     person_type: PersonType = PersonType.UNKNOWN
-    face_encoding: Optional[np.ndarray] = None
+    face_encoding: Optional[Any] = None  # np.ndarray when available
     demographics: Optional[Dict] = None
     disguise_detected: List[DisguiseType] = None
     confidence_score: float = 0.0
@@ -67,7 +78,7 @@ class DetectionResult:
     camera_id: str
     person_identities: List[PersonIdentity]
     face_locations: List[Tuple[int, int, int, int]]
-    face_encodings: List[np.ndarray]
+    face_encodings: List[Any]  # List[np.ndarray] when available
     demographics: List[Dict]
     disguise_analysis: List[Dict]
     processing_time_ms: float
@@ -84,7 +95,8 @@ class WatchlistManager:
             PersonType.SUSPECT: self._load_watchlist("suspects.json")
         }
         self.face_encodings_cache = {}
-        self._load_face_encodings()
+        if CV2_AVAILABLE:
+            self._load_face_encodings()
     
     def _load_watchlist(self, filename: str) -> Dict:
         """Load watchlist from JSON file"""
@@ -128,7 +140,7 @@ class WatchlistManager:
             logger.error(f"Error saving face encodings: {e}")
     
     def add_person(self, person_type: PersonType, person_id: str, name: str, 
-                   face_encoding: np.ndarray, image_path: str = None, 
+                   face_encoding: Any, image_path: str = None,  # np.ndarray when available
                    metadata: Dict = None) -> bool:
         """Add person to watchlist"""
         try:
@@ -170,7 +182,7 @@ class WatchlistManager:
             logger.error(f"Error removing person from watchlist: {e}")
             return False
     
-    def get_person_encodings(self, person_type: PersonType = None) -> Dict[str, np.ndarray]:
+    def get_person_encodings(self, person_type: PersonType = None) -> Dict[str, Any]:  # Dict[str, np.ndarray] when available
         """Get face encodings for watchlist members"""
         if person_type:
             return {pid: enc for pid, enc in self.face_encodings_cache.items() 
@@ -188,12 +200,18 @@ class DisguiseDetector:
     """Detects disguises like masks, hats, glasses, beards"""
     
     def __init__(self):
+        if not CV2_AVAILABLE:
+            self.enabled = False
+            return
+        self.enabled = True
         self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
         self.eye_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_eye.xml')
         self.mask_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_smile.xml')  # Placeholder
     
-    def detect_disguises(self, face_image: np.ndarray) -> List[DisguiseType]:
+    def detect_disguises(self, face_image: Any) -> List[DisguiseType]:  # np.ndarray when available
         """Detect disguises in face image"""
+        if not CV2_AVAILABLE or not self.enabled:
+            return [DisguiseType.NONE]
         disguises = []
         gray = cv2.cvtColor(face_image, cv2.COLOR_BGR2GRAY)
         
@@ -241,9 +259,11 @@ class CrossAgeDetector:
         except ValueError:
             return 0.0
     
-    def cross_age_compare(self, encoding1: np.ndarray, encoding2: np.ndarray,
+    def cross_age_compare(self, encoding1: Any, encoding2: Any,  # np.ndarray when available
                          age1: str, age2: str) -> float:
         """Compare faces across different age groups"""
+        if not CV2_AVAILABLE or face_recognition is None:
+            return 0.0
         # Standard face similarity
         face_similarity = 1 - face_recognition.face_distance([encoding1], encoding2)[0]
         
@@ -259,6 +279,12 @@ class FaceIdentityAgent:
     def __init__(self, cctv_videos_dir="app/cctv_videos", 
                  similarity_threshold: float = 0.4,
                  privacy_mode: bool = False):
+        if not CV2_AVAILABLE:
+            logger.warning("Face & Identity Agent disabled: cv2 not available")
+            self.enabled = False
+            return
+        
+        self.enabled = True
         self.cctv_videos_dir = Path(cctv_videos_dir)
         self.similarity_threshold = similarity_threshold
         self.privacy_mode = privacy_mode
@@ -279,6 +305,9 @@ class FaceIdentityAgent:
     def process_cctv_video(self, video_path: str, camera_id: str = "camera_001",
                           frame_skip: int = 30) -> List[DetectionResult]:
         """Process CCTV video for face detection and identification"""
+        if not self.enabled or not CV2_AVAILABLE:
+            logger.warning("CCTV processing disabled: cv2 not available")
+            return []
         logger.info(f"Processing CCTV video: {video_path}")
         
         cap = cv2.VideoCapture(str(video_path))
@@ -313,7 +342,7 @@ class FaceIdentityAgent:
         logger.info(f"Processed {len(results)} frames from {video_path}")
         return results
     
-    def process_frame(self, frame: np.ndarray, frame_number: int, 
+    def process_frame(self, frame: Any, frame_number: int,  # np.ndarray when available
                      camera_id: str) -> Optional[DetectionResult]:
         """Process a single frame for face detection and identification"""
         start_time = time.time()
@@ -375,9 +404,17 @@ class FaceIdentityAgent:
             logger.error(f"Error processing frame {frame_number}: {e}")
             return None
     
-    def _identify_person(self, face_encoding: np.ndarray, face_image: np.ndarray,
+    def _identify_person(self, face_encoding: Any, face_image: Any,  # np.ndarray when available
                         camera_id: str) -> PersonIdentity:
         """Identify person using watchlist and cross-age detection"""
+        if not CV2_AVAILABLE or face_recognition is None:
+            # Return a default person identity if cv2 is not available
+            self.person_counter += 1
+            return PersonIdentity(
+                person_id=f"person_{self.person_counter:06d}",
+                person_type=PersonType.UNKNOWN,
+                confidence_score=0.0
+            )
         
         # Check against watchlist
         best_match_id = None
@@ -431,7 +468,7 @@ class FaceIdentityAgent:
         
         return person_identity
     
-    def _get_demographics(self, face_image: np.ndarray, 
+    def _get_demographics(self, face_image: Any,  # np.ndarray when available
                          person_identity: PersonIdentity) -> Dict:
         """Get demographics if privacy mode allows"""
         if self.privacy_mode:
@@ -448,8 +485,10 @@ class FaceIdentityAgent:
         return {"error": "demographics_unavailable"}
     
     def add_to_watchlist(self, person_type: PersonType, name: str, 
-                        face_image: np.ndarray, metadata: Dict = None) -> str:
+                        face_image: Any, metadata: Dict = None) -> str:  # np.ndarray when available
         """Add person to watchlist"""
+        if not CV2_AVAILABLE or face_recognition is None:
+            raise ValueError("FaceAI dependencies not available")
         # Generate face encoding
         face_encodings = face_recognition.face_encodings(face_image)
         if not face_encodings:

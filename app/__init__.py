@@ -14,7 +14,9 @@ def create_app():
     
     # Configuration
     app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key')
-    app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'mysql+pymysql://flaskuser:flaskpass@localhost:3306/flaskapi')
+    # Default to SQLite for easier development, can be overridden with DATABASE_URL env var
+    default_db = os.environ.get('DATABASE_URL', 'sqlite:///vigilanteye.db')
+    app.config['SQLALCHEMY_DATABASE_URI'] = default_db
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['MAX_CONTENT_LENGTH'] = 20 * 1024 * 1024 * 1024  # 20GB
     app.config['JWT_SECRET_KEY'] = os.environ.get('JWT_SECRET_KEY', 'jwt-secret-string')
