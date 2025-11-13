@@ -42,6 +42,12 @@ def features():
     """Features page"""
     return render_template('features.html')
 
+@main_bp.route('/cctv')
+@login_required
+def cctv_dashboard():
+    """CCTV Intelligence Dashboard"""
+    return render_template('cctv_dashboard.html')
+
 @main_bp.route('/health')
 def health():
     """Health check endpoint - API"""

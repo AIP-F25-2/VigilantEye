@@ -7,8 +7,10 @@ from .project_controller import project_bp
 from .telegram_controller import bp as telegram_bp
 from .webhook_controller import bp as webhook_bp
 from .faceai_controller import faceai_bp
+from .cctv_controller import cctv_bp
 
 __all__ = [
     'main_bp', 'api_bp', 'auth_bp', 'video_bp', 
-    'recording_bp', 'project_bp', 'telegram_bp', 'webhook_bp', 'faceai_bp'
+    'recording_bp', 'project_bp', 'telegram_bp', 'webhook_bp', 
+    'faceai_bp', 'cctv_bp'
 ]

@@ -43,6 +43,7 @@ def create_app():
     from app.controllers.telegram_controller import bp as telegram_bp
     from app.controllers.webhook_controller import bp as webhook_bp
     from app.controllers.faceai_controller import faceai_bp
+    from app.controllers.cctv_controller import cctv_bp
     
     # Register main blueprints
     app.register_blueprint(main_bp)
@@ -61,6 +62,9 @@ def create_app():
     
     # Register FaceAi integration blueprint
     app.register_blueprint(faceai_bp)  # FaceAi API routes (/api/faceai/*)
+    
+    # Register CCTV integration blueprint
+    app.register_blueprint(cctv_bp)  # CCTV API routes (/api/cctv/*)
     
     # Note: Server blueprints removed - using new API structure
     
