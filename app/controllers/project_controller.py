@@ -253,7 +253,7 @@ def add_project_member(project_id):
                 # Reactivate member
                 existing_member.is_active = True
                 existing_member.role = role
-                existing_member.joined_at = datetime.utcnow()
+                existing_member.joined_at = datetime.now(timezone.utc)
         else:
             # Create new member
             member = ProjectMember(
