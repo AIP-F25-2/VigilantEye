@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify, render_template
 import os, cv2
+from werkzeug.utils import secure_filename
 from demographics import DemographicsAnalyzer
 
 app = Flask(__name__)
@@ -25,13 +26,21 @@ def analyze():
         return jsonify({"error": "No image uploaded"}), 400
 
     file = request.files["image"]
-    filepath = os.path.join(UPLOAD_FOLDER, file.filename)
+    if not file.filename:
+        return jsonify({"error": "No file selected"}), 400
+    
+    # Sanitize filename to prevent path traversal
+    safe_filename = secure_filename(file.filename)
+    if not safe_filename:
+        return jsonify({"error": "Invalid filename"}), 400
+    
+    filepath = os.path.join(UPLOAD_FOLDER, safe_filename)
     file.save(filepath)
 
     results, processed_frame = analyzer.analyze(filepath)
 
     # save processed image with labels
-    output_path = os.path.join(UPLOAD_FOLDER, "result_" + file.filename)
+    output_path = os.path.join(UPLOAD_FOLDER, "result_" + safe_filename)
     cv2.imwrite(output_path, processed_frame)
 
     return jsonify({

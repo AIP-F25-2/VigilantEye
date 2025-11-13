@@ -21,7 +21,7 @@ class ImprovedFaceDetector:
         self.known_faces = {}  # {person_id: [list_of_encodings]}
         self.face_counter = 0
         
-        print(f"   Enhanced Face Detector initialized")
+        print("   Enhanced Face Detector initialized")
         print(f"   Similarity threshold: {similarity_threshold}")
         print(f"   Multiple encodings per person: {use_multiple_encodings}")
     
@@ -58,7 +58,7 @@ class ImprovedFaceDetector:
             if locations_hog:
                 encodings_hog = face_recognition.face_encodings(preprocessed, locations_hog, model="large")
                 all_detections.extend(zip(locations_hog, encodings_hog))
-        except:
+        except Exception:
             pass
         
         # Method 2: CNN model (more accurate, better for various angles)
@@ -78,7 +78,7 @@ class ImprovedFaceDetector:
                     
                     if not is_duplicate:
                         all_detections.append((loc_cnn, enc_cnn))
-        except:
+        except Exception:
             pass
         
         # If no faces found, try with different preprocessing
@@ -93,7 +93,7 @@ class ImprovedFaceDetector:
                 if locations_eq:
                     encodings_eq = face_recognition.face_encodings(equalized_rgb, locations_eq, model="large")
                     all_detections.extend(zip(locations_eq, encodings_eq))
-            except:
+            except Exception:
                 pass
         
         print(f" Detected {len(all_detections)} faces using multiple methods")
@@ -234,7 +234,7 @@ class ImprovedFaceDetector:
                 label += f" ({similarity:.2f})"
             
             # Add text background
-            (text_width, text_height), baseline = cv2.getTextSize(
+            (text_width, text_height), _ = cv2.getTextSize(
                 label, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)
             cv2.rectangle(annotated_image, 
                          (left, top - text_height - 15),
@@ -282,7 +282,7 @@ class ImprovedFaceDetector:
     
     def get_detailed_stats(self):
         """Print detailed statistics"""
-        print(f"\n Enhanced Detection Statistics:")
+        print("\n Enhanced Detection Statistics:")
         print(f"   Total unique persons: {len(self.known_faces)}")
         print(f"   Similarity threshold: {self.similarity_threshold}")
         
@@ -338,7 +338,7 @@ def test_recognition_accuracy(image1_path, image2_path):
     print(f"\n=== Processing Image 2: {image2_path} ===")
     results2, _ = detector.process_image(image2_path)
     
-    print(f"\n Recognition Test Results:")
+    print("\n Recognition Test Results:")
     if results1 and results2:
         if results1[0]['person_id'] == results2[0]['person_id']:
             print(" SUCCESS: Same person recognized in both images!")

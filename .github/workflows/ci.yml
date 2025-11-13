@@ -14,10 +14,10 @@ jobs:
       mysql:
         image: mysql:8.0
         env:
-          MYSQL_ROOT_PASSWORD: rootpass
+          MYSQL_ROOT_PASSWORD: ${{ secrets.MYSQL_ROOT_PASSWORD || 'test_root_pass' }}
           MYSQL_DATABASE: flaskapi
           MYSQL_USER: flaskuser
-          MYSQL_PASSWORD: flaskpass
+          MYSQL_PASSWORD: ${{ secrets.MYSQL_PASSWORD || 'test_flask_pass' }}
         ports:
           - 3306:3306
         options: >-
@@ -41,7 +41,7 @@ jobs:
     
     - name: Run tests
       env:
-        DATABASE_URL: mysql+pymysql://flaskuser:flaskpass@localhost:3306/flaskapi
+        DATABASE_URL: mysql+pymysql://flaskuser:${{ secrets.MYSQL_PASSWORD || 'test_flask_pass' }}@localhost:3306/flaskapi
         SECRET_KEY: test-secret-key
         JWT_SECRET_KEY: test-jwt-secret
       run: |

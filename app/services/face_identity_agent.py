@@ -58,10 +58,10 @@ class PersonIdentity:
     person_type: PersonType = PersonType.UNKNOWN
     face_encoding: Optional[Any] = None  # np.ndarray when available
     demographics: Optional[Dict] = None
-    disguise_detected: List[DisguiseType] = None
+    disguise_detected: Optional[List[DisguiseType]] = None
     confidence_score: float = 0.0
     last_seen: Optional[datetime] = None
-    cameras_seen: List[str] = None
+    cameras_seen: Optional[List[str]] = None
     watchlist_status: bool = False
     
     def __post_init__(self):

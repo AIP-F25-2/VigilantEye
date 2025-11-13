@@ -5,7 +5,7 @@ Integrates face detection, demographics analysis, and ambiguity detection
 
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 # Try to import optional dependencies
@@ -444,7 +444,7 @@ class FaceAiService:
             
             # Add frame metadata
             face_results["frame_number"] = frame_number
-            face_results["timestamp"] = datetime.utcnow().isoformat()
+            face_results["timestamp"] = datetime.now(timezone.utc).isoformat()
             
             return face_results
             

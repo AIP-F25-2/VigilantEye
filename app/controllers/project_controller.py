@@ -3,7 +3,7 @@ from app import db
 from app.models import Project, ProjectMember, User
 from app.schemas import ProjectSchema, ProjectCreateSchema, ProjectMemberSchema
 from marshmallow import ValidationError
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 
 project_bp = Blueprint('project_api', __name__)
@@ -107,7 +107,7 @@ def create_project():
             project_id=project.id,
             user_id=user_id,
             role='owner',
-            joined_at=datetime.utcnow(),
+            joined_at=datetime.now(timezone.utc),
             can_upload=True,
             can_edit=True,
             can_delete=True,
@@ -260,7 +260,7 @@ def add_project_member(project_id):
                 project_id=project_id,
                 user_id=member_user_id,
                 role=role,
-                joined_at=datetime.utcnow(),
+                joined_at=datetime.now(timezone.utc),
                 invited_by_id=user_id,
                 invitation_token=str(uuid4()),
                 can_upload=role in ['owner', 'admin', 'editor'],

@@ -3,7 +3,7 @@ from app import db
 from app.models.outbound_message import OutboundMessage, MessageStatus
 from app.services.telegram_client import send_text, send_photo, build_ack_button
 from app.services.scheduler import schedule_post_actions
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 
 logger = logging.getLogger(__name__)
@@ -53,7 +53,7 @@ def ingest():
         msg.save()
 
         # Schedule future jobs (escalate and close)
-        created_at = msg.created_at or datetime.utcnow()
+        created_at = msg.created_at or datetime.now(timezone.utc)
         schedule_post_actions(msg.id, created_at)
         return jsonify({"id": msg.id, "status": msg.status.value, "telegram": resp["result"]})
     except Exception as e:

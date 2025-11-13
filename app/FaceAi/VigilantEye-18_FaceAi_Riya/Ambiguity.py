@@ -14,7 +14,7 @@ class SimpleAmbiguityChecker:
     def __init__(self, ambiguity_threshold=0.7):
         self.ambiguity_threshold = ambiguity_threshold
         self.face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalface_default.xml")
-        print(f" Improved Ambiguity Checker initialized")
+        print(" Improved Ambiguity Checker initialized")
         print(f"   Threshold: {ambiguity_threshold} (lower = more strict)")
 
     def check_ambiguity(self, image1, image2, show_result=True):
@@ -64,7 +64,7 @@ class SimpleAmbiguityChecker:
         }
 
         # Normalize weights if face not detected
-        if weights['face'] == 0.0:
+        if abs(weights['face']) < 1e-9:
             total = sum(weights.values())
             for k in weights:
                 weights[k] = weights[k] / total
@@ -94,15 +94,15 @@ class SimpleAmbiguityChecker:
             'weights': weights
         }
 
-        print(f"\n{'='*60}")
-        print(f" IMPROVED AMBIGUITY ANALYSIS RESULT")
-        print(f"{'='*60}")
+        print("\n" + "="*60)
+        print(" IMPROVED AMBIGUITY ANALYSIS RESULT")
+        print("="*60)
         print(f"Ambiguous: {'YES ' if is_ambiguous else 'NO '}")
         print(f"Ambiguity Score: {ambiguity_score:.2f} / 1.00")
-        print(f"\nReasons:")
+        print("\nReasons:")
         for reason in reasons:
             print(f"  • {reason}")
-        print(f"{'='*60}")
+        print("="*60)
 
         if show_result:
             self._visualize_comparison(img1, img2, is_ambiguous, ambiguity_score, reasons)
@@ -136,8 +136,8 @@ class SimpleAmbiguityChecker:
             face2 = gray2[y:y+h, x:x+w]
 
             orb = cv2.ORB_create()
-            kp1, des1 = orb.detectAndCompute(face1, None)
-            kp2, des2 = orb.detectAndCompute(face2, None)
+            _, des1 = orb.detectAndCompute(face1, None)
+            _, des2 = orb.detectAndCompute(face2, None)
 
             if des1 is None or des2 is None:
                 return 0.0
@@ -151,7 +151,7 @@ class SimpleAmbiguityChecker:
             good_matches = [m for m in matches if m.distance < 60]
             similarity = len(good_matches) / len(matches)
             return similarity
-        except:
+        except Exception:
             return 0.0
 
     def _compare_colors(self, img1, img2):
@@ -170,14 +170,14 @@ class SimpleAmbiguityChecker:
 
             similarity = cv2.compareHist(hist1, hist2, cv2.HISTCMP_CORREL)
             return max(0, similarity)
-        except:
+        except Exception:
             return 0.0
 
     def _compare_clothing_hist(self, img1, img2):
         """Upper/lower body clothing histograms"""
         try:
-            h1, w1 = img1.shape[:2]
-            h2, w2 = img2.shape[:2]
+            h1, _ = img1.shape[:2]
+            h2, _ = img2.shape[:2]
 
             upper1 = img1[int(h1*0.3):int(h1*0.6), :]
             upper2 = img2[int(h2*0.3):int(h2*0.6), :]
@@ -197,7 +197,7 @@ class SimpleAmbiguityChecker:
             lower_sim = hist_sim(lower1, lower2)
 
             return (upper_sim + lower_sim) / 2
-        except:
+        except Exception:
             return 0.0
 
     def _compare_body_shape(self, img1, img2):
@@ -216,7 +216,7 @@ class SimpleAmbiguityChecker:
             hog2 = hog2 / (np.linalg.norm(hog2) + 1e-7)
 
             return cosine_similarity([hog1], [hog2])[0][0]
-        except:
+        except Exception:
             return 0.0
 
     def _compare_proportions(self, img1, img2):
@@ -227,7 +227,7 @@ class SimpleAmbiguityChecker:
             ratio2 = h2 / w2
             diff = abs(ratio1 - ratio2)
             return 1 - min(diff / 2.0, 1.0)
-        except:
+        except Exception:
             return 0.0
 
     def _compare_texture_lbp(self, img1, img2):
@@ -261,7 +261,7 @@ class SimpleAmbiguityChecker:
             hist2 = lbp_hist(img2_resized)
 
             return cosine_similarity([hist1], [hist2])[0][0]
-        except:
+        except Exception:
             return 0.0
 
     def _visualize_comparison(self, img1, img2, is_ambiguous, score, reasons):
@@ -287,7 +287,7 @@ class SimpleAmbiguityChecker:
             result_text += f"  • {reason}\n"
 
         fig.text(0.5, 0.02, result_text, ha='center', fontsize=11,
-                bbox=dict(boxstyle='round', facecolor=color, alpha=0.3))
+                bbox={'boxstyle': 'round', 'facecolor': color, 'alpha': 0.3})
 
         plt.tight_layout()
         plt.subplots_adjust(bottom=0.25)

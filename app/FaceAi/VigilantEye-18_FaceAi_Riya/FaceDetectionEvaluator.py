@@ -1,5 +1,4 @@
 # FaceDetectionEvaluator.py
-# FaceDetectionEvaluator.py
 import cv2
 import os
 from sklearn.metrics import classification_report
@@ -24,7 +23,7 @@ class FaceDetectionEvaluator:
                     print(f"⚠️ Skipping {filename} — could not read image.")
                     continue
 
-                face_locations, face_names = self.detector.detect_faces(image)
+                _, face_names = self.detector.detect_faces(image)
 
                 if face_names:
                     pred_name = face_names[0]  # take first detected

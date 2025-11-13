@@ -31,6 +31,7 @@ faceai_bp = Blueprint("faceai", __name__, url_prefix="/api/faceai")
 # Constants
 MODEL_VERSION = "1.0"
 DEFAULT_SOURCE_TYPE = "image"
+FACEAI_SERVICE_UNAVAILABLE_MSG = "FaceAi service not available"
 
 @faceai_bp.route("/status", methods=["GET"])
 def get_status():
@@ -65,7 +66,7 @@ def detect_faces():
         # Get FaceAi service
         service = get_faceai_service()
         if not service.is_available():
-            return error_response("FaceAi service not available", 
+            return error_response(FACEAI_SERVICE_UNAVAILABLE_MSG, 
                                 status_code=HTTP_SERVICE_UNAVAILABLE)
         
         # Process image
@@ -122,7 +123,7 @@ def analyze_demographics():
         # Get FaceAi service
         service = get_faceai_service()
         if not service.is_available():
-            return error_response("FaceAi service not available", 
+            return error_response(FACEAI_SERVICE_UNAVAILABLE_MSG, 
                                 status_code=HTTP_SERVICE_UNAVAILABLE)
         
         # Process image
@@ -195,7 +196,7 @@ def check_ambiguity():
         # Get FaceAi service
         service = get_faceai_service()
         if not service.is_available():
-            return error_response("FaceAi service not available", 
+            return error_response(FACEAI_SERVICE_UNAVAILABLE_MSG, 
                                 status_code=HTTP_SERVICE_UNAVAILABLE)
         
         # Process images

@@ -3,7 +3,7 @@ from app import db
 from app.models import Recording, RecordingSession, Device
 from app.schemas import RecordingSchema, RecordingStartSchema, RecordingSessionSchema
 from marshmallow import ValidationError
-from datetime import datetime
+from datetime import datetime, timezone
 import threading
 import subprocess
 import os
@@ -140,7 +140,7 @@ def stop_recording(recording_id):
                 }), 400
             
             recording.status = RecordingStatus.STOPPING
-            recording.ended_at = datetime.utcnow()
+            recording.ended_at = datetime.now(timezone.utc)
             
             # Stop the recording process
             if _active_recording and _active_recording.id == recording.id:
@@ -245,7 +245,7 @@ def _start_recording_process(recording):
         
         # For now, just update the status
         recording.status = RecordingStatus.RECORDING
-        recording.started_at = datetime.utcnow()
+        recording.started_at = datetime.now(timezone.utc)
         recording.process_id = os.getpid()  # Placeholder
         
         with _recording_lock:
@@ -266,7 +266,7 @@ def _stop_recording_process():
         # For now, just update the status
         if _active_recording:
             _active_recording.status = RecordingStatus.COMPLETED
-            _active_recording.ended_at = datetime.utcnow()
+            _active_recording.ended_at = datetime.now(timezone.utc)
         
         return True
         

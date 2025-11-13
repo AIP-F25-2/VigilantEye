@@ -74,12 +74,3 @@ class DemographicsAnalyzer:
         cv2.destroyAllWindows()
 
         return results
-
-
-# ---------- Run ----------
-#analyzer = DemographicsAnalyzer()
-#results = analyzer.analyze("person.jpg")
-
-#print("Detected faces:")
-#for res in results:
- #   print(res)

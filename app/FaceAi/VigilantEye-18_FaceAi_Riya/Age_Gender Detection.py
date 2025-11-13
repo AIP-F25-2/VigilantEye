@@ -4,15 +4,16 @@ AGE_LIST = ['(0-2)','(4-6)','(8-12)','(15-20)','(25-32)','(38-43)','(48-53)','(6
 GENDER_LIST = ['Male','Female']
 MODEL_MEAN = (78.4263377603, 87.7689143744, 114.895847746)
 AGE_INP_SIZE = (227, 227)
+OPENCV_FACE_DETECTOR_PBTXT = "opencv_face_detector.pbtxt"
 
 class DemographicsAnalyzer:
     def __init__(self, model_dir="models"):
         self.model_dir = model_dir
         # find face detector pb & pbtxt
         candidates = [
-            ("opencv_face_detector_uint8.pb","opencv_face_detector.pbtxt"),
-            ("opencv_face_detector.pb","opencv_face_detector.pbtxt"),
-            ("opencv_face_detector_uint8.pb","opencv_face_detector.pbtxt")
+            ("opencv_face_detector_uint8.pb", OPENCV_FACE_DETECTOR_PBTXT),
+            ("opencv_face_detector.pb", OPENCV_FACE_DETECTOR_PBTXT),
+            ("opencv_face_detector_uint8.pb", OPENCV_FACE_DETECTOR_PBTXT)
         ]
         self.face_net = None
         for pb,txt in candidates:
