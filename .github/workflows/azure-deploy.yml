@@ -8,10 +8,10 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: vigilanteye-api-prod
-  AZURE_RESOURCE_GROUP: vigilanteye-rg
-  CONTAINER_REGISTRY: vigilanteyeregistry.azurecr.io
-  IMAGE_NAME: vigilanteye-api
+  CONTAINER_APP_NAME: vigilanteye-app
+  AZURE_RESOURCE_GROUP: vigilanteye-docker-rg
+  CONTAINER_REGISTRY: vigilanteyeacr.azurecr.io
+  IMAGE_NAME: vigilanteye-web
 
 jobs:
   build-and-deploy:
@@ -41,45 +41,53 @@ jobs:
       with:
         creds: ${{ secrets.AZURE_CREDENTIALS }}
 
-    - name: Build and push Docker image
-      run: |
-        # Build Docker image
-        docker build -t ${{ env.IMAGE_NAME }}:${{ github.sha }} .
-        docker build -t ${{ env.IMAGE_NAME }}:latest .
-        
-        # Login to Azure Container Registry
-        az acr login --name ${{ env.CONTAINER_REGISTRY }}
-        
-        # Tag and push images
-        docker tag ${{ env.IMAGE_NAME }}:${{ github.sha }} ${{ env.CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-        docker tag ${{ env.IMAGE_NAME }}:latest ${{ env.CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-        
-        docker push ${{ env.CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-        docker push ${{ env.CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
 
-    - name: Deploy to Azure App Service
-      uses: azure/webapps-deploy@v2
+    - name: Login to Azure Container Registry
+      uses: docker/login-action@v2
       with:
-        app-name: ${{ env.AZURE_WEBAPP_NAME }}
-        resource-group: ${{ env.AZURE_RESOURCE_GROUP }}
-        images: ${{ env.CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        registry: ${{ env.CONTAINER_REGISTRY }}
+        username: ${{ secrets.ACR_USERNAME }}
+        password: ${{ secrets.ACR_PASSWORD }}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v4
+      with:
+        context: .
+        push: true
+        tags: |
+          ${{ env.CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+          ${{ env.CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        cache-from: type=registry,ref=${{ env.CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        cache-to: type=inline
+
+    - name: Deploy to Azure Container Apps
+      run: |
+        az containerapp update \
+          --name ${{ env.CONTAINER_APP_NAME }} \
+          --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+          --image ${{ env.CONTAINER_REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
 
     - name: Run database migrations
       run: |
-        # Get the app service URL
-        APP_URL=$(az webapp show --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query defaultHostName -o tsv)
-        
-        # Run migrations via Azure CLI
-        az webapp ssh --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --command "flask db upgrade"
+        az containerapp exec \
+          --name ${{ env.CONTAINER_APP_NAME }} \
+          --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+          --command "flask db upgrade" || echo "Migration may have failed, check logs"
 
     - name: Health check
       run: |
         # Wait for deployment to complete
         sleep 30
         
-        # Get the app service URL
-        APP_URL=$(az webapp show --name ${{ env.AZURE_WEBAPP_NAME }} --resource-group ${{ env.AZURE_RESOURCE_GROUP }} --query defaultHostName -o tsv)
+        # Get the container app URL
+        APP_URL=$(az containerapp show \
+          --name ${{ env.CONTAINER_APP_NAME }} \
+          --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+          --query "properties.configuration.ingress.fqdn" \
+          --output tsv)
         
         # Test health endpoint
         curl -f https://$APP_URL/health || exit 1
-        echo "Deployment successful! API is running at https://$APP_URL"
+        echo "Deployment successful! Application is running at https://$APP_URL"

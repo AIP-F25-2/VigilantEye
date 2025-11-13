@@ -1,8 +1,12 @@
-# Python
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+
+# C extensions
 *.so
+
+# Distribution / packaging
 .Python
 build/
 develop-eggs/
@@ -16,48 +20,155 @@ parts/
 sdist/
 var/
 wheels/
+pip-wheel-metadata/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
-# Virtual Environment
-venv/
-ENV/
-env/
+# PyInstaller
+*.manifest
+*.spec
 
-# Flask
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
 instance/
 .webassets-cache
 
-# PyCharm
-.idea/
+# Scrapy stuff:
+.scrapy
 
-# VS Code
-.vscode/
+# Sphinx documentation
+docs/_build/
 
-# Environment variables
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
 .env
-.env.local
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
 
-# Database
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# VIGILANTEye specific
 *.db
 *.sqlite
-*.sqlite3
+data/
+uploads/
+*.pem
+*.key
+*.crt
 
-# Logs
-*.log
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
 # OS
 .DS_Store
 Thumbs.db
 
-# Docker
-docker-compose.override.yml
+# Logs
+logs/
+*.log
 
-# Testing
-.pytest_cache/
-.coverage
-htmlcov/
+# Temporary files
+tmp/
+temp/
+*.tmp
 
-# Migrations backup
-*.pyc
+# Database
+*.db-journal
+
+# Secrets and config
+.env.local
+.env.production
+secrets.json
+config.local.py
+
+# FaceAI models (large files)
+app/FaceAi/VigilantEye-18_FaceAi_Riya/models/*.caffemodel
+app/FaceAi/VigilantEye-18_FaceAi_Riya/models/*.pb
+*.pkl
+
+# Keep model configs
+!app/FaceAi/VigilantEye-18_FaceAi_Riya/models/*.prototxt
+!app/FaceAi/VigilantEye-18_FaceAi_Riya/models/*.pbtxt
+
+# Test images (optional - remove if you want to track them)
+# app/FaceAi/VigilantEye-18_FaceAi_Riya/test_images/
+# app/FaceAi/VigilantEye-18_FaceAi_Riya/uploads/

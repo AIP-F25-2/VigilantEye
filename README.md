@@ -1,6 +1,13 @@
 # 🚀 VIGILANTEye - Video Surveillance Management System
 
+[![GitHub](https://img.shields.io/badge/GitHub-Repository-blue)](https://github.com/AIP-F25-2/VigilantEye)
+[![Python](https://img.shields.io/badge/Python-3.11-blue)](https://www.python.org/)
+[![Flask](https://img.shields.io/badge/Flask-2.3.3-green)](https://flask.palletsprojects.com/)
+[![License](https://img.shields.io/badge/License-MIT-yellow)](LICENSE)
+
 A comprehensive video surveillance management system with Telegram integration, built with Flask and deployed on Azure.
+
+**Repository**: [https://github.com/AIP-F25-2/VigilantEye](https://github.com/AIP-F25-2/VigilantEye)
 
 ## 🌟 Features
 
@@ -47,8 +54,8 @@ VIGILANTEye/
 
 1. **Clone and Setup**:
    ```bash
-   git clone <repository-url>
-   cd VIGILANTEye
+   git clone https://github.com/AIP-F25-2/VigilantEye.git
+   cd VigilantEye
    pip install -r requirements.txt
    ```
 
@@ -215,11 +222,22 @@ curl -X POST https://your-app.azurecontainerapps.io/api/telegram/ingest \
 
 ## 🤝 Contributing
 
-1. Fork the repository
-2. Create a feature branch
+We welcome contributions! Please follow these steps:
+
+1. Fork the repository: [https://github.com/AIP-F25-2/VigilantEye](https://github.com/AIP-F25-2/VigilantEye)
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
 3. Make your changes
-4. Add tests
-5. Submit a pull request
+4. Add tests if applicable
+5. Commit your changes (`git commit -m 'Add some amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
+
+### Contributors
+
+- [@Sukhjitsingh2](https://github.com/Sukhjitsingh2) - sukhjit singh
+- [@NSriDatta16](https://github.com/NSriDatta16) - N SriDatta
+- [@probablybhavik](https://github.com/probablybhavik) - Bhavik Gandhi
+- [@sameerkeshvani](https://github.com/sameerkeshvani)
 
 ## 📄 License
 

@@ -1,3 +1,4 @@
 [config]
 SCM_DO_BUILD_DURING_DEPLOYMENT=true
-
+ENABLE_ORYX_BUILD=true
+POST_BUILD_COMMAND=flask db upgrade
