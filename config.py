@@ -5,7 +5,26 @@ class Config:
     """Configuration class for the application"""
     
     # Database
-    DATABASE_URL = os.environ.get('DATABASE_URL', 'mysql+pymysql://flaskuser:flaskpass@localhost:3306/flaskapi')
+    # DATABASE_URL must be set via environment variable for security
+    # Format: mysql+pymysql://user:password@host:port/database
+    # For local development, you can use: sqlite:///vigilanteye.db
+    _database_url = os.environ.get('DATABASE_URL')
+    if not _database_url:
+        # Allow SQLite for local development only
+        if os.environ.get('FLASK_ENV') == 'development':
+            _database_url = 'sqlite:///vigilanteye.db'
+            import warnings
+            warnings.warn(
+                "DATABASE_URL not set. Using SQLite for development. "
+                "Set DATABASE_URL environment variable for production.",
+                UserWarning
+            )
+        else:
+            raise ValueError(
+                "DATABASE_URL environment variable is required for production. "
+                "Set it to: mysql+pymysql://user:password@host:port/database"
+            )
+    DATABASE_URL = _database_url
     
     # Flask
     SECRET_KEY = os.environ.get('SECRET_KEY', 'dev-secret-key')

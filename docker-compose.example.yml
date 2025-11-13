@@ -1,4 +1,5 @@
 # Docker Compose file for Flask API with MySQL and phpMyAdmin
+# Copy this file to docker-compose.yml and set your passwords in a .env file
 
 services:
   db:
@@ -6,8 +7,8 @@ services:
     environment:
       MYSQL_DATABASE: ${MYSQL_DATABASE:-flaskapi}
       MYSQL_USER: ${MYSQL_USER:-flaskuser}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     command: --default-authentication-plugin=mysql_native_password
     volumes:
       - mysql_data:/var/lib/mysql
@@ -24,7 +25,7 @@ services:
     environment:
       PMA_HOST: db
       PMA_USER: root
-      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD:-}
+      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD}
     ports:
       - "8080:80"
     depends_on:
@@ -36,16 +37,16 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: ${DATABASE_URL:-mysql+pymysql://${MYSQL_USER:-flaskuser}:${MYSQL_PASSWORD:-}@db:3306/${MYSQL_DATABASE:-flaskapi}}
-      SECRET_KEY: your-secret-key-here
-      JWT_SECRET_KEY: jwt-secret-string
-      FLASK_ENV: development
-      TELEGRAM_BOT_TOKEN: 8345256867:AAFMasgNavOAstsxPdnOazZfHNRHoNJTbQ0
-      TELEGRAM_WEBHOOK_SECRET: supersecret
+      DATABASE_URL: ${DATABASE_URL:-mysql+pymysql://${MYSQL_USER:-flaskuser}:${MYSQL_PASSWORD}@db:3306/${MYSQL_DATABASE:-flaskapi}}
+      SECRET_KEY: ${SECRET_KEY}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY}
+      FLASK_ENV: ${FLASK_ENV:-development}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+      TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET}
       ALT_CHANNELS_FILE: alternate_channels.json
-      ESCALATE_AFTER_SECONDS: 900
-      CLOSE_AFTER_SECONDS: 3600
-      FLASK_DEBUG: 1
+      ESCALATE_AFTER_SECONDS: ${ESCALATE_AFTER_SECONDS:-900}
+      CLOSE_AFTER_SECONDS: ${CLOSE_AFTER_SECONDS:-3600}
+      FLASK_DEBUG: ${FLASK_DEBUG:-0}
     depends_on:
       db:
         condition: service_healthy
@@ -62,3 +63,4 @@ services:
 
 volumes:
   mysql_data:
+
