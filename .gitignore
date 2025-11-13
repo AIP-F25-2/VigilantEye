@@ -63,6 +63,21 @@ coverage/
 
 # Docker
 .dockerignore
+.env
+.env.production
+.env.staging
+*.env.local
+
+# Nginx
+nginx/ssl/*.pem
+nginx/ssl/*.key
+nginx/ssl/*.crt
+
+# Docker volumes (if mounted locally)
+backend_storage/
+backend_models/
+backend_logs/
+nginx_logs/
 
 # OS
 Thumbs.db

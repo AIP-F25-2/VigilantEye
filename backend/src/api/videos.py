@@ -31,10 +31,8 @@ SUPPORTED_VIDEO_FORMATS = {
 @videos_bp.route("/upload", methods=["POST"])
 @require_auth
 def upload_video() -> Any:
-    if "video" not in request.files:
-        return jsonify({"error": "Invalid video file"}), 400
-
-    file_obj = request.files["video"]
+    # Accept both "file" and "video" for backward compatibility
+    file_obj = request.files.get("file") or request.files.get("video")
     if file_obj is None or not file_obj.filename:
         return jsonify({"error": "Invalid video file"}), 400
 

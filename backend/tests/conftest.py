@@ -98,6 +98,7 @@ def app():
     os.environ["JWT_SECRET_KEY"] = "test-jwt-secret-key"
     test_app = create_app("development")
     test_app.config["TESTING"] = True
+    test_app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
 
     with test_app.app_context():
         db.create_all()
@@ -108,12 +109,8 @@ def app():
 
 @pytest.fixture(autouse=True)
 def cleanup_db(app):
-    """Clean up database before and after each test."""
+    """Clean up database after each test."""
     with app.app_context():
-        # Before test
-        for table in reversed(db.metadata.sorted_tables):
-            db.session.execute(table.delete())
-        db.session.commit()
         yield
         # After test
         for table in reversed(db.metadata.sorted_tables):
@@ -170,7 +167,7 @@ def auth_headers(app):
 
     def _auth_headers(user: User) -> Dict[str, str]:
         with app.app_context():
-            token = create_access_token(identity=user)
+            token = create_access_token(identity=str(user.id))
             return {"Authorization": f"Bearer {token}"}
 
     return _auth_headers

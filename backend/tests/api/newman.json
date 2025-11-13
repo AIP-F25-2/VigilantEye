@@ -1,0 +1,23 @@
+{
+  "iterationCount": 1,
+  "delayRequest": 100,
+  "timeout": {
+    "request": 30000,
+    "response": 30000,
+    "script": 5000
+  },
+  "reporters": ["cli", "json", "html"],
+  "reporter": {
+    "json": {
+      "export": "./newman-report.json"
+    },
+    "html": {
+      "export": "./newman-report.html"
+    }
+  },
+  "bail": false,
+  "ignoreRedirects": false,
+  "insecure": false,
+  "color": "on"
+}
+

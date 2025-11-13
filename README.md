@@ -122,6 +122,183 @@ celery -A src.celery_app:create_celery_app worker --loglevel=info
 - **Backend API**: http://localhost:5000/api
 - **Health Check**: http://localhost:5000/health
 
+## Docker Deployment
+
+### Prerequisites
+- Docker 20.10+
+- Docker Compose 2.0+
+- 8GB RAM minimum (16GB recommended for AI models)
+- 50GB disk space (for AI models, videos, database)
+
+### Quick Start with Docker
+
+**1. Clone and Configure:**
+
+```bash
+git clone <repository-url>
+cd VigilantEye
+cp .env.example .env
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+# Edit .env files with your configuration
+```
+
+**2. Start All Services:**
+
+```bash
+make up
+# Or: docker-compose up -d
+```
+
+**3. Run Database Migrations:**
+
+```bash
+make db-migrate
+# Or: docker-compose exec backend alembic upgrade head
+```
+
+**4. Seed Test Data (Optional):**
+
+```bash
+make db-seed
+# Or: docker-compose exec backend python scripts/seed_test_data.py
+```
+
+**5. Access Application:**
+
+- Frontend: http://localhost:80
+- Backend API: http://localhost:80/api
+- Health Check: http://localhost:80/health
+- Metrics: http://localhost:80/metrics
+
+### Services
+
+**Infrastructure Services:**
+
+- **MySQL 8.0**: Primary database (port 3306)
+- **Redis 7**: Cache and message broker (port 6379)
+- **ChromaDB**: Vector database for embeddings (port 8000)
+- **Ollama**: Local LLM inference (port 11434)
+
+**Application Services:**
+
+- **Backend (Flask)**: REST API and WebSocket server (port 5000)
+- **Celery Worker**: Async task processing (AI analysis, cleanup)
+- **Celery Beat**: Scheduled tasks (TTL cleanup, auto-close, escalation)
+- **Nginx**: Reverse proxy and frontend server (ports 80, 443)
+
+### Makefile Commands
+
+**Development:**
+
+- `make up` - Start all services
+- `make down` - Stop all services
+- `make logs` - View logs from all services
+- `make logs-backend` - View backend logs only
+- `make restart` - Restart all services
+- `make ps` - List running containers
+
+**Database:**
+
+- `make db-migrate` - Run database migrations
+- `make db-seed` - Seed test data
+- `make db-reset` - Reset database to clean state
+- `make shell-db` - Open MySQL shell
+
+**Testing:**
+
+- `make test` - Run all tests (backend + frontend)
+- `make test-backend` - Run backend tests only
+- `make test-frontend` - Run frontend tests only
+
+**Maintenance:**
+
+- `make build` - Build all images
+- `make rebuild` - Rebuild without cache
+- `make clean` - Remove all containers and volumes (WARNING: data loss)
+- `make prune` - Clean up unused Docker resources
+
+**Debugging:**
+
+- `make shell-backend` - Open shell in backend container
+- `make pull-models` - Pre-download AI models
+
+### Production Deployment
+
+**1. Configure Production Environment:**
+
+```bash
+cp .env.production .env
+# Edit .env with production values (strong passwords, actual domains)
+```
+
+**2. Build Production Images:**
+
+```bash
+make rebuild
+```
+
+**3. Start Services:**
+
+```bash
+make up
+```
+
+**4. Configure SSL (Optional):**
+
+- Place SSL certificates in `nginx/ssl/`
+- Update nginx.conf to enable HTTPS
+- Restart Nginx: `docker-compose restart nginx`
+
+**5. Monitor Health:**
+
+- Check health: `curl http://localhost/health`
+- Check readiness: `curl http://localhost/health/ready`
+- View metrics: `curl http://localhost/metrics`
+
+### Troubleshooting
+
+**Services won't start:**
+
+- Check logs: `make logs`
+- Check service status: `make ps`
+- Verify ports not in use: `netstat -an | grep 3306` (MySQL), `grep 6379` (Redis)
+- Check Docker resources: `docker system df`
+
+**Backend fails health check:**
+
+- Check backend logs: `make logs-backend`
+- Verify database connection: `make shell-db`
+- Check Redis: `docker-compose exec redis redis-cli ping`
+- Check ChromaDB: `curl http://localhost:8000/api/v1/heartbeat`
+
+**Celery worker not processing tasks:**
+
+- Check worker logs: `docker-compose logs -f celery-worker`
+- Verify Redis connection (Celery uses Redis as broker)
+- Check worker is registered: `docker-compose exec celery-worker celery -A src.celery_app inspect active`
+
+**Nginx 502 Bad Gateway:**
+
+- Check backend is running: `docker-compose ps backend`
+- Check backend health: `curl http://localhost:5000/health`
+- Review Nginx logs: `docker-compose logs nginx`
+- Verify upstream configuration in nginx.conf
+
+**Out of disk space:**
+
+- Check Docker disk usage: `docker system df`
+- Clean up: `make prune`
+- Remove old images: `docker image prune -a`
+- Check storage volume: `docker volume inspect vigilanteye_backend_storage`
+
+**AI models not downloading:**
+
+- Check Ollama is running: `docker-compose ps ollama`
+- Pull model manually: `docker-compose exec ollama ollama pull llama3.2:1b`
+- Check disk space (models are 1-5GB each)
+- Review backend logs for download errors
+
 ## Testing
 
 ### Backend Tests

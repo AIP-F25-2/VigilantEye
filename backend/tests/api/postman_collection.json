@@ -207,7 +207,7 @@
             "header": [{"key": "Authorization", "value": "Bearer {{access_token}}"}],
             "body": {
               "mode": "formdata",
-              "formdata": [{"key": "video", "type": "file", "src": []}]
+              "formdata": [{"key": "file", "type": "file", "src": []}]
             },
             "url": {
               "raw": "{{base_url}}/api/videos/upload",

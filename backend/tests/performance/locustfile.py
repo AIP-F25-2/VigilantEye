@@ -60,22 +60,11 @@ class VideoUploadUser(VigilantEyeUser):
         video_data = b"fake video data" * (file_size // 16 + 1)
         video_file = ("video", BytesIO(video_data[:file_size]), "video/mp4")
 
-        start_time = time.time()
         response = self.client.post(
             "/api/videos/upload",
-            files={"video": video_file},
+            files={"file": video_file},
             headers=self.client.headers,
         )
-        upload_time = time.time() - start_time
-
-        if response.status_code == 201:
-            self.environment.events.request.fire(
-                request_type="POST",
-                name="/api/videos/upload",
-                response_time=upload_time * 1000,
-                response_length=len(response.content),
-                exception=None,
-            )
 
 
 class VideoAnalysisUser(VigilantEyeUser):
@@ -205,25 +194,11 @@ class ReportDownloadUser(VigilantEyeUser):
             return
 
         ticket_id = random.choice(self.ticket_ids)
-        start_time = time.time()
         response = self.client.get(
             f"/api/tickets/{ticket_id}/report/download",
             params={"format": "pdf"},
             headers=self.client.headers,
         )
-        download_time = time.time() - start_time
-
-        if response.status_code == 200:
-            # Verify PDF content
-            content_type = response.headers.get("Content-Type", "")
-            if "application/pdf" in content_type:
-                self.environment.events.request.fire(
-                    request_type="GET",
-                    name="/api/tickets/{id}/report/download",
-                    response_time=download_time * 1000,
-                    response_length=len(response.content),
-                    exception=None,
-                )
 
 
 class MonitoringUser(VigilantEyeUser):

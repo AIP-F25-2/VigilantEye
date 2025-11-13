@@ -96,6 +96,8 @@ def mock_video_processor(monkeypatch):
 @pytest.fixture
 def mock_telegram_bot(monkeypatch):
     """Mock Telegram bot to avoid actual API calls."""
+    import sys
+    
     mock_bot = MagicMock()
     mock_bot.send_message = MagicMock(return_value=MagicMock(message_id=123))
     mock_bot.send_photo = MagicMock(return_value=MagicMock(message_id=124))
@@ -106,10 +108,12 @@ def mock_telegram_bot(monkeypatch):
     mock_bot.delete_webhook = MagicMock(return_value=True)
     mock_bot.get_webhook_info = MagicMock(return_value={"url": "https://example.com/webhook"})
 
-    # Mock telegram.Bot class
+    # Mock telegram module without importing it
     mock_telegram = MagicMock()
     mock_telegram.Bot = MagicMock(return_value=mock_bot)
-    monkeypatch.setitem(__import__("telegram", fromlist=["Bot"]).__dict__, "Bot", mock_telegram.Bot)
+    mock_module = MagicMock()
+    mock_module.Bot = mock_telegram.Bot
+    monkeypatch.setitem(sys.modules, "telegram", mock_module)
 
     return mock_bot
 
@@ -211,7 +215,7 @@ def upload_video_via_api(client, user, filename: str = "test.mp4"):
     from src.app import db
     from flask_jwt_extended import create_access_token
 
-    token = create_access_token(identity=user)
+    token = create_access_token(identity=str(user.id))
     video_file = create_test_video_file(filename)
     response = client.post(
         "/api/videos/upload",
@@ -229,7 +233,7 @@ def create_ticket_via_api(client, user, video_id: str):
     """Create ticket via API."""
     from flask_jwt_extended import create_access_token
 
-    token = create_access_token(identity=user)
+    token = create_access_token(identity=str(user.id))
     response = client.post(
         "/api/tickets",
         json={

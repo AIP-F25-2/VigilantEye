@@ -1,0 +1,49 @@
+# Docker Compose Override for Development
+# This file is automatically merged with docker-compose.yml by Docker Compose
+# Use this for development-specific overrides without modifying docker-compose.yml
+# 
+# Usage:
+#   Development: docker-compose up (automatically uses override)
+#   Production: docker-compose -f docker-compose.yml up (skip override)
+#   Or: Rename to disable: mv docker-compose.override.yml docker-compose.override.yml.disabled
+
+version: '3.8'
+
+services:
+  backend:
+    # Use Flask development server with hot-reload
+    command: flask run --host=0.0.0.0 --port=5000 --reload
+    environment:
+      FLASK_ENV: development
+      DEBUG: "True"
+    volumes:
+      # Use delegated for better performance on macOS/Windows
+      - ./backend:/app:delegated
+
+  celery-worker:
+    # Debug logging, fewer workers for development
+    command: celery -A src.celery_app worker --loglevel=debug --concurrency=2
+
+  celery-beat:
+    # Debug logging for development
+    command: celery -A src.celery_app beat --loglevel=debug
+
+  # Optional: Frontend service for development with Vite dev server
+  # Uncomment if you want to run frontend separately from Nginx
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile.dev
+  #   container_name: vigilanteye-frontend
+  #   restart: unless-stopped
+  #   ports:
+  #     - '5173:5173'
+  #   environment:
+  #     VITE_API_BASE_URL: http://localhost:5000/api
+  #   volumes:
+  #     - ./frontend:/app:delegated
+  #     - /app/node_modules
+  #   command: npm run dev
+  #   networks:
+  #     - vigilanteye-network
+

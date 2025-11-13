@@ -8,6 +8,7 @@ import * as authService from '@/services/authService'
 import { useAuth } from '@/hooks/useAuth'
 
 const mockNavigate = vi.fn()
+let mockLocation = { state: null, pathname: '/login', search: '', hash: '' }
 
 // Mock dependencies
 vi.mock('@/services/authService')
@@ -17,7 +18,7 @@ vi.mock('react-router-dom', async () => {
   return {
     ...actual,
     useNavigate: () => mockNavigate,
-    useLocation: () => ({ state: null }),
+    useLocation: () => mockLocation,
   }
 })
 
@@ -262,6 +263,96 @@ describe('Login Page', () => {
         created_at: new Date().toISOString(),
       },
       expires_in: 3600,
+    })
+  })
+
+  it('redirects to home if already authenticated', async () => {
+    ;(useAuth as any).mockReturnValue({
+      isAuthenticated: true,
+      login: vi.fn(),
+    })
+
+    render(
+      <TestWrapper>
+        <LoginPage />
+      </TestWrapper>
+    )
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true })
+    })
+  })
+
+  it('navigates to location.state.from after successful login', async () => {
+    // Set location with state
+    const originalLocation = mockLocation
+    mockLocation = {
+      state: { from: '/protected-page' },
+      pathname: '/login',
+      search: '',
+      hash: '',
+    }
+
+    vi.spyOn(authService, 'login').mockResolvedValue({
+      access_token: 'token123',
+      refresh_token: 'refresh123',
+      user: {
+        id: '123',
+        username: 'testuser',
+        email: 'test@example.com',
+        role: 'staff',
+        is_active: true,
+        last_login: null,
+        created_at: new Date().toISOString(),
+      },
+      expires_in: 3600,
+    })
+
+    render(
+      <TestWrapper>
+        <LoginPage />
+      </TestWrapper>
+    )
+
+    const usernameInput = screen.getByLabelText(/email or username/i)
+    const passwordInput = screen.getByLabelText(/password/i)
+    const submitButton = screen.getByRole('button', { name: /sign in/i })
+
+    fireEvent.change(usernameInput, { target: { value: 'testuser' } })
+    fireEvent.change(passwordInput, { target: { value: 'Password123' } })
+    fireEvent.click(submitButton)
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/protected-page', { replace: true })
+    })
+
+    // Reset the location
+    mockLocation = originalLocation
+  })
+
+  it('toggles password visibility via eye icon', async () => {
+    render(
+      <TestWrapper>
+        <LoginPage />
+      </TestWrapper>
+    )
+
+    const passwordInput = screen.getByLabelText(/password/i) as HTMLInputElement
+    const toggleButton = screen.getByRole('button', { name: /show password|hide password/i })
+
+    // Password should be hidden initially
+    expect(passwordInput.type).toBe('password')
+
+    // Click to show password
+    fireEvent.click(toggleButton)
+    await waitFor(() => {
+      expect(passwordInput.type).toBe('text')
+    })
+
+    // Click to hide password again
+    fireEvent.click(toggleButton)
+    await waitFor(() => {
+      expect(passwordInput.type).toBe('password')
     })
   })
 })
