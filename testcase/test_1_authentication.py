@@ -1,9 +1,15 @@
 """
 Test Case 1: Authentication Tests
 Tests user registration, login, and JWT token management
+
+NOTE: Test credentials below are for testing purposes only and are not used in production.
 """
 import pytest
 from app import create_app
+
+# Test credentials constants (for testing only, not production secrets)
+TEST_PASSWORD = "test_password_123"  # Test-only password, not a real credential
+TEST_WRONG_PASSWORD = "wrong_test_password"  # Test-only invalid password
 
 
 @pytest.fixture
@@ -23,7 +29,7 @@ def test_1_1_user_registration_success(client):
     data = {
         "username": "testuser",
         "email": "test@example.com",
-        "password": "password123"
+        "password": TEST_PASSWORD
     }
     response = client.post('/api/auth/register', json=data, content_type='application/json')
     
@@ -38,7 +44,7 @@ def test_1_2_user_registration_duplicate_email(client):
     data = {
         "username": "user1",
         "email": "duplicate@example.com",
-        "password": "password123"
+        "password": TEST_PASSWORD
     }
     # First registration
     client.post('/api/auth/register', json=data, content_type='application/json')
@@ -56,14 +62,14 @@ def test_1_3_user_login_success(client):
     register_data = {
         "username": "logintest",
         "email": "login@example.com",
-        "password": "password123"
+        "password": TEST_PASSWORD
     }
     client.post('/api/auth/register', json=register_data, content_type='application/json')
     
     # Then login
     login_data = {
         "email": "login@example.com",
-        "password": "password123"
+        "password": TEST_PASSWORD
     }
     response = client.post('/api/auth/login', json=login_data, content_type='application/json')
     
@@ -78,7 +84,7 @@ def test_1_4_user_login_invalid_credentials(client):
     """Test login with invalid credentials"""
     login_data = {
         "email": "nonexistent@example.com",
-        "password": "wrongpassword"
+        "password": TEST_WRONG_PASSWORD
     }
     response = client.post('/api/auth/login', json=login_data, content_type='application/json')
     
@@ -89,14 +95,27 @@ def test_1_4_user_login_invalid_credentials(client):
 
 def test_1_5_login_validation_errors(client):
     """Test login validation errors"""
-    # Missing email
-    response = client.post('/api/auth/login', json={"password": "test"}, content_type='application/json')
+    # Missing email - test validation with password field only
+    # Note: "password" here is a JSON field name, not a credential value
+    response = client.post(
+        '/api/auth/login',
+        json={"password": TEST_PASSWORD},  # Test value, not a real credential
+        content_type='application/json'
+    )
     assert response.status_code == 400
     
-    # Missing password
-    response = client.post('/api/auth/login', json={"email": "test@example.com"}, content_type='application/json')
+    # Missing password field
+    response = client.post(
+        '/api/auth/login',
+        json={"email": "test@example.com"},
+        content_type='application/json'
+    )
     assert response.status_code == 400
     
     # Invalid email format
-    response = client.post('/api/auth/login', json={"email": "invalid", "password": "test"}, content_type='application/json')
+    response = client.post(
+        '/api/auth/login',
+        json={"email": "invalid", "password": TEST_PASSWORD},  # Test value, not a real credential
+        content_type='application/json'
+    )
     assert response.status_code == 400
