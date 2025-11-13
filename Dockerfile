@@ -7,13 +7,14 @@ WORKDIR /app
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Install system dependencies
+# Install system dependencies including CMake for dlib
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         default-mysql-client \
         build-essential \
         pkg-config \
         default-libmysqlclient-dev \
+        cmake \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install Python dependencies

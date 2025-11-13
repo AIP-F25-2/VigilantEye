@@ -1,0 +1,610 @@
+{% extends "base.html" %}
+
+{% block title %}CCTV Intelligence - VIGILANTEye{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">📹 CCTV Intelligence Dashboard</h1>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#processVideoModal">
+                        <i class="fas fa-video"></i> Process Video
+                    </button>
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addWatchlistModal">
+                        <i class="fas fa-user-plus"></i> Add to Watchlist
+                    </button>
+                    <button type="button" class="btn btn-warning" onclick="refreshDashboard()">
+                        <i class="fas fa-sync"></i> Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="totalPersons">0</h4>
+                            <p class="card-text">Persons Tracked</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="watchlistPersons">0</h4>
+                            <p class="card-text">Watchlist Members</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-list fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="activeCameras">0</h4>
+                            <p class="card-text">Active Cameras</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-camera fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="recentAlerts">0</h4>
+                            <p class="card-text">Recent Alerts</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs" id="cctvTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="tracking-tab" data-bs-toggle="tab" data-bs-target="#tracking" type="button" role="tab">
+                <i class="fas fa-search"></i> Person Tracking
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="watchlist-tab" data-bs-toggle="tab" data-bs-target="#watchlist" type="button" role="tab">
+                <i class="fas fa-list"></i> Watchlist
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="cameras-tab" data-bs-toggle="tab" data-bs-target="#cameras" type="button" role="tab">
+                <i class="fas fa-camera"></i> Cameras
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="alerts-tab" data-bs-toggle="tab" data-bs-target="#alerts" type="button" role="tab">
+                <i class="fas fa-bell"></i> Alerts
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="cctvTabContent">
+        <!-- Person Tracking Tab -->
+        <div class="tab-pane fade show active" id="tracking" role="tabpanel">
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Person Tracking</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="trackingTable">
+                            <thead>
+                                <tr>
+                                    <th>Person ID</th>
+                                    <th>Type</th>
+                                    <th>Confidence</th>
+                                    <th>Last Seen</th>
+                                    <th>Cameras</th>
+                                    <th>Watchlist</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data will be loaded via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Watchlist Tab -->
+        <div class="tab-pane fade" id="watchlist" role="tabpanel">
+            <div class="card mt-3">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Watchlist Management</h5>
+                    <div class="btn-group" role="group">
+                        <button class="btn btn-sm btn-outline-primary" onclick="loadWatchlist('employee')">Employees</button>
+                        <button class="btn btn-sm btn-outline-success" onclick="loadWatchlist('vip')">VIPs</button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="loadWatchlist('suspect')">Suspects</button>
+                        <button class="btn btn-sm btn-outline-info" onclick="loadWatchlist()">All</button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="watchlistTable">
+                            <thead>
+                                <tr>
+                                    <th>Person ID</th>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Added Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data will be loaded via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cameras Tab -->
+        <div class="tab-pane fade" id="cameras" role="tabpanel">
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Camera Status</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="camerasTable">
+                            <thead>
+                                <tr>
+                                    <th>Camera ID</th>
+                                    <th>Persons Detected</th>
+                                    <th>Last Activity</th>
+                                    <th>Watchlist Alerts</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data will be loaded via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts Tab -->
+        <div class="tab-pane fade" id="alerts" role="tabpanel">
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Recent Alerts</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="alertsTable">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Camera</th>
+                                    <th>Person ID</th>
+                                    <th>Type</th>
+                                    <th>Confidence</th>
+                                    <th>Frame</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data will be loaded via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Process Video Modal -->
+<div class="modal fade" id="processVideoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Process CCTV Video</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="processVideoForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="videoFile" class="form-label">Upload Video</label>
+                        <input type="file" class="form-control" id="videoFile" name="video" accept="video/*" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="cameraId" class="form-label">Camera ID</label>
+                                <input type="text" class="form-control" id="cameraId" name="camera_id" value="camera_001">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="frameSkip" class="form-label">Frame Skip</label>
+                                <input type="number" class="form-control" id="frameSkip" name="frame_skip" value="30" min="1">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="privacyMode" name="privacy_mode">
+                            <label class="form-check-label" for="privacyMode">
+                                Privacy Mode (disable demographics)
+                            </label>
+                        </div>
+                    </div>
+                </form>
+                <div id="processResult" class="mt-3" style="display: none;">
+                    <!-- Results will be displayed here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="processVideo()">Process Video</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add to Watchlist Modal -->
+<div class="modal fade" id="addWatchlistModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add to Watchlist</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addWatchlistForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="watchlistImage" class="form-label">Person Image</label>
+                        <input type="file" class="form-control" id="watchlistImage" name="image" accept="image/*" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="personName" class="form-label">Name</label>
+                                <input type="text" class="form-control" id="personName" name="name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="personType" class="form-label">Type</label>
+                                <select class="form-select" id="personType" name="person_type" required>
+                                    <option value="employee">Employee</option>
+                                    <option value="vip">VIP</option>
+                                    <option value="suspect">Suspect</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="metadata" class="form-label">Metadata (JSON)</label>
+                        <textarea class="form-control" id="metadata" name="metadata" rows="3" placeholder='{"department": "IT", "access_level": "high"}'></textarea>
+                    </div>
+                </form>
+                <div id="addWatchlistResult" class="mt-3" style="display: none;">
+                    <!-- Results will be displayed here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-success" onclick="addToWatchlist()">Add to Watchlist</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// CCTV Dashboard JavaScript
+document.addEventListener('DOMContentLoaded', function() {
+    loadDashboardData();
+    setInterval(loadDashboardData, 30000); // Refresh every 30 seconds
+});
+
+function loadDashboardData() {
+    // Load agent status
+    fetch('/api/cctv/status')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const summary = data.tracking_summary;
+                document.getElementById('totalPersons').textContent = summary.total_persons;
+                document.getElementById('watchlistPersons').textContent = summary.watchlist_persons;
+                document.getElementById('activeCameras').textContent = summary.cameras_active;
+            }
+        })
+        .catch(error => console.error('Error loading status:', error));
+
+    // Load tracking data
+    loadTrackingData();
+    
+    // Load alerts
+    loadAlerts();
+}
+
+function loadTrackingData() {
+    fetch('/api/cctv/tracking')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateTrackingTable(data.known_persons);
+            }
+        })
+        .catch(error => console.error('Error loading tracking data:', error));
+}
+
+function loadWatchlist(type = null) {
+    const url = type ? `/api/cctv/watchlist?type=${type}` : '/api/cctv/watchlist';
+    fetch(url)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateWatchlistTable(data.watchlist);
+            }
+        })
+        .catch(error => console.error('Error loading watchlist:', error));
+}
+
+function loadCameras() {
+    fetch('/api/cctv/cameras')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                updateCamerasTable(data.cameras);
+            }
+        })
+        .catch(error => console.error('Error loading cameras:', error));
+}
+
+function loadAlerts() {
+    fetch('/api/cctv/alerts')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('recentAlerts').textContent = data.total_alerts;
+                updateAlertsTable(data.alerts);
+            }
+        })
+        .catch(error => console.error('Error loading alerts:', error));
+}
+
+function updateTrackingTable(persons) {
+    const tbody = document.querySelector('#trackingTable tbody');
+    tbody.innerHTML = '';
+    
+    Object.entries(persons).forEach(([personId, person]) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${personId}</td>
+            <td><span class="badge bg-${getTypeColor(person.person_type)}">${person.person_type}</span></td>
+            <td>${(person.confidence_score * 100).toFixed(1)}%</td>
+            <td>${person.last_seen ? new Date(person.last_seen).toLocaleString() : 'Never'}</td>
+            <td>${person.cameras_seen.join(', ')}</td>
+            <td><span class="badge bg-${person.watchlist_status ? 'success' : 'secondary'}">${person.watchlist_status ? 'Yes' : 'No'}</span></td>
+            <td>
+                <button class="btn btn-sm btn-outline-primary" onclick="viewPerson('${personId}')">
+                    <i class="fas fa-eye"></i>
+                </button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function updateWatchlistTable(watchlist) {
+    const tbody = document.querySelector('#watchlistTable tbody');
+    tbody.innerHTML = '';
+    
+    Object.entries(watchlist).forEach(([type, persons]) => {
+        Object.entries(persons).forEach(([personId, person]) => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${personId}</td>
+                <td>${person.name}</td>
+                <td><span class="badge bg-${getTypeColor(type)}">${type}</span></td>
+                <td>${new Date(person.added_date).toLocaleString()}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeFromWatchlist('${personId}')">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    });
+}
+
+function updateCamerasTable(cameras) {
+    const tbody = document.querySelector('#camerasTable tbody');
+    tbody.innerHTML = '';
+    
+    cameras.forEach(camera => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${camera.camera_id}</td>
+            <td>${camera.persons_detected}</td>
+            <td>${camera.last_activity ? new Date(camera.last_activity).toLocaleString() : 'Never'}</td>
+            <td><span class="badge bg-${camera.watchlist_alerts > 0 ? 'danger' : 'success'}">${camera.watchlist_alerts}</span></td>
+            <td><span class="badge bg-success">Active</span></td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function updateAlertsTable(alerts) {
+    const tbody = document.querySelector('#alertsTable tbody');
+    tbody.innerHTML = '';
+    
+    alerts.forEach(alert => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${new Date(alert.timestamp).toLocaleString()}</td>
+            <td>${alert.camera_id}</td>
+            <td>${alert.person_id}</td>
+            <td><span class="badge bg-${getTypeColor(alert.person_type)}">${alert.person_type}</span></td>
+            <td>${(alert.confidence_score * 100).toFixed(1)}%</td>
+            <td>${alert.frame_number}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function getTypeColor(type) {
+    const colors = {
+        'employee': 'primary',
+        'vip': 'success',
+        'suspect': 'danger',
+        'unknown': 'secondary',
+        'visitor': 'info'
+    };
+    return colors[type] || 'secondary';
+}
+
+function processVideo() {
+    const form = document.getElementById('processVideoForm');
+    const formData = new FormData(form);
+    const resultDiv = document.getElementById('processResult');
+    
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div><p>Processing video...</p></div>';
+    
+    fetch('/api/cctv/process', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <h6>Video Processing Complete</h6>
+                    <p><strong>Frames Processed:</strong> ${data.frames_processed}</p>
+                    <p><strong>Detections Saved:</strong> ${data.detections_saved}</p>
+                    <p><strong>Total Faces:</strong> ${data.processing_summary.total_faces}</p>
+                    <p><strong>Unique Persons:</strong> ${data.processing_summary.unique_persons}</p>
+                    <p><strong>Watchlist Matches:</strong> ${data.processing_summary.watchlist_matches}</p>
+                </div>
+            `;
+            loadDashboardData(); // Refresh dashboard
+        } else {
+            resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+        }
+    })
+    .catch(error => {
+        resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+    });
+}
+
+function addToWatchlist() {
+    const form = document.getElementById('addWatchlistForm');
+    const formData = new FormData(form);
+    const resultDiv = document.getElementById('addWatchlistResult');
+    
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div><p>Adding to watchlist...</p></div>';
+    
+    fetch('/api/cctv/watchlist', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            resultDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <h6>Added to Watchlist</h6>
+                    <p><strong>Person ID:</strong> ${data.person_id}</p>
+                    <p><strong>Name:</strong> ${data.name}</p>
+                    <p><strong>Type:</strong> ${data.person_type}</p>
+                </div>
+            `;
+            loadWatchlist(); // Refresh watchlist
+        } else {
+            resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+        }
+    })
+    .catch(error => {
+        resultDiv.innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+    });
+}
+
+function removeFromWatchlist(personId) {
+    if (confirm('Are you sure you want to remove this person from the watchlist?')) {
+        fetch(`/api/cctv/watchlist/${personId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                loadWatchlist(); // Refresh watchlist
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
+    }
+}
+
+function viewPerson(personId) {
+    // Implement person details view
+    alert('View person details for: ' + personId);
+}
+
+function refreshDashboard() {
+    loadDashboardData();
+    loadCameras();
+}
+
+// Tab event listeners
+document.getElementById('watchlist-tab').addEventListener('click', function() {
+    loadWatchlist();
+});
+
+document.getElementById('cameras-tab').addEventListener('click', function() {
+    loadCameras();
+});
+
+document.getElementById('alerts-tab').addEventListener('click', function() {
+    loadAlerts();
+});
+</script>
+{% endblock %}
+

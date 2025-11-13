@@ -1,8 +1,21 @@
 from app import create_app, db
 from app.models import *
 from app.services.scheduler import start_scheduler
+from flask_migrate import upgrade
+import logging
 
 app = create_app()
+
+# Run database migrations automatically on startup
+with app.app_context():
+    try:
+        logging.info("Running database migrations...")
+        upgrade()
+        logging.info("Database migrations completed successfully")
+    except Exception as e:
+        logging.error(f"Error running migrations: {e}")
+        # Don't fail startup if migrations fail - log and continue
+        # This allows the app to start even if there are migration issues
 
 # Start the background scheduler for message processing
 start_scheduler()

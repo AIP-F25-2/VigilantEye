@@ -3,9 +3,7 @@ FaceAi API Controller for VIGILANTEye
 Provides REST API endpoints for face detection, demographics, and ambiguity analysis
 """
 
-from flask import Blueprint, request, jsonify, current_app
-from werkzeug.utils import secure_filename
-import os
+from flask import Blueprint, request
 import time
 import logging
 from app import db
@@ -14,34 +12,25 @@ from app.models.faceai_models import (
     FaceDetection, DemographicsAnalysis, AmbiguityAnalysis, 
     FaceEncoding, FaceAiConfiguration
 )
+from app.utils.file_utils import (
+    save_uploaded_file, calculate_processing_time, 
+    validate_file_upload, ALLOWED_IMAGE_EXTENSIONS
+)
+from app.utils.response_utils import (
+    success_response, error_response, handle_exception,
+    paginated_response, HTTP_BAD_REQUEST, HTTP_INTERNAL_ERROR,
+    HTTP_SERVICE_UNAVAILABLE, HTTP_CREATED
+)
+from app.utils.db_utils import save_model
 
 logger = logging.getLogger(__name__)
 
 # Create blueprint
 faceai_bp = Blueprint("faceai", __name__, url_prefix="/api/faceai")
 
-# Allowed file extensions
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'tiff'}
-
-def allowed_file(filename):
-    """Check if file extension is allowed"""
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-
-def save_uploaded_file(file, subfolder="uploads"):
-    """Save uploaded file and return path"""
-    if file and allowed_file(file.filename):
-        filename = secure_filename(file.filename)
-        # Add timestamp to avoid conflicts
-        name, ext = os.path.splitext(filename)
-        filename = f"{name}_{int(time.time())}{ext}"
-        
-        upload_dir = os.path.join(current_app.config.get('UPLOAD_FOLDER', 'uploads'), subfolder)
-        os.makedirs(upload_dir, exist_ok=True)
-        
-        filepath = os.path.join(upload_dir, filename)
-        file.save(filepath)
-        return filepath
-    return None
+# Constants
+MODEL_VERSION = "1.0"
+DEFAULT_SOURCE_TYPE = "image"
 
 @faceai_bp.route("/status", methods=["GET"])
 def get_status():
@@ -49,32 +38,26 @@ def get_status():
     try:
         service = get_faceai_service()
         status = service.get_service_status()
-        return jsonify({
-            "success": True,
-            "status": status
-        })
+        return success_response({"status": status})
     except Exception as e:
-        logger.error(f"Status check error: {e}")
-        return jsonify({"error": str(e)}), 500
+        return handle_exception(e, "Status check", HTTP_INTERNAL_ERROR)
 
 @faceai_bp.route("/detect", methods=["POST"])
 def detect_faces():
     """Detect and recognize faces in an uploaded image"""
     try:
-        if 'image' not in request.files:
-            return jsonify({"error": "No image file provided"}), 400
-        
-        file = request.files['image']
-        if file.filename == '':
-            return jsonify({"error": "No file selected"}), 400
+        # Validate file upload
+        file, error_msg = validate_file_upload(request.files, 'image')
+        if error_msg:
+            return error_response(error_msg, status_code=HTTP_BAD_REQUEST)
         
         # Save uploaded file
-        filepath = save_uploaded_file(file, "faceai")
+        filepath = save_uploaded_file(file, "faceai", ALLOWED_IMAGE_EXTENSIONS)
         if not filepath:
-            return jsonify({"error": "Invalid file type"}), 400
+            return error_response("Invalid file type", status_code=HTTP_BAD_REQUEST)
         
         # Get additional parameters
-        source_type = request.form.get('source_type', 'image')
+        source_type = request.form.get('source_type', DEFAULT_SOURCE_TYPE)
         video_id = request.form.get('video_id')
         frame_number = request.form.get('frame_number', type=int)
         show_result = request.form.get('show_result', 'false').lower() == 'true'
@@ -82,39 +65,33 @@ def detect_faces():
         # Get FaceAi service
         service = get_faceai_service()
         if not service.is_available():
-            return jsonify({"error": "FaceAi service not available"}), 503
+            return error_response("FaceAi service not available", 
+                                status_code=HTTP_SERVICE_UNAVAILABLE)
         
         # Process image
         start_time = time.time()
         result = service.detect_faces(filepath, show_result=show_result)
-        processing_time = (time.time() - start_time) * 1000  # Convert to milliseconds
+        processing_time = calculate_processing_time(start_time)
         
         if result.get("error"):
-            return jsonify(result), 500
+            return error_response(result.get("error"), status_code=HTTP_INTERNAL_ERROR)
         
         # Save to database
-        try:
-            face_detection = FaceDetection(
-                source_type=source_type,
-                source_path=filepath,
-                video_id=video_id,
-                frame_number=frame_number,
-                faces_detected=result.get("faces_detected", 0),
-                detection_results=result.get("results"),
-                processing_time_ms=processing_time,
-                model_version="1.0"
-            )
-            db.session.add(face_detection)
-            db.session.commit()
-            
+        face_detection = FaceDetection(
+            source_type=source_type,
+            source_path=filepath,
+            video_id=video_id,
+            frame_number=frame_number,
+            faces_detected=result.get("faces_detected", 0),
+            detection_results=result.get("results"),
+            processing_time_ms=processing_time,
+            model_version=MODEL_VERSION
+        )
+        success, _ = save_model(face_detection)
+        if success:
             result["detection_id"] = face_detection.id
-            
-        except Exception as e:
-            logger.error(f"Database save error: {e}")
-            db.session.rollback()
         
-        return jsonify({
-            "success": True,
+        return success_response({
             "detection_id": result.get("detection_id"),
             "faces_detected": result.get("faces_detected", 0),
             "results": result.get("results", []),
@@ -122,64 +99,55 @@ def detect_faces():
         })
         
     except Exception as e:
-        logger.error(f"Face detection error: {e}")
-        return jsonify({"error": str(e)}), 500
+        return handle_exception(e, "Face detection", HTTP_INTERNAL_ERROR)
 
 @faceai_bp.route("/demographics", methods=["POST"])
 def analyze_demographics():
     """Analyze age and gender demographics of faces in an image"""
     try:
-        if 'image' not in request.files:
-            return jsonify({"error": "No image file provided"}), 400
-        
-        file = request.files['image']
-        if file.filename == '':
-            return jsonify({"error": "No file selected"}), 400
+        # Validate file upload
+        file, error_msg = validate_file_upload(request.files, 'image')
+        if error_msg:
+            return error_response(error_msg, status_code=HTTP_BAD_REQUEST)
         
         # Save uploaded file
-        filepath = save_uploaded_file(file, "faceai")
+        filepath = save_uploaded_file(file, "faceai", ALLOWED_IMAGE_EXTENSIONS)
         if not filepath:
-            return jsonify({"error": "Invalid file type"}), 400
+            return error_response("Invalid file type", status_code=HTTP_BAD_REQUEST)
         
         # Get additional parameters
-        source_type = request.form.get('source_type', 'image')
+        source_type = request.form.get('source_type', DEFAULT_SOURCE_TYPE)
         face_detection_id = request.form.get('face_detection_id')
         
         # Get FaceAi service
         service = get_faceai_service()
         if not service.is_available():
-            return jsonify({"error": "FaceAi service not available"}), 503
+            return error_response("FaceAi service not available", 
+                                status_code=HTTP_SERVICE_UNAVAILABLE)
         
         # Process image
         start_time = time.time()
         result = service.analyze_demographics(filepath)
-        processing_time = (time.time() - start_time) * 1000
+        processing_time = calculate_processing_time(start_time)
         
         if result.get("error"):
-            return jsonify(result), 500
+            return error_response(result.get("error"), status_code=HTTP_INTERNAL_ERROR)
         
         # Save to database
-        try:
-            demographics_analysis = DemographicsAnalysis(
-                face_detection_id=face_detection_id,
-                source_type=source_type,
-                source_path=filepath,
-                faces_analyzed=result.get("faces_analyzed", 0),
-                analysis_results=result.get("results"),
-                processing_time_ms=processing_time,
-                model_version="1.0"
-            )
-            db.session.add(demographics_analysis)
-            db.session.commit()
-            
+        demographics_analysis = DemographicsAnalysis(
+            face_detection_id=face_detection_id,
+            source_type=source_type,
+            source_path=filepath,
+            faces_analyzed=result.get("faces_analyzed", 0),
+            analysis_results=result.get("results"),
+            processing_time_ms=processing_time,
+            model_version=MODEL_VERSION
+        )
+        success, _ = save_model(demographics_analysis)
+        if success:
             result["analysis_id"] = demographics_analysis.id
-            
-        except Exception as e:
-            logger.error(f"Database save error: {e}")
-            db.session.rollback()
         
-        return jsonify({
-            "success": True,
+        return success_response({
             "analysis_id": result.get("analysis_id"),
             "faces_analyzed": result.get("faces_analyzed", 0),
             "results": result.get("results", []),
@@ -187,28 +155,26 @@ def analyze_demographics():
         })
         
     except Exception as e:
-        logger.error(f"Demographics analysis error: {e}")
-        return jsonify({"error": str(e)}), 500
+        return handle_exception(e, "Demographics analysis", HTTP_INTERNAL_ERROR)
 
 @faceai_bp.route("/ambiguity", methods=["POST"])
 def check_ambiguity():
     """Check if two images show the same person (ambiguity detection)"""
     try:
-        if 'image1' not in request.files or 'image2' not in request.files:
-            return jsonify({"error": "Two image files required (image1 and image2)"}), 400
+        # Validate file uploads
+        file1, error_msg1 = validate_file_upload(request.files, 'image1')
+        file2, error_msg2 = validate_file_upload(request.files, 'image2')
         
-        file1 = request.files['image1']
-        file2 = request.files['image2']
-        
-        if file1.filename == '' or file2.filename == '':
-            return jsonify({"error": "Both files must be selected"}), 400
+        if error_msg1 or error_msg2:
+            return error_response("Two image files required (image1 and image2)", 
+                                status_code=HTTP_BAD_REQUEST)
         
         # Save uploaded files
-        filepath1 = save_uploaded_file(file1, "faceai")
-        filepath2 = save_uploaded_file(file2, "faceai")
+        filepath1 = save_uploaded_file(file1, "faceai", ALLOWED_IMAGE_EXTENSIONS)
+        filepath2 = save_uploaded_file(file2, "faceai", ALLOWED_IMAGE_EXTENSIONS)
         
         if not filepath1 or not filepath2:
-            return jsonify({"error": "Invalid file types"}), 400
+            return error_response("Invalid file types", status_code=HTTP_BAD_REQUEST)
         
         # Get additional parameters
         source_type = request.form.get('source_type', 'comparison')
@@ -217,40 +183,34 @@ def check_ambiguity():
         # Get FaceAi service
         service = get_faceai_service()
         if not service.is_available():
-            return jsonify({"error": "FaceAi service not available"}), 503
+            return error_response("FaceAi service not available", 
+                                status_code=HTTP_SERVICE_UNAVAILABLE)
         
         # Process images
         start_time = time.time()
         result = service.check_ambiguity(filepath1, filepath2, show_result=show_result)
-        processing_time = (time.time() - start_time) * 1000
+        processing_time = calculate_processing_time(start_time)
         
         if result.get("error"):
-            return jsonify(result), 500
+            return error_response(result.get("error"), status_code=HTTP_INTERNAL_ERROR)
         
         # Save to database
-        try:
-            ambiguity_analysis = AmbiguityAnalysis(
-                image1_path=filepath1,
-                image2_path=filepath2,
-                source_type=source_type,
-                is_ambiguous=result.get("ambiguous", False),
-                ambiguity_score=result.get("score", 0.0),
-                similarity_scores=result.get("similarities", {}),
-                reasons=result.get("reasons", []),
-                processing_time_ms=processing_time,
-                model_version="1.0"
-            )
-            db.session.add(ambiguity_analysis)
-            db.session.commit()
-            
+        ambiguity_analysis = AmbiguityAnalysis(
+            image1_path=filepath1,
+            image2_path=filepath2,
+            source_type=source_type,
+            is_ambiguous=result.get("ambiguous", False),
+            ambiguity_score=result.get("score", 0.0),
+            similarity_scores=result.get("similarities", {}),
+            reasons=result.get("reasons", []),
+            processing_time_ms=processing_time,
+            model_version=MODEL_VERSION
+        )
+        success, _ = save_model(ambiguity_analysis)
+        if success:
             result["analysis_id"] = ambiguity_analysis.id
-            
-        except Exception as e:
-            logger.error(f"Database save error: {e}")
-            db.session.rollback()
         
-        return jsonify({
-            "success": True,
+        return success_response({
             "analysis_id": result.get("analysis_id"),
             "ambiguous": result.get("ambiguous", False),
             "score": result.get("score", 0.0),
@@ -260,15 +220,15 @@ def check_ambiguity():
         })
         
     except Exception as e:
-        logger.error(f"Ambiguity check error: {e}")
-        return jsonify({"error": str(e)}), 500
+        return handle_exception(e, "Ambiguity check", HTTP_INTERNAL_ERROR)
 
 @faceai_bp.route("/detections", methods=["GET"])
 def get_detections():
     """Get face detection history"""
     try:
+        from app.utils.file_utils import DEFAULT_PAGE_SIZE
         page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 10, type=int)
+        per_page = request.args.get('per_page', DEFAULT_PAGE_SIZE, type=int)
         source_type = request.args.get('source_type')
         
         query = FaceDetection.query
@@ -280,100 +240,76 @@ def get_detections():
             page=page, per_page=per_page, error_out=False
         )
         
-        return jsonify({
-            "success": True,
-            "detections": [detection.to_dict() for detection in detections.items],
-            "pagination": {
-                "page": page,
-                "per_page": per_page,
-                "total": detections.total,
-                "pages": detections.pages
-            }
-        })
+        return paginated_response(
+            [detection.to_dict() for detection in detections.items],
+            page, per_page, detections.total, detections.pages,
+            data_key="detections"
+        )
         
     except Exception as e:
-        logger.error(f"Get detections error: {e}")
-        return jsonify({"error": str(e)}), 500
+        return handle_exception(e, "Get detections", HTTP_INTERNAL_ERROR)
 
 @faceai_bp.route("/detections/<detection_id>", methods=["GET"])
 def get_detection(detection_id):
     """Get specific face detection result"""
     try:
         detection = FaceDetection.query.get_or_404(detection_id)
-        return jsonify({
-            "success": True,
-            "detection": detection.to_dict()
-        })
-        
+        return success_response({"detection": detection.to_dict()})
     except Exception as e:
-        logger.error(f"Get detection error: {e}")
-        return jsonify({"error": str(e)}), 500
+        return handle_exception(e, "Get detection", HTTP_INTERNAL_ERROR)
 
 @faceai_bp.route("/analyses/demographics", methods=["GET"])
 def get_demographics_analyses():
     """Get demographics analysis history"""
     try:
+        from app.utils.file_utils import DEFAULT_PAGE_SIZE
         page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 10, type=int)
+        per_page = request.args.get('per_page', DEFAULT_PAGE_SIZE, type=int)
         
         analyses = DemographicsAnalysis.query.order_by(
             DemographicsAnalysis.created_at.desc()
         ).paginate(page=page, per_page=per_page, error_out=False)
         
-        return jsonify({
-            "success": True,
-            "analyses": [analysis.to_dict() for analysis in analyses.items],
-            "pagination": {
-                "page": page,
-                "per_page": per_page,
-                "total": analyses.total,
-                "pages": analyses.pages
-            }
-        })
+        return paginated_response(
+            [analysis.to_dict() for analysis in analyses.items],
+            page, per_page, analyses.total, analyses.pages,
+            data_key="analyses"
+        )
         
     except Exception as e:
-        logger.error(f"Get demographics analyses error: {e}")
-        return jsonify({"error": str(e)}), 500
+        return handle_exception(e, "Get demographics analyses", HTTP_INTERNAL_ERROR)
 
 @faceai_bp.route("/analyses/ambiguity", methods=["GET"])
 def get_ambiguity_analyses():
     """Get ambiguity analysis history"""
     try:
+        from app.utils.file_utils import DEFAULT_PAGE_SIZE
         page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 10, type=int)
+        per_page = request.args.get('per_page', DEFAULT_PAGE_SIZE, type=int)
         
         analyses = AmbiguityAnalysis.query.order_by(
             AmbiguityAnalysis.created_at.desc()
         ).paginate(page=page, per_page=per_page, error_out=False)
         
-        return jsonify({
-            "success": True,
-            "analyses": [analysis.to_dict() for analysis in analyses.items],
-            "pagination": {
-                "page": page,
-                "per_page": per_page,
-                "total": analyses.total,
-                "pages": analyses.pages
-            }
-        })
+        return paginated_response(
+            [analysis.to_dict() for analysis in analyses.items],
+            page, per_page, analyses.total, analyses.pages,
+            data_key="analyses"
+        )
         
     except Exception as e:
-        logger.error(f"Get ambiguity analyses error: {e}")
-        return jsonify({"error": str(e)}), 500
+        return handle_exception(e, "Get ambiguity analyses", HTTP_INTERNAL_ERROR)
 
 @faceai_bp.route("/configurations", methods=["GET"])
 def get_configurations():
     """Get FaceAi configurations"""
     try:
         configs = FaceAiConfiguration.query.filter_by(is_active=True).all()
-        return jsonify({
-            "success": True,
+        return success_response({
             "configurations": [config.to_dict() for config in configs]
         })
-        
     except Exception as e:
-        logger.error(f"Get configurations error: {e}")
-        return jsonify({"error": str(e)}), 500
+        return handle_exception(e, "Get configurations", HTTP_INTERNAL_ERROR)
 
 @faceai_bp.route("/configurations", methods=["POST"])
 def create_configuration():
@@ -382,7 +318,8 @@ def create_configuration():
         data = request.get_json()
         
         if not data or 'config_name' not in data or 'config_data' not in data:
-            return jsonify({"error": "config_name and config_data required"}), 400
+            return error_response("config_name and config_data required", 
+                                status_code=HTTP_BAD_REQUEST)
         
         config = FaceAiConfiguration(
             config_name=data['config_name'],
@@ -391,15 +328,13 @@ def create_configuration():
             created_by=data.get('created_by')
         )
         
-        db.session.add(config)
-        db.session.commit()
+        success, error_msg = save_model(config)
+        if not success:
+            return error_response(error_msg or "Failed to create configuration",
+                                status_code=HTTP_INTERNAL_ERROR)
         
-        return jsonify({
-            "success": True,
-            "configuration": config.to_dict()
-        }), 201
+        return success_response({"configuration": config.to_dict()}, 
+                              status_code=HTTP_CREATED)
         
     except Exception as e:
-        logger.error(f"Create configuration error: {e}")
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+        return handle_exception(e, "Create configuration", HTTP_INTERNAL_ERROR)

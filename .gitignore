@@ -172,3 +172,6 @@ app/FaceAi/VigilantEye-18_FaceAi_Riya/models/*.pb
 # Test images (optional - remove if you want to track them)
 # app/FaceAi/VigilantEye-18_FaceAi_Riya/test_images/
 # app/FaceAi/VigilantEye-18_FaceAi_Riya/uploads/
+
+# Migrations backup
+*.pyc
