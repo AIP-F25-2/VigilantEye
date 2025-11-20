@@ -4,7 +4,6 @@ import numpy as np
 from Ambiguity import SimpleAmbiguityChecker
 
 # Initialize Flask app
-app = Flask(__name__)
 
 # Load the ambiguity checker model
 checker = SimpleAmbiguityChecker()
@@ -46,5 +45,4 @@ def check():
         return jsonify({"error": str(e)}), 500
 
 
-if __name__ == "__main__":
-    app.run(debug=True,port=5002)
+
