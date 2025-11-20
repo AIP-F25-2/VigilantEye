@@ -48,6 +48,12 @@ def cctv_dashboard():
     """CCTV Intelligence Dashboard"""
     return render_template('cctv_dashboard.html')
 
+@main_bp.route('/ai-analytics')
+@login_required
+def ai_analytics_dashboard():
+    """AI Analytics Dashboard"""
+    return render_template('ai_analytics_dashboard.html')
+
 @main_bp.route('/health')
 def health():
     """Health check endpoint - API"""

@@ -21,6 +21,22 @@
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    {% if session.user_id %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.dashboard') }}">Dashboard</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.face_ai_dashboard') }}">FaceAI</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.cctv_dashboard') }}">CCTV</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.ai_analytics_dashboard') }}">AI Analytics</a>
+                        </li>
+                    {% endif %}
+                </ul>
                 <ul class="navbar-nav ms-auto">
                     {% if session.user_id %}
                         <li class="nav-item">

@@ -13,6 +13,10 @@ from .faceai_models import (
     FaceDetection, DemographicsAnalysis, AmbiguityAnalysis, 
     FaceEncoding, FaceAiConfiguration
 )
+from .ai_analytics_models import (
+    ObjectDetection, AnomalyDetection, BehaviorAnalysis,
+    CrowdDensityAnalysis, SmartAlert
+)
 
 __all__ = [
     'BaseModel',
@@ -26,5 +30,7 @@ __all__ = [
     'Analytics', 'ViewEvent',
     'OutboundMessage', 'MessageStatus',
     'FaceDetection', 'DemographicsAnalysis', 'AmbiguityAnalysis',
-    'FaceEncoding', 'FaceAiConfiguration'
+    'FaceEncoding', 'FaceAiConfiguration',
+    'ObjectDetection', 'AnomalyDetection', 'BehaviorAnalysis',
+    'CrowdDensityAnalysis', 'SmartAlert'
 ]

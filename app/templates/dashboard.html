@@ -168,15 +168,31 @@
     </div>
 
     <div class="card">
-      <div class="card-header"><h6 class="mb-0">Automation status</h6></div>
+      <div class="card-header"><h6 class="mb-0">Automation Status</h6></div>
       <div class="card-body">
-        <div class="d-flex justify-content-between">
-          <span>Intrusion rule</span>
-          <span class="badge bg-secondary">Disabled</span>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span><i class="bi bi-robot me-1"></i> AI Analytics</span>
+          <span class="badge bg-success">Active</span>
         </div>
-        <div class="d-flex justify-content-between mt-2">
-          <span>PPE detection</span>
-          <span class="badge bg-secondary">Disabled</span>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span><i class="bi bi-person-badge me-1"></i> Face Recognition</span>
+          <span class="badge bg-success">Active</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span><i class="bi bi-camera-video me-1"></i> CCTV Processing</span>
+          <span class="badge bg-success">Active</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span><i class="bi bi-bell me-1"></i> Smart Alerts</span>
+          <span class="badge bg-success">Active</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <span><i class="bi bi-exclamation-triangle me-1"></i> Anomaly Detection</span>
+          <span class="badge bg-success">Active</span>
+        </div>
+        <div class="d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-people me-1"></i> Crowd Density Analysis</span>
+          <span class="badge bg-success">Active</span>
         </div>
       </div>
     </div>
@@ -247,13 +263,13 @@
                 </div>
               </div>
               <div class="flex-grow-1">
-                <h6 class="mb-2 text-warning">Object Recognition</h6>
-                <p class="text-muted small mb-3">Advanced object detection and classification for security monitoring.</p>
+                <h6 class="mb-2 text-warning">AI Analytics & Intelligence</h6>
+                <p class="text-muted small mb-3">Object detection, anomaly detection, behavior analysis, and smart alerts powered by AI.</p>
                 <div class="d-flex gap-2">
-                  <button class="btn btn-warning btn-sm" disabled>
-                    <i class="bi bi-search me-1"></i> Enable Objects
-                  </button>
-                  <span class="badge bg-secondary align-self-center">Demo Mode</span>
+                  <a href="{{ url_for('main.ai_analytics_dashboard') }}" class="btn btn-warning btn-sm">
+                    <i class="bi bi-robot me-1"></i> AI Analytics Dashboard
+                  </a>
+                  <span class="badge bg-success align-self-center">Available</span>
                 </div>
               </div>
             </div>

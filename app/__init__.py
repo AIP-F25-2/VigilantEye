@@ -46,6 +46,7 @@ def create_app():
     from app.controllers.webhook_controller import bp as webhook_bp
     from app.controllers.faceai_controller import faceai_bp
     from app.controllers.cctv_controller import cctv_bp
+    from app.controllers.ai_analytics_controller import ai_analytics_bp
     
     # Register main blueprints
     app.register_blueprint(main_bp)
@@ -67,6 +68,9 @@ def create_app():
     
     # Register CCTV integration blueprint
     app.register_blueprint(cctv_bp)  # CCTV API routes (/api/cctv/*)
+    
+    # Register AI Analytics blueprint
+    app.register_blueprint(ai_analytics_bp)  # AI Analytics API routes (/api/ai/*)
     
     # Note: Server blueprints removed - using new API structure
     

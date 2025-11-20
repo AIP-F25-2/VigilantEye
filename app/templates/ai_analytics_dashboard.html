@@ -1,0 +1,615 @@
+{% extends "base.html" %}
+
+{% block title %}AI Analytics Dashboard - VIGILANTEye{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">🤖 AI Analytics Dashboard</h1>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#analyzeFrameModal">
+                        <i class="bi bi-camera"></i> Analyze Frame
+                    </button>
+                    <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#analyzeVideoModal">
+                        <i class="bi bi-play-circle"></i> Analyze Video
+                    </button>
+                    <button type="button" class="btn btn-info" onclick="refreshDashboard()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="totalObjects">0</h4>
+                            <p class="card-text mb-0">Objects Detected</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-box-seam" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="totalAnomalies">0</h4>
+                            <p class="card-text mb-0">Anomalies Detected</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-exclamation-triangle" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="totalBehaviors">0</h4>
+                            <p class="card-text mb-0">Behaviors Analyzed</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-person-walking" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h4 class="card-title" id="totalAlerts">0</h4>
+                            <p class="card-text mb-0">Smart Alerts</p>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="bi bi-bell" style="font-size: 2rem;"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs for different views -->
+    <ul class="nav nav-tabs mb-4" id="analyticsTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="anomalies-tab" data-bs-toggle="tab" data-bs-target="#anomalies" type="button" role="tab">
+                <i class="bi bi-exclamation-triangle"></i> Anomalies
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="behaviors-tab" data-bs-toggle="tab" data-bs-target="#behaviors" type="button" role="tab">
+                <i class="bi bi-person-walking"></i> Behaviors
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="alerts-tab" data-bs-toggle="tab" data-bs-target="#alerts" type="button" role="tab">
+                <i class="bi bi-bell"></i> Smart Alerts
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="crowd-tab" data-bs-toggle="tab" data-bs-target="#crowd" type="button" role="tab">
+                <i class="bi bi-people"></i> Crowd Density
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content" id="analyticsTabContent">
+        <!-- Anomalies Tab -->
+        <div class="tab-pane fade show active" id="anomalies" role="tabpanel">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Recent Anomalies</h5>
+                    <button class="btn btn-sm btn-outline-primary" onclick="loadAnomalies()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="anomaliesTable">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Confidence</th>
+                                    <th>Description</th>
+                                    <th>Location</th>
+                                    <th>Timestamp</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="anomaliesTableBody">
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">Loading anomalies...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Behaviors Tab -->
+        <div class="tab-pane fade" id="behaviors" role="tabpanel">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Behavior Analysis</h5>
+                    <button class="btn btn-sm btn-outline-primary" onclick="loadBehaviors()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="behaviorsTable">
+                            <thead>
+                                <tr>
+                                    <th>Behavior Type</th>
+                                    <th>Confidence</th>
+                                    <th>Duration</th>
+                                    <th>Location</th>
+                                    <th>Timestamp</th>
+                                </tr>
+                            </thead>
+                            <tbody id="behaviorsTableBody">
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">Loading behaviors...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts Tab -->
+        <div class="tab-pane fade" id="alerts" role="tabpanel">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Smart Alerts</h5>
+                    <button class="btn btn-sm btn-outline-primary" onclick="loadAlerts()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="alertsList">
+                        <div class="text-center text-muted">Loading alerts...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Crowd Density Tab -->
+        <div class="tab-pane fade" id="crowd" role="tabpanel">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Crowd Density Analysis</h5>
+                    <button class="btn btn-sm btn-outline-primary" onclick="loadCrowdDensity()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover" id="crowdTable">
+                            <thead>
+                                <tr>
+                                    <th>Density Level</th>
+                                    <th>Person Count</th>
+                                    <th>Density %</th>
+                                    <th>Camera</th>
+                                    <th>Timestamp</th>
+                                </tr>
+                            </thead>
+                            <tbody id="crowdTableBody">
+                                <tr>
+                                    <td colspan="5" class="text-center text-muted">Loading crowd density data...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Analyze Frame Modal -->
+<div class="modal fade" id="analyzeFrameModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Analyze Frame</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="analyzeFrameForm">
+                    <div class="mb-3">
+                        <label for="frameImage" class="form-label">Upload Image</label>
+                        <input type="file" class="form-control" id="frameImage" accept="image/*" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="cameraId" class="form-label">Camera ID (optional)</label>
+                        <input type="text" class="form-control" id="cameraId" placeholder="camera_001">
+                    </div>
+                    <div class="mb-3">
+                        <label for="frameNumber" class="form-label">Frame Number (optional)</label>
+                        <input type="number" class="form-control" id="frameNumber" placeholder="0">
+                    </div>
+                </form>
+                <div id="frameAnalysisResult" class="mt-3"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="analyzeFrame()">
+                    <i class="bi bi-play"></i> Analyze
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Analyze Video Modal -->
+<div class="modal fade" id="analyzeVideoModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Analyze Video</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="analyzeVideoForm">
+                    <div class="mb-3">
+                        <label for="videoFile" class="form-label">Upload Video</label>
+                        <input type="file" class="form-control" id="videoFile" accept="video/*" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="videoCameraId" class="form-label">Camera ID (optional)</label>
+                        <input type="text" class="form-control" id="videoCameraId" placeholder="camera_001">
+                    </div>
+                    <div class="mb-3">
+                        <label for="frameSkip" class="form-label">Frame Skip (process every Nth frame)</label>
+                        <input type="number" class="form-control" id="frameSkip" value="30" min="1">
+                        <small class="form-text text-muted">Higher values = faster processing but less detail</small>
+                    </div>
+                </form>
+                <div id="videoAnalysisResult" class="mt-3"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="analyzeVideo()">
+                    <i class="bi bi-play"></i> Analyze Video
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Load dashboard data on page load
+document.addEventListener('DOMContentLoaded', function() {
+    checkServiceStatus();
+    loadAnomalies();
+    loadBehaviors();
+    loadAlerts();
+    loadCrowdDensity();
+});
+
+function checkServiceStatus() {
+    fetch('/api/ai/status')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.data.status) {
+                const status = data.data.status;
+                console.log('AI Analytics Service Status:', status);
+            }
+        })
+        .catch(error => console.error('Error checking status:', error));
+}
+
+function refreshDashboard() {
+    loadAnomalies();
+    loadBehaviors();
+    loadAlerts();
+    loadCrowdDensity();
+    checkServiceStatus();
+}
+
+function loadAnomalies() {
+    fetch('/api/ai/anomalies?per_page=20')
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById('anomaliesTableBody');
+            if (data.success && data.data && data.data.anomalies && data.data.anomalies.length > 0) {
+                document.getElementById('totalAnomalies').textContent = data.data.total || 0;
+                tbody.innerHTML = data.data.anomalies.map(anomaly => `
+                    <tr>
+                        <td><span class="badge bg-danger">${anomaly.anomaly_type}</span></td>
+                        <td>${(anomaly.confidence * 100).toFixed(1)}%</td>
+                        <td>${anomaly.description || 'N/A'}</td>
+                        <td>${anomaly.location ? `[${anomaly.location[0]}, ${anomaly.location[1]}]` : 'N/A'}</td>
+                        <td>${new Date(anomaly.created_at).toLocaleString()}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewAnomalyDetails('${anomaly.id}')">
+                                <i class="bi bi-eye"></i> View
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = '<tr><td colspan="6" class="text-center text-muted">No anomalies detected</td></tr>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading anomalies:', error);
+            document.getElementById('anomaliesTableBody').innerHTML = 
+                '<tr><td colspan="6" class="text-center text-danger">Error loading anomalies</td></tr>';
+        });
+}
+
+function loadBehaviors() {
+    fetch('/api/ai/behaviors?per_page=20')
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById('behaviorsTableBody');
+            if (data.success && data.data && data.data.behaviors && data.data.behaviors.length > 0) {
+                document.getElementById('totalBehaviors').textContent = data.data.total || 0;
+                tbody.innerHTML = data.data.behaviors.map(behavior => `
+                    <tr>
+                        <td><span class="badge bg-success">${behavior.behavior_type}</span></td>
+                        <td>${(behavior.confidence * 100).toFixed(1)}%</td>
+                        <td>${behavior.duration_seconds ? behavior.duration_seconds.toFixed(1) + 's' : 'N/A'}</td>
+                        <td>${behavior.location ? `[${behavior.location[0]}, ${behavior.location[1]}]` : 'N/A'}</td>
+                        <td>${new Date(behavior.created_at).toLocaleString()}</td>
+                    </tr>
+                `).join('');
+            } else {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No behaviors analyzed</td></tr>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading behaviors:', error);
+            document.getElementById('behaviorsTableBody').innerHTML = 
+                '<tr><td colspan="5" class="text-center text-danger">Error loading behaviors</td></tr>';
+        });
+}
+
+function loadAlerts() {
+    fetch('/api/ai/alerts?per_page=20&unread_only=false')
+        .then(response => response.json())
+        .then(data => {
+            const alertsList = document.getElementById('alertsList');
+            if (data.success && data.data && data.data.alerts && data.data.alerts.length > 0) {
+                document.getElementById('totalAlerts').textContent = data.data.total || 0;
+                alertsList.innerHTML = data.data.alerts.map(alert => {
+                    const severityClass = {
+                        'low': 'info',
+                        'medium': 'warning',
+                        'high': 'danger',
+                        'critical': 'danger'
+                    }[alert.severity] || 'secondary';
+                    return `
+                        <div class="alert alert-${severityClass} d-flex justify-content-between align-items-start mb-3">
+                            <div>
+                                <h6 class="alert-heading">
+                                    <span class="badge bg-${severityClass}">${alert.severity.toUpperCase()}</span>
+                                    ${alert.title}
+                                </h6>
+                                <p class="mb-1">${alert.description || 'No description'}</p>
+                                <small class="text-muted">${new Date(alert.created_at).toLocaleString()}</small>
+                            </div>
+                            ${!alert.is_acknowledged ? `
+                                <button class="btn btn-sm btn-outline-primary" onclick="acknowledgeAlert('${alert.id}')">
+                                    <i class="bi bi-check"></i> Acknowledge
+                                </button>
+                            ` : '<span class="badge bg-success">Acknowledged</span>'}
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                alertsList.innerHTML = '<div class="text-center text-muted">No alerts</div>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading alerts:', error);
+            document.getElementById('alertsList').innerHTML = 
+                '<div class="text-center text-danger">Error loading alerts</div>';
+        });
+}
+
+function loadCrowdDensity() {
+    fetch('/api/ai/crowd-density?per_page=20')
+        .then(response => response.json())
+        .then(data => {
+            const tbody = document.getElementById('crowdTableBody');
+            if (data.success && data.data && data.data.analyses && data.data.analyses.length > 0) {
+                tbody.innerHTML = data.data.analyses.map(analysis => {
+                    const levelClass = {
+                        'low': 'success',
+                        'medium': 'info',
+                        'high': 'warning',
+                        'very_high': 'danger'
+                    }[analysis.density_level] || 'secondary';
+                    return `
+                        <tr>
+                            <td><span class="badge bg-${levelClass}">${analysis.density_level}</span></td>
+                            <td>${analysis.person_count}</td>
+                            <td>${analysis.density_percentage.toFixed(1)}%</td>
+                            <td>${analysis.camera_id || 'N/A'}</td>
+                            <td>${new Date(analysis.created_at).toLocaleString()}</td>
+                        </tr>
+                    `;
+                }).join('');
+            } else {
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-muted">No crowd density data</td></tr>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading crowd density:', error);
+            document.getElementById('crowdTableBody').innerHTML = 
+                '<tr><td colspan="5" class="text-center text-danger">Error loading crowd density</td></tr>';
+        });
+}
+
+function analyzeFrame() {
+    const fileInput = document.getElementById('frameImage');
+    const cameraId = document.getElementById('cameraId').value;
+    const frameNumber = document.getElementById('frameNumber').value;
+    const resultDiv = document.getElementById('frameAnalysisResult');
+    
+    if (!fileInput.files[0]) {
+        alert('Please select an image file');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('image', fileInput.files[0]);
+    if (cameraId) formData.append('camera_id', cameraId);
+    if (frameNumber) formData.append('frame_number', frameNumber);
+    
+    resultDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div><p>Analyzing frame...</p></div>';
+    
+    fetch('/api/ai/analyze-frame', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.message || data.error || `HTTP ${response.status}: ${response.statusText}`);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Response data:', data); // Debug log
+        if (data.success && data.data) {
+            const result = data.data;
+            resultDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <h6>Analysis Complete!</h6>
+                    <p><strong>Objects Detected:</strong> ${result.objects_detected || result.objects_detected === 0 ? result.objects_detected : 'N/A'}</p>
+                    <p><strong>Anomalies Found:</strong> ${result.anomalies ? result.anomalies.length : 0}</p>
+                    <p><strong>Behaviors Detected:</strong> ${result.behaviors ? result.behaviors.length : 0}</p>
+                    <p><strong>Crowd Density:</strong> ${result.crowd_density ? result.crowd_density.density_level + ' (' + result.crowd_density.person_count + ' people)' : 'N/A'}</p>
+                    <p><strong>Processing Time:</strong> ${result.processing_time_ms ? result.processing_time_ms.toFixed(2) : 'N/A'}ms</p>
+                </div>
+            `;
+            setTimeout(() => {
+                refreshDashboard();
+            }, 1000);
+        } else {
+            const errorMsg = data.message || data.error || data.details || 'Analysis failed';
+            console.error('Analysis error:', data); // Debug log
+            resultDiv.innerHTML = `<div class="alert alert-danger"><strong>Error:</strong> ${errorMsg}</div>`;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        resultDiv.innerHTML = `<div class="alert alert-danger"><strong>Error:</strong> ${error.message || 'An unexpected error occurred. Please check the console for details.'}</div>`;
+    });
+}
+
+function analyzeVideo() {
+    const fileInput = document.getElementById('videoFile');
+    const cameraId = document.getElementById('videoCameraId').value;
+    const frameSkip = document.getElementById('frameSkip').value || 30;
+    const resultDiv = document.getElementById('videoAnalysisResult');
+    
+    if (!fileInput.files[0]) {
+        alert('Please select a video file');
+        return;
+    }
+    
+    const formData = new FormData();
+    formData.append('video', fileInput.files[0]);
+    if (cameraId) formData.append('camera_id', cameraId);
+    formData.append('frame_skip', frameSkip);
+    
+    resultDiv.innerHTML = '<div class="text-center"><div class="spinner-border" role="status"></div><p>Analyzing video... This may take a while.</p></div>';
+    
+    fetch('/api/ai/analyze-video', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(data => {
+                throw new Error(data.message || data.error || `HTTP ${response.status}: ${response.statusText}`);
+            });
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Video analysis response:', data); // Debug log
+        if (data.success && data.data) {
+            const result = data.data;
+            resultDiv.innerHTML = `
+                <div class="alert alert-success">
+                    <h6>Video Analysis Complete!</h6>
+                    <p><strong>Frames Processed:</strong> ${result.frames_processed || result.frames_processed === 0 ? result.frames_processed : 'N/A'}</p>
+                    <p><strong>Total Frames:</strong> ${result.total_frames || result.total_frames === 0 ? result.total_frames : 'N/A'}</p>
+                    <p><strong>Total Anomalies:</strong> ${result.total_anomalies || result.total_anomalies === 0 ? result.total_anomalies : 'N/A'}</p>
+                    <p><strong>Total Behaviors:</strong> ${result.total_behaviors || result.total_behaviors === 0 ? result.total_behaviors : 'N/A'}</p>
+                    <p><strong>Processing Time:</strong> ${result.processing_time_ms ? (result.processing_time_ms / 1000).toFixed(2) : 'N/A'}s</p>
+                    ${result.video_path ? `<p class="small text-muted"><strong>Video:</strong> ${result.video_path}</p>` : ''}
+                </div>
+            `;
+            setTimeout(() => {
+                refreshDashboard();
+            }, 1000);
+        } else {
+            const errorMsg = data.message || data.error || data.details || 'Analysis failed';
+            console.error('Video analysis error:', data); // Debug log
+            resultDiv.innerHTML = `<div class="alert alert-danger"><strong>Error:</strong> ${errorMsg}</div>`;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        resultDiv.innerHTML = `<div class="alert alert-danger"><strong>Error:</strong> ${error.message || 'An unexpected error occurred. Please check the console for details.'}</div>`;
+    });
+}
+
+function acknowledgeAlert(alertId) {
+    fetch(`/api/ai/alerts/${alertId}/acknowledge`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ acknowledged_by: 'user' })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            loadAlerts();
+        } else {
+            alert('Error acknowledging alert: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error acknowledging alert');
+    });
+}
+
+function viewAnomalyDetails(anomalyId) {
+    // TODO: Implement detailed view modal
+    alert('Anomaly ID: ' + anomalyId);
+}
+</script>
+{% endblock %}
+

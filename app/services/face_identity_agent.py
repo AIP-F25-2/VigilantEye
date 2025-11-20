@@ -16,18 +16,28 @@ import hashlib
 from pathlib import Path
 
 # Try to import FaceAI dependencies (optional)
+# Check cv2 and numpy separately from face_recognition
+CV2_AVAILABLE = False
+FACE_RECOGNITION_AVAILABLE = False
+cv2 = None
+np = None
+face_recognition = None
+
 try:
     import cv2
     import numpy as np
-    import face_recognition
     CV2_AVAILABLE = True
 except ImportError:
-    CV2_AVAILABLE = False
-    cv2 = None
-    np = None
-    face_recognition = None
     logger = logging.getLogger(__name__)
-    logger.warning("FaceAI dependencies (cv2, numpy, face_recognition) not available. CCTV features will be disabled.")
+    logger.warning("OpenCV (cv2) or numpy not available. Basic CCTV features will be disabled.")
+
+# Try to import face_recognition separately (requires dlib)
+try:
+    import face_recognition
+    FACE_RECOGNITION_AVAILABLE = True
+except ImportError:
+    logger = logging.getLogger(__name__)
+    logger.info("face_recognition not available (optional - requires dlib). Advanced face recognition features will be limited.")
 
 # Import existing FaceAi service
 from app.services.faceai_service import get_faceai_service
@@ -280,9 +290,12 @@ class FaceIdentityAgent:
                  similarity_threshold: float = 0.4,
                  privacy_mode: bool = False):
         if not CV2_AVAILABLE:
-            logger.warning("Face & Identity Agent disabled: cv2 not available")
+            logger.warning("Face & Identity Agent disabled: OpenCV (cv2) not available")
             self.enabled = False
             return
+        
+        if not FACE_RECOGNITION_AVAILABLE:
+            logger.info("Face & Identity Agent: face_recognition not available. Basic face detection will work, but advanced recognition features are limited.")
         
         self.enabled = True
         self.cctv_videos_dir = Path(cctv_videos_dir)
@@ -362,13 +375,14 @@ class FaceIdentityAgent:
             # Process each detected face
             for i, face_data in enumerate(face_result["results"]):
                 face_location = face_data["bounding_box"]
-                face_encoding = face_data["face_encoding"]
+                # face_encoding might not be available if face_recognition is not installed
+                face_encoding = face_data.get("face_encoding")
                 
                 # Extract face region
                 top, right, bottom, left = face_location
                 face_image = frame[top:bottom, left:right]
                 
-                # Identify person
+                # Identify person (works with or without face_encoding)
                 person_identity = self._identify_person(face_encoding, face_image, camera_id)
                 person_identities.append(person_identity)
                 
@@ -384,7 +398,13 @@ class FaceIdentityAgent:
                 })
                 
                 face_locations.append(face_location)
-                face_encodings.append(face_encoding)
+                # Only add encoding if available (requires face_recognition)
+                if face_encoding is not None:
+                    face_encodings.append(face_encoding)
+                else:
+                    # Create a placeholder encoding for basic detection
+                    # This allows the system to work without face_recognition
+                    face_encodings.append(None)
             
             processing_time = (time.time() - start_time) * 1000
             
@@ -407,7 +427,7 @@ class FaceIdentityAgent:
     def _identify_person(self, face_encoding: Any, face_image: Any,  # np.ndarray when available
                         camera_id: str) -> PersonIdentity:
         """Identify person using watchlist and cross-age detection"""
-        if not CV2_AVAILABLE or face_recognition is None:
+        if not CV2_AVAILABLE:
             # Return a default person identity if cv2 is not available
             self.person_counter += 1
             return PersonIdentity(
@@ -416,34 +436,53 @@ class FaceIdentityAgent:
                 confidence_score=0.0
             )
         
-        # Check against watchlist
+        # If face_recognition is not available, use basic detection
+        if not FACE_RECOGNITION_AVAILABLE or face_recognition is None:
+            self.person_counter += 1
+            return PersonIdentity(
+                person_id=f"person_{self.person_counter:06d}",
+                person_type=PersonType.UNKNOWN,
+                confidence_score=0.5,  # Basic detection confidence
+                face_encoding=None  # No encoding available without face_recognition
+            )
+        
+        # Check against watchlist (only if face_recognition is available and face_encoding exists)
         best_match_id = None
         best_similarity = 0.0
         person_type = PersonType.UNKNOWN
         
-        for person_id, known_encoding in self.watchlist_manager.get_person_encodings().items():
-            similarity = 1 - face_recognition.face_distance([known_encoding], face_encoding)[0]
-            
-            if similarity > best_similarity and similarity >= self.similarity_threshold:
-                best_similarity = similarity
-                best_match_id = person_id
-                # Determine person type
-                for ptype, watchlist in self.watchlist_manager.watchlists.items():
-                    if person_id in watchlist:
-                        person_type = ptype
-                        break
-        
-        # If no watchlist match, check against known persons
-        if not best_match_id:
-            for person_id, person_identity in self.known_persons.items():
-                if person_identity.face_encoding is not None:
-                    similarity = 1 - face_recognition.face_distance(
-                        [person_identity.face_encoding], face_encoding)[0]
+        if FACE_RECOGNITION_AVAILABLE and face_recognition is not None and face_encoding is not None:
+            for person_id, known_encoding in self.watchlist_manager.get_person_encodings().items():
+                try:
+                    similarity = 1 - face_recognition.face_distance([known_encoding], face_encoding)[0]
                     
                     if similarity > best_similarity and similarity >= self.similarity_threshold:
                         best_similarity = similarity
                         best_match_id = person_id
-                        person_type = person_identity.person_type
+                        # Determine person type
+                        for ptype, watchlist in self.watchlist_manager.watchlists.items():
+                            if person_id in watchlist:
+                                person_type = ptype
+                                break
+                except Exception as e:
+                    logger.debug(f"Error comparing face encoding: {e}")
+                    continue
+            
+            # If no watchlist match, check against known persons
+            if not best_match_id:
+                for person_id, person_identity in self.known_persons.items():
+                    if person_identity.face_encoding is not None:
+                        try:
+                            similarity = 1 - face_recognition.face_distance(
+                                [person_identity.face_encoding], face_encoding)[0]
+                            
+                            if similarity > best_similarity and similarity >= self.similarity_threshold:
+                                best_similarity = similarity
+                                best_match_id = person_id
+                                person_type = person_identity.person_type
+                        except Exception as e:
+                            logger.debug(f"Error comparing with known person: {e}")
+                            continue
         
         # Create or update person identity
         if best_match_id and best_match_id in self.known_persons:
@@ -487,8 +526,10 @@ class FaceIdentityAgent:
     def add_to_watchlist(self, person_type: PersonType, name: str, 
                         face_image: Any, metadata: Dict = None) -> str:  # np.ndarray when available
         """Add person to watchlist"""
-        if not CV2_AVAILABLE or face_recognition is None:
-            raise ValueError("FaceAI dependencies not available")
+        if not CV2_AVAILABLE:
+            raise ValueError("OpenCV (cv2) is required for watchlist operations")
+        if not FACE_RECOGNITION_AVAILABLE or face_recognition is None:
+            raise ValueError("face_recognition library is required for watchlist operations. Please install face-recognition (requires dlib).")
         # Generate face encoding
         face_encodings = face_recognition.face_encodings(face_image)
         if not face_encodings:

@@ -1,64 +1,114 @@
-# Docker Compose file for Flask API with MySQL and phpMyAdmin
+# Docker Compose file for VigilantEye Flask API with MySQL and phpMyAdmin
 
 services:
   db:
     image: mysql:8.0
+    container_name: vigilanteye_db
+    restart: unless-stopped
     environment:
       MYSQL_DATABASE: ${MYSQL_DATABASE:-flaskapi}
       MYSQL_USER: ${MYSQL_USER:-flaskuser}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-}
-    command: --default-authentication-plugin=mysql_native_password
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-flaskpass}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpass}
+    command: --default-authentication-plugin=mysql_native_password --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     volumes:
       - mysql_data:/var/lib/mysql
     ports:
       - "3306:3306"
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
-      interval: 5s
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-prootpass"]
+      interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 30s
+    networks:
+      - vigilanteye_network
 
   phpmyadmin:
     image: phpmyadmin:latest
+    container_name: vigilanteye_phpmyadmin
+    restart: unless-stopped
     environment:
       PMA_HOST: db
       PMA_USER: root
-      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD:-}
+      PMA_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpass}
+      UPLOAD_LIMIT: 300M
     ports:
       - "8080:80"
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - vigilanteye_network
 
   web:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vigilanteye_web
+    restart: unless-stopped
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: ${DATABASE_URL:-mysql+pymysql://${MYSQL_USER:-flaskuser}:${MYSQL_PASSWORD:-}@db:3306/${MYSQL_DATABASE:-flaskapi}}
-      SECRET_KEY: your-secret-key-here
-      JWT_SECRET_KEY: jwt-secret-string
-      FLASK_ENV: development
-      TELEGRAM_BOT_TOKEN: 8345256867:AAFMasgNavOAstsxPdnOazZfHNRHoNJTbQ0
-      TELEGRAM_WEBHOOK_SECRET: supersecret
-      ALT_CHANNELS_FILE: alternate_channels.json
-      ESCALATE_AFTER_SECONDS: 900
-      CLOSE_AFTER_SECONDS: 3600
-      FLASK_DEBUG: 1
+      # Database
+      DATABASE_URL: ${DATABASE_URL:-mysql+pymysql://${MYSQL_USER:-flaskuser}:${MYSQL_PASSWORD:-flaskpass}@db:3306/${MYSQL_DATABASE:-flaskapi}}
+      
+      # Flask Configuration
+      SECRET_KEY: ${SECRET_KEY:-change-this-secret-key-in-production}
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-this-jwt-secret-in-production}
+      FLASK_ENV: ${FLASK_ENV:-production}
+      FLASK_DEBUG: ${FLASK_DEBUG:-0}
+      
+      # Telegram Bot Configuration
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_WEBHOOK_SECRET: ${TELEGRAM_WEBHOOK_SECRET:-supersecret}
+      
+      # Message Processing Configuration
+      ESCALATE_AFTER_SECONDS: ${ESCALATE_AFTER_SECONDS:-900}
+      CLOSE_AFTER_SECONDS: ${CLOSE_AFTER_SECONDS:-3600}
+      
+      # Channel Configuration
+      ALT_CHANNELS_FILE: ${ALT_CHANNELS_FILE:-alternate_channels.json}
+      DEFAULT_CHANNEL: ${DEFAULT_CHANNEL:-}
+      ESCALATION_CHANNEL: ${ESCALATION_CHANNEL:-}
     depends_on:
       db:
         condition: service_healthy
     volumes:
-      - .:/app
+      # Mount uploads directory for persistent storage
+      - uploads_data:/app/uploads
+      - instance_data:/app/instance
+      - cctv_videos_data:/app/app/cctv_videos
+      # Mount alternate_channels.json if you want to edit it without rebuilding
+      - ./alternate_channels.json:/app/alternate_channels.json:ro
     command: >
       sh -c "
-        echo 'Starting application...' &&
-        echo 'Running migrations...' &&
+        echo 'Waiting for database to be ready...' &&
+        sleep 5 &&
+        echo 'Running database migrations...' &&
         flask db upgrade &&
-        echo 'Starting Gunicorn...' &&
-        gunicorn --bind 0.0.0.0:8000 --workers 1 --log-level debug run:app
+        echo 'Starting Gunicorn server...' &&
+        gunicorn --bind 0.0.0.0:8000 --workers 4 --threads 2 --timeout 120 --keep-alive 5 --log-level info --access-logfile - --error-logfile - run:app
       "
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/api/v1/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - vigilanteye_network
 
 volumes:
   mysql_data:
+    driver: local
+  uploads_data:
+    driver: local
+  instance_data:
+    driver: local
+  cctv_videos_data:
+    driver: local
+
+networks:
+  vigilanteye_network:
+    driver: bridge

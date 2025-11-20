@@ -1,0 +1,71 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+instance/
+
+# Logs
+*.log
+logs/
+
+# Environment variables
+.env
+.env.local
+
+# Git
+.git/
+.gitignore
+
+# Documentation
+*.md
+!README.md
+
+# Test files
+testcase/
+tests/
+*.test.py
+
+# Uploads (will be mounted as volume if needed)
+uploads/
+app/cctv_videos/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+# Deployment scripts
+deploy-*.ps1
+*.ps1
+
+# Migration files (keep structure, but ignore pyc)
+migrations/__pycache__/
+migrations/versions/__pycache__/
+

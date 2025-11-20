@@ -108,19 +108,31 @@ def process_cctv_video():
                 db.session.add(face_detection)
                 db.session.flush()  # Get the ID
                 
-                # Save face encodings
+                # Save face encodings (only if available - requires face_recognition)
                 for i, (person_identity, face_encoding) in enumerate(zip(result.person_identities, result.face_encodings)):
-                    face_encoding_record = FaceEncoding(
-                        person_id=person_identity.person_id,
-                        face_detection_id=face_detection.id,
-                        source_path=video_path,
-                        face_encoding=face_encoding.tolist(),  # Convert numpy array to list
-                        bounding_box=result.face_locations[i],
-                        is_known_person=person_identity.watchlist_status,
-                        confidence_score=person_identity.confidence_score,
-                        model_version=MODEL_VERSION
-                    )
-                    db.session.add(face_encoding_record)
+                    if face_encoding is not None:
+                        try:
+                            # Convert numpy array to list if it's a numpy array
+                            if hasattr(face_encoding, 'tolist'):
+                                encoding_list = face_encoding.tolist()
+                            else:
+                                encoding_list = face_encoding if isinstance(face_encoding, list) else None
+                            
+                            if encoding_list is not None:
+                                face_encoding_record = FaceEncoding(
+                                    person_id=person_identity.person_id,
+                                    face_detection_id=face_detection.id,
+                                    source_path=video_path,
+                                    face_encoding=encoding_list,
+                                    bounding_box=result.face_locations[i],
+                                    is_known_person=person_identity.watchlist_status,
+                                    confidence_score=person_identity.confidence_score,
+                                    model_version=MODEL_VERSION
+                                )
+                                db.session.add(face_encoding_record)
+                        except Exception as e:
+                            logger.warning(f"Failed to save face encoding for person {person_identity.person_id}: {e}")
+                            # Continue processing even if encoding save fails
                 
                 saved_detections.append({
                     "detection_id": face_detection.id,

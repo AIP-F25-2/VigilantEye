@@ -55,16 +55,21 @@ def error_response(error: Any,
     Returns:
         Tuple of (jsonify response, status_code)
     """
+    response = {"success": False}
+    
     if isinstance(error, dict):
         # If error is a dict, use it as the response
-        response = {"error": error.get("message", str(error))}
+        response["error"] = error.get("message", str(error))
+        response["message"] = error.get("message", str(error))
         # Add any additional fields from the error dict
         for key, value in error.items():
             if key != "message":
                 response[key] = value
     else:
         # If error is a string, use it directly
-        response = {"error": str(error)}
+        error_str = str(error)
+        response["error"] = error_str
+        response["message"] = error_str
     
     if details:
         response["details"] = details
