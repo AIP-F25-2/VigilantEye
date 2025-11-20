@@ -230,6 +230,67 @@ class FaceAiService:
         """Check if FaceAi service is available (at least basic face detection)"""
         return self.initialized and self.face_detector is not None
     
+    def _run_face_detection(self, image_path_or_array, show_result=False):
+        """Run face detection using available detector"""
+        if hasattr(self.face_detector, 'process_image'):
+            return self.face_detector.process_image(
+                image_path_or_array, show_result=show_result
+            )
+        elif hasattr(self.face_detector, 'detect_faces'):
+            results = self.face_detector.detect_faces(image_path_or_array)
+            return results, None
+        else:
+            return None, None
+    
+    @staticmethod
+    def _convert_numpy_type(value):
+        """Convert NumPy types to native Python types"""
+        if CV2_AVAILABLE and np is not None:
+            if hasattr(value, 'item'):  # NumPy scalar
+                return value.item()
+            elif isinstance(value, (np.integer, np.int32, np.int64)):
+                return int(value)
+            elif isinstance(value, (np.floating, np.float32, np.float64)):
+                return float(value)
+        return value
+    
+    def _format_dict_result(self, result):
+        """Format a dictionary result by converting NumPy types"""
+        clean_result = {}
+        for key, value in result.items():
+            if isinstance(value, (list, tuple)):
+                clean_result[key] = [self._convert_numpy_type(v) for v in value]
+            else:
+                clean_result[key] = self._convert_numpy_type(value)
+        return clean_result
+    
+    def _format_tuple_result(self, result):
+        """Format a tuple result into a dictionary"""
+        if len(result) < 4:
+            return None
+        x, y, w, h = [self._convert_numpy_type(v) for v in result[:4]]
+        confidence = self._convert_numpy_type(result[4]) if len(result) > 4 else 1.0
+        return {
+            "bounding_box": [int(y), int(x+w), int(y+h), int(x)],
+            "confidence": float(confidence)
+        }
+    
+    def _format_detection_results(self, results):
+        """Format detection results from various formats to consistent format"""
+        if not isinstance(results, list):
+            return []
+        
+        formatted_results = []
+        for result in results:
+            if isinstance(result, dict):
+                formatted_results.append(self._format_dict_result(result))
+            elif isinstance(result, tuple):
+                formatted_result = self._format_tuple_result(result)
+                if formatted_result:
+                    formatted_results.append(formatted_result)
+        
+        return formatted_results
+    
     def detect_faces(self, image_path_or_array, show_result=False):
         """
         Detect and recognize faces in an image
@@ -245,64 +306,75 @@ class FaceAiService:
             return {"error": "Face detector not available"}
         
         try:
-            # Check if detector has process_image method (advanced) or detect_faces (basic)
-            if hasattr(self.face_detector, 'process_image'):
-                results, annotated_image = self.face_detector.process_image(
-                    image_path_or_array, show_result=show_result
-                )
-            elif hasattr(self.face_detector, 'detect_faces'):
-                # Basic detector
-                results = self.face_detector.detect_faces(image_path_or_array)
-                annotated_image = None
-            else:
+            results, annotated_image = self._run_face_detection(image_path_or_array, show_result)
+            
+            if results is None:
                 return {"error": "Face detector method not found"}
             
-            # Helper function to convert NumPy types to native Python types
-            def convert_numpy_type(value):
-                """Convert NumPy types to native Python types"""
-                if CV2_AVAILABLE and np is not None:
-                    if hasattr(value, 'item'):  # NumPy scalar
-                        return value.item()
-                    elif isinstance(value, (np.integer, np.int32, np.int64)):
-                        return int(value)
-                    elif isinstance(value, (np.floating, np.float32, np.float64)):
-                        return float(value)
-                return value
-            
-            if isinstance(results, list):
-                formatted_results = []
-                for result in results:
-                    if isinstance(result, dict):
-                        # Convert any NumPy types in the dict to native Python types
-                        clean_result = {}
-                        for key, value in result.items():
-                            if isinstance(value, (list, tuple)):
-                                # Convert list/tuple elements
-                                clean_result[key] = [convert_numpy_type(v) for v in value]
-                            else:
-                                clean_result[key] = convert_numpy_type(value)
-                        formatted_results.append(clean_result)
-                    elif isinstance(result, tuple):
-                        # Handle tuple format
-                        if len(result) >= 4:
-                            x, y, w, h = [convert_numpy_type(v) for v in result[:4]]
-                            confidence = convert_numpy_type(result[4]) if len(result) > 4 else 1.0
-                            formatted_results.append({
-                                "bounding_box": [int(y), int(x+w), int(y+h), int(x)],  # as list for JSON
-                                "confidence": float(confidence)
-                            })
-                results = formatted_results
+            formatted_results = self._format_detection_results(results)
             
             return {
                 "success": True,
-                "faces_detected": len(results) if isinstance(results, list) else 0,
-                "results": results if isinstance(results, list) else [],
+                "faces_detected": len(formatted_results),
+                "results": formatted_results,
                 "annotated_image": annotated_image
             }
             
         except Exception as e:
             logger.error(f"Face detection error: {e}")
             return {"error": str(e)}
+    
+    def _get_demographics_error_response(self):
+        """Get error response when demographics analyzer is not available"""
+        return {
+            "error": "Demographics analyzer not available. Advanced FaceAI modules are required for age and gender analysis. Basic face detection is available.",
+            "available_features": {
+                "face_detection": self.face_detector is not None,
+                "demographics": False,
+                "ambiguity_check": self.ambiguity_checker is not None
+            },
+            "suggestion": "To enable demographics analysis, ensure the advanced FaceAI modules (Age_Gender Detection.py) are properly installed."
+        }
+    
+    def _format_dict_demographics_result(self, result):
+        """Format a dictionary demographics result"""
+        clean_result = {
+            "face_box": result.get("face_box"),
+            "gender": result.get("gender"),
+            "gender_score": float(result.get("gender_score", 0.0)) if result.get("gender_score") is not None else None,
+            "age_group": result.get("age_group"),
+            "age_score": float(result.get("age_score", 0.0)) if result.get("age_score") is not None else None,
+            "ethnicity": result.get("ethnicity")
+        }
+        # Convert face_box if it's a list/tuple with NumPy types
+        if isinstance(clean_result["face_box"], (list, tuple)):
+            clean_result["face_box"] = [self._convert_numpy_type(v) for v in clean_result["face_box"]]
+        return clean_result
+    
+    def _format_tuple_demographics_result(self, result):
+        """Format a tuple demographics result"""
+        if len(result) < 5:
+            return None
+        x1, y1, x2, y2, label = result
+        x1, y1, x2, y2 = [self._convert_numpy_type(v) for v in [x1, y1, x2, y2]]
+        return {
+            "face_box": [int(x1), int(y1), int(x2-x1), int(y2-y1)],
+            "label": str(label) if label else None,
+            "gender": label.split(',')[0] if label and ',' in label else None,
+            "age_group": label.split(',')[1].strip() if label and ',' in label else None
+        }
+    
+    def _format_demographics_results(self, results):
+        """Format demographics results from various formats"""
+        formatted_results = []
+        for result in results:
+            if isinstance(result, dict):
+                formatted_results.append(self._format_dict_demographics_result(result))
+            elif isinstance(result, tuple):
+                formatted_result = self._format_tuple_demographics_result(result)
+                if formatted_result:
+                    formatted_results.append(formatted_result)
+        return formatted_results
     
     def analyze_demographics(self, image_path):
         """
@@ -314,60 +386,12 @@ class FaceAiService:
         Returns:
             dict: Demographics analysis results
         """
-        # Helper function to convert NumPy types (defined here for use in this method)
-        def convert_numpy_type(value):
-            """Convert NumPy types to native Python types"""
-            if CV2_AVAILABLE and np is not None:
-                if hasattr(value, 'item'):  # NumPy scalar
-                    return value.item()
-                elif isinstance(value, (np.integer, np.int32, np.int64)):
-                    return int(value)
-                elif isinstance(value, (np.floating, np.float32, np.float64)):
-                    return float(value)
-            return value
-        
         if not self.demographics_analyzer:
-            # Return a helpful error message with available alternatives
-            return {
-                "error": "Demographics analyzer not available. Advanced FaceAI modules are required for age and gender analysis. Basic face detection is available.",
-                "available_features": {
-                    "face_detection": self.face_detector is not None,
-                    "demographics": False,
-                    "ambiguity_check": self.ambiguity_checker is not None
-                },
-                "suggestion": "To enable demographics analysis, ensure the advanced FaceAI modules (Age_Gender Detection.py) are properly installed."
-            }
+            return self._get_demographics_error_response()
         
         try:
             results = self.demographics_analyzer.analyze(image_path)
-            
-            # Format results for API response
-            formatted_results = []
-            for result in results:
-                if isinstance(result, dict):
-                    # Convert NumPy types to native Python types
-                    clean_result = {
-                        "face_box": result.get("face_box"),
-                        "gender": result.get("gender"),
-                        "gender_score": float(result.get("gender_score", 0.0)) if result.get("gender_score") is not None else None,
-                        "age_group": result.get("age_group"),
-                        "age_score": float(result.get("age_score", 0.0)) if result.get("age_score") is not None else None,
-                        "ethnicity": result.get("ethnicity")
-                    }
-                    # Convert face_box if it's a list/tuple with NumPy types
-                    if isinstance(clean_result["face_box"], (list, tuple)):
-                        clean_result["face_box"] = [convert_numpy_type(v) for v in clean_result["face_box"]]
-                    formatted_results.append(clean_result)
-                elif isinstance(result, tuple) and len(result) >= 5:
-                    # Handle tuple format from demographics.py
-                    x1, y1, x2, y2, label = result
-                    x1, y1, x2, y2 = [convert_numpy_type(v) for v in [x1, y1, x2, y2]]
-                    formatted_results.append({
-                        "face_box": [int(x1), int(y1), int(x2-x1), int(y2-y1)],
-                        "label": str(label) if label else None,
-                        "gender": label.split(',')[0] if label and ',' in label else None,
-                        "age_group": label.split(',')[1].strip() if label and ',' in label else None
-                    })
+            formatted_results = self._format_demographics_results(results)
             
             return {
                 "success": True,

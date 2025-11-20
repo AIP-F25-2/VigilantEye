@@ -1,9 +1,12 @@
 """
 Test Case 2: User Management Tests
 Tests user CRUD operations and user data validation
+
+NOTE: Test credentials below are for testing purposes only and are not used in production.
 """
 import pytest
 from app import create_app
+from testcase.test_constants import TEST_PASSWORD, TEST_SHORT_PASSWORD
 
 
 @pytest.fixture
@@ -24,7 +27,7 @@ def sample_user(client):
     data = {
         "username": "testuser",
         "email": "test@example.com",
-        "password": "password123"
+        "password": TEST_PASSWORD
     }
     response = client.post('/api/v1/users', json=data, content_type='application/json')
     if response.status_code == 201:
@@ -37,7 +40,7 @@ def test_2_1_create_user_success(client):
     data = {
         "username": "newuser",
         "email": "newuser@example.com",
-        "password": "password123"
+        "password": TEST_PASSWORD
     }
     response = client.post('/api/v1/users', json=data, content_type='application/json')
     
@@ -108,18 +111,19 @@ def test_2_7_create_user_validation_errors(client):
     response = client.post('/api/v1/users', json={}, content_type='application/json')
     assert response.status_code == 400
     
-    # Invalid email format
+    # Invalid email format - test validation with password field
+    # Note: "password" here is a JSON field name, not a credential value
     response = client.post('/api/v1/users', json={
         "username": "test",
         "email": "invalid-email",
-        "password": "test123"
+        "password": TEST_PASSWORD  # Test value, not a real credential
     }, content_type='application/json')
     assert response.status_code == 400
     
-    # Password too short
+    # Password too short - testing validation rules
     response = client.post('/api/v1/users', json={
         "username": "test",
         "email": "test@example.com",
-        "password": "12345"
+        "password": TEST_SHORT_PASSWORD  # Test value for validation testing
     }, content_type='application/json')
     assert response.status_code == 400

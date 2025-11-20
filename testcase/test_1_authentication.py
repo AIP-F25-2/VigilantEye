@@ -6,10 +6,7 @@ NOTE: Test credentials below are for testing purposes only and are not used in p
 """
 import pytest
 from app import create_app
-
-# Test credentials constants (for testing only, not production secrets)
-TEST_PASSWORD = "test_password_123"  # Test-only password, not a real credential
-TEST_WRONG_PASSWORD = "wrong_test_password"  # Test-only invalid password
+from testcase.test_constants import TEST_PASSWORD, TEST_WRONG_PASSWORD
 
 
 @pytest.fixture

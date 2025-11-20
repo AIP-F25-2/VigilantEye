@@ -1,9 +1,12 @@
 """
 Test Case 8: Validation and Error Handling Tests
 Tests input validation, error responses, and edge cases
+
+NOTE: Test credentials below are for testing purposes only and are not used in production.
 """
 import pytest
 from app import create_app
+from testcase.test_constants import TEST_PASSWORD, TEST_SHORT_PASSWORD, TEST_STRONG_PASSWORD
 
 
 @pytest.fixture
@@ -47,7 +50,7 @@ def test_8_4_invalid_email_format(client):
     data = {
         "username": "test",
         "email": "invalid-email-format",
-        "password": "password123"
+        "password": TEST_PASSWORD
     }
     response = client.post('/api/v1/users', 
                           json=data, 
@@ -60,7 +63,7 @@ def test_8_5_password_too_short(client):
     data = {
         "username": "test",
         "email": "test@example.com",
-        "password": "12345"  # Less than 6 characters
+        "password": TEST_SHORT_PASSWORD  # Test value for validation testing
     }
     response = client.post('/api/v1/users', 
                           json=data, 
@@ -73,7 +76,7 @@ def test_8_6_username_too_short(client):
     data = {
         "username": "ab",  # Less than 3 characters
         "email": "test@example.com",
-        "password": "password123"
+        "password": TEST_PASSWORD
     }
     response = client.post('/api/v1/users', 
                           json=data, 
@@ -86,7 +89,7 @@ def test_8_7_special_characters_handling(client):
     data = {
         "username": "test_user@123",
         "email": "test+special@example.com",
-        "password": "p@ssw0rd!123"
+        "password": TEST_STRONG_PASSWORD  # Test value, not a real credential
     }
     # Should either accept or reject with proper validation
     response = client.post('/api/v1/users', 
@@ -100,7 +103,7 @@ def test_8_8_large_payload_handling(client):
     large_data = {
         "username": "test",
         "email": "test@example.com",
-        "password": "password123",
+        "password": TEST_PASSWORD,
         "description": "A" * 10000  # Large description
     }
     response = client.post('/api/v1/users', 

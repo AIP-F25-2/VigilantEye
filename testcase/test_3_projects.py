@@ -1,9 +1,12 @@
 """
 Test Case 3: Project Management Tests
 Tests project CRUD operations, filtering, and project-user relationships
+
+NOTE: Test credentials below are for testing purposes only and are not used in production.
 """
 import pytest
 from app import create_app
+from testcase.test_constants import TEST_PASSWORD
 
 
 @pytest.fixture
@@ -24,7 +27,7 @@ def sample_user(client):
     data = {
         "username": "projectowner",
         "email": "owner@example.com",
-        "password": "password123"
+        "password": TEST_PASSWORD  # Test value, not a real credential
     }
     response = client.post('/api/v1/users', json=data, content_type='application/json')
     if response.status_code == 201:

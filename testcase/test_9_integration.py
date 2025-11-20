@@ -1,10 +1,13 @@
 """
 Test Case 9: Integration Tests
 Tests complete workflows and component interactions
+
+NOTE: Test credentials below are for testing purposes only and are not used in production.
 """
 import pytest
 from unittest.mock import patch
 from app import create_app
+from testcase.test_constants import TEST_PASSWORD
 
 
 @pytest.fixture
@@ -25,7 +28,7 @@ def test_9_1_user_project_integration(client):
     user_data = {
         "username": "owner",
         "email": "owner@example.com",
-        "password": "password123"
+        "password": TEST_PASSWORD  # Test value, not a real credential
     }
     user_response = client.post('/api/v1/users', 
                                json=user_data, 
@@ -54,7 +57,7 @@ def test_9_2_authentication_workflow(client):
     register_data = {
         "username": "workflow_user",
         "email": "workflow@example.com",
-        "password": "password123"
+        "password": TEST_PASSWORD  # Test value, not a real credential
     }
     register_response = client.post('/api/auth/register', 
                                    json=register_data, 
@@ -64,7 +67,7 @@ def test_9_2_authentication_workflow(client):
     # Login
     login_data = {
         "email": "workflow@example.com",
-        "password": "password123"
+        "password": TEST_PASSWORD  # Test value, not a real credential
     }
     login_response = client.post('/api/auth/login', 
                                 json=login_data, 
@@ -125,7 +128,7 @@ def test_9_5_multiple_operations_sequence(client):
     user_data = {
         "username": "sequence_user",
         "email": "sequence@example.com",
-        "password": "password123"
+        "password": TEST_PASSWORD  # Test value, not a real credential
     }
     user_response = client.post('/api/v1/users', 
                                json=user_data, 

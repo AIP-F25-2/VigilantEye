@@ -1,9 +1,12 @@
 """
 Test Case 10: Edge Cases and Boundary Tests
 Tests edge cases, boundary conditions, and unusual scenarios
+
+NOTE: Test credentials below are for testing purposes only and are not used in production.
 """
 import pytest
 from app import create_app
+from testcase.test_constants import TEST_PASSWORD
 
 
 @pytest.fixture
@@ -23,7 +26,7 @@ def test_10_1_very_long_username(client):
     data = {
         "username": "a" * 100,  # Very long username
         "email": "long@example.com",
-        "password": "password123"
+        "password": TEST_PASSWORD  # Test value, not a real credential
     }
     response = client.post('/api/v1/users', 
                           json=data, 
@@ -37,7 +40,7 @@ def test_10_2_unicode_characters(client):
     data = {
         "username": "测试用户123",
         "email": "test@example.com",
-        "password": "password123"
+        "password": TEST_PASSWORD  # Test value, not a real credential
     }
     response = client.post('/api/v1/users', 
                           json=data, 
@@ -51,7 +54,7 @@ def test_10_3_whitespace_only_input(client):
     data = {
         "username": "   ",
         "email": "   ",
-        "password": "password123"
+        "password": TEST_PASSWORD  # Test value, not a real credential
     }
     response = client.post('/api/v1/users', 
                           json=data, 
@@ -64,7 +67,7 @@ def test_10_4_null_values(client):
     data = {
         "username": None,
         "email": "test@example.com",
-        "password": "password123"
+        "password": TEST_PASSWORD  # Test value, not a real credential
     }
     response = client.post('/api/v1/users', 
                           json=data, 
@@ -95,7 +98,7 @@ def test_10_8_sql_injection_attempt(client):
     data = {
         "username": "admin'; DROP TABLE users; --",
         "email": "test@example.com",
-        "password": "password123"
+        "password": TEST_PASSWORD  # Test value, not a real credential
     }
     response = client.post('/api/v1/users', 
                           json=data, 
@@ -113,7 +116,7 @@ def test_10_9_xss_attempt(client):
     data = {
         "username": "<script>alert('xss')</script>",
         "email": "test@example.com",
-        "password": "password123"
+        "password": TEST_PASSWORD  # Test value, not a real credential
     }
     response = client.post('/api/v1/users', 
                           json=data, 
@@ -132,7 +135,7 @@ def test_10_10_concurrent_requests(client):
         data = {
             "username": f"user_{threading.current_thread().ident}",
             "email": f"user_{threading.current_thread().ident}@example.com",
-            "password": "password123"
+            "password": TEST_PASSWORD  # Test value, not a real credential
         }
         response = client.post('/api/v1/users', 
                               json=data, 
