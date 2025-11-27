@@ -43,7 +43,7 @@
               <input class="form-check-input" type="checkbox" id="remember">
               <label class="form-check-label" for="remember">Remember me</label>
             </div>
-            <a class="small" href="#" tabindex="-1">Forgot password?</a>
+            <a class="small" href="{{ url_for('web_auth.forgot_password') }}">Forgot password?</a>
           </div>
           <div class="d-grid">
             <button type="submit" class="btn btn-success btn-lg">Sign in</button>
